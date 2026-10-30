@@ -2,122 +2,215 @@
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TCBT कृषि मित्र</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background: #efeae2; display: flex; justify-content: center; height: 100vh; }
-        .chat-app { width: 100%; max-width: 500px; height: 100vh; background: #efeae2; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        .chat-header { background: #075e54; color: white; padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
-        .avatar { width: 40px; height: 40px; background: #25d366; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-        .header-info h3 { font-size: 16px; font-weight: 600; }
-        .header-info p { font-size: 11px; opacity: 0.85; }
-        .chat-body { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .msg { max-width: 82%; padding: 8px 12px; border-radius: 8px; font-size: 14.2px; line-height: 1.45; word-wrap: break-word; }
-        .user-msg { background: #d9fdd3; align-self: flex-end; border-top-right-radius: 2px; }
-        .bot-msg { background: white; align-self: flex-start; border-top-left-radius: 2px; box-shadow: 0 1px 1px rgba(0,0,0,0.06); }
-        .source-card { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #ddd; }
-        .video-btn { display: inline-flex; align-items: center; gap: 6px; background: #ffebee; color: #c62828; text-decoration: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; margin-top: 5px; border: 1px solid #ffcdd2; }
-        .video-btn:hover { background: #ffcdd2; }
-        .chat-footer { padding: 10px; background: #f0f2f5; display: flex; gap: 8px; align-items: center; }
-        .chat-input { flex: 1; border: none; padding: 12px 16px; border-radius: 24px; font-size: 15px; outline: none; background: white; }
-        .send-btn { background: #00a884; border: none; width: 44px; height: 44px; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; }
+        body { background: #d1d7db; display: flex; justify-content: center; height: 100vh; overflow: hidden; }
         
-        /* Sprouting Plant Loader */
-        .plant-loader { display: none; align-self: flex-start; background: white; padding: 8px 16px; border-radius: 18px; margin-bottom: 5px; }
-        .plant-anim { display: inline-block; animation: sprout 1.2s infinite ease-in-out; font-size: 20px; }
+        .chat-container { width: 100%; max-width: 480px; height: 100vh; background: #efeae2; display: flex; flex-direction: column; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+        
+        /* Header */
+        .chat-header { background: #075e54; color: white; padding: 10px 14px; display: flex; align-items: center; gap: 12px; z-index: 10; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        .avatar-box { width: 42px; height: 42px; background: #25d366; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+        .header-text h3 { font-size: 16px; font-weight: 600; }
+        .header-text p { font-size: 11.5px; color: #dcf8c6; }
+        
+        /* Chat Body */
+        .chat-body { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background-image: radial-gradient(#d3cbbe 1px, transparent 1px); background-size: 16px 16px; }
+        
+        .bubble { max-width: 85%; padding: 8px 12px 6px 12px; border-radius: 8px; font-size: 14.5px; line-height: 1.45; word-wrap: break-word; position: relative; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+        .user-bubble { background: #d9fdd3; align-self: flex-end; border-top-right-radius: 2px; }
+        .bot-bubble { background: #ffffff; align-self: flex-start; border-top-left-radius: 2px; }
+        
+        .bubble-meta { display: flex; align-items: center; justify-content: flex-end; gap: 4px; font-size: 10.5px; color: #667781; margin-top: 4px; float: right; margin-left: 8px; }
+        .tick { font-size: 13px; color: #8696a0; font-weight: bold; }
+        .tick.blue { color: #53bdeb; }
+        
+        /* Video Clip Buttons */
+        .source-section { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #d1d7db; }
+        .source-title { font-size: 12px; font-weight: bold; color: #075e54; margin-bottom: 4px; }
+        .clip-btn { display: inline-flex; align-items: center; gap: 6px; background: #fef2f2; color: #b91c1c; text-decoration: none; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; margin-top: 4px; border: 1px solid #fecaca; }
+        .clip-btn:hover { background: #fee2e2; }
+        
+        /* Follow-up Chips */
+        .suggestions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .chip { background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; border-radius: 14px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+        .chip:hover { background: #c8e6c9; }
+
+        /* Plant Sprouting Animation Loader */
+        .plant-loader { display: none; align-self: flex-start; background: #ffffff; padding: 8px 14px; border-radius: 16px; align-items: center; gap: 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+        .plant-icon { font-size: 20px; display: inline-block; animation: sprout 1.3s infinite ease-in-out; }
+        .loader-text { font-size: 12px; color: #54656f; font-weight: 500; }
         @keyframes sprout {
-            0% { transform: scale(0.8) rotate(-10deg); opacity: 0.6; }
-            50% { transform: scale(1.2) rotate(10deg); opacity: 1; }
-            100% { transform: scale(0.8) rotate(-10deg); opacity: 0.6; }
+            0% { transform: scale(0.8) rotate(-12deg); opacity: 0.6; }
+            50% { transform: scale(1.25) rotate(10deg); opacity: 1; }
+            100% { transform: scale(0.8) rotate(-12deg); opacity: 0.6; }
         }
+
+        /* Footer & Auto-expanding Textarea */
+        .chat-footer { background: #f0f2f5; padding: 6px 10px; display: flex; align-items: flex-end; gap: 8px; border-top: 1px solid #e9edef; }
+        .input-box { flex: 1; background: #ffffff; border-radius: 20px; padding: 8px 14px; display: flex; align-items: center; box-shadow: 0 1px 1px rgba(0,0,0,0.06); }
+        .chat-textarea { width: 100%; border: none; outline: none; font-size: 15px; resize: none; max-height: 100px; line-height: 20px; background: transparent; font-family: inherit; }
+        .send-btn { background: #00a884; border: none; width: 42px; height: 42px; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 17px; flex-shrink: 0; }
     </style>
 </head>
 <body>
 
-<div class="chat-app">
+<div class="chat-container">
     <div class="chat-header">
-        <div class="avatar">🌱</div>
-        <div class="header-info">
+        <div class="avatar-box">🌱</div>
+        <div class="header-text">
             <h3>TCBT प्राकृतिक कृषि मित्र</h3>
-            <p>ताराचंद बेलजी कृषि पाठशाला सहायक</p>
+            <p>ऑनलाइन • ताराचंद बेलजी कृषि सहायक</p>
         </div>
     </div>
 
     <div class="chat-body" id="chatBody">
-        <div class="msg bot-msg">
+        <div class="bubble bot-bubble">
             नमस्ते किसान भाई! 🙏<br>
             आप TCBT, पंच महाभूत कृषि, जीवामृत या 3G कटिंग से जुड़ा कोई भी सवाल पूछ सकते हैं।
+            <div class="bubble-meta"><span id="initTime"></span></div>
         </div>
     </div>
 
+    <!-- Sprouting Plant Loader -->
     <div class="plant-loader" id="plantLoader">
-        <span class="plant-anim">🌱</span> <span style="font-size:12px; color:#555; margin-left:5px;">पौधा तैयार हो रहा है (खोज जारी है)...</span>
+        <span class="plant-icon">🌱</span>
+        <span class="loader-text">पौधा अंकुरित हो रहा है (ज्ञान खोज जारी है)...</span>
     </div>
 
     <div class="chat-footer">
-        <input type="text" id="userInput" class="chat-input" placeholder="यहाँ अपना सवाल लिखें..." onkeypress="handleKey(event)">
-        <button class="send-btn" onclick="sendQuery()">➤</button>
+        <div class="input-box">
+            <textarea id="chatInput" class="chat-textarea" rows="1" placeholder="यहाँ अपना सवाल लिखें..." oninput="autoGrow(this)" onkeydown="checkKey(event)"></textarea>
+        </div>
+        <button class="send-btn" onclick="sendMsg()">➤</button>
     </div>
 </div>
 
 <script>
     const chatBody = document.getElementById('chatBody');
-    const userInput = document.getElementById('userInput');
+    const chatInput = document.getElementById('chatInput');
     const plantLoader = document.getElementById('plantLoader');
 
-    function handleKey(e) {
-        if (e.key === 'Enter') sendQuery();
+    function getTimeString() {
+        const d = new Date();
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    document.getElementById('initTime').textContent = getTimeString();
+
+    function autoGrow(element) {
+        element.style.height = 'auto';
+        element.style.height = Math.min(element.scrollHeight, 100) + 'px';
     }
 
-    async function sendQuery() {
-        const text = userInput.value.trim();
+    function checkKey(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMsg();
+        }
+    }
+
+    async function sendMsg(presetText = null) {
+        const text = (presetText || chatInput.value).trim();
         if (!text) return;
 
-        // User Message Render
-        appendMessage(text, 'user-msg');
-        userInput.value = '';
+        const time = getTimeString();
+        const msgId = 'msg-' + Date.now();
+
+        // 1. User Message Display with Single Grey Tick
+        const userHtml = `
+            <div class="bubble user-bubble" id="${msgId}">
+                ${text.replace(/\n/g, '<br>')}
+                <div class="bubble-meta">
+                    <span>${time}</span>
+                    <span class="tick tick-status">✓</span>
+                </div>
+            </div>`;
+        chatBody.insertAdjacentHTML('beforeend', userHtml);
+        chatInput.value = '';
+        chatInput.style.height = 'auto';
+
         plantLoader.style.display = 'flex';
         chatBody.scrollTop = chatBody.scrollHeight;
 
+        // 2. Double Grey Tick (Sent/Processing)
+        setTimeout(() => {
+            const userMsgElem = document.getElementById(msgId);
+            if (userMsgElem) {
+                userMsgElem.querySelector('.tick-status').textContent = '✓✓';
+            }
+        }, 500);
+
         try {
-            const res = await fetch('/api/ask', {
+            // Check both /api/ask and /ask automatically
+            let res = await fetch('/api/ask', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ query: text })
             });
+            if (res.status === 404) {
+                res = await fetch('/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: text })
+                });
+            }
 
             const data = await res.json();
             plantLoader.style.display = 'none';
 
+            // 3. Blue Tick (Delivered & Read)
+            const userMsgElem = document.getElementById(msgId);
+            if (userMsgElem) {
+                const tickElem = userMsgElem.querySelector('.tick-status');
+                tickElem.textContent = '✓✓';
+                tickElem.classList.add('blue');
+            }
+
             if (!res.ok) {
-                appendMessage(data.detail || 'Kuch gadbad hui.', 'bot-msg');
+                appendBotMsg(data.detail || 'क्षमा करें, कुछ तकनीकी समस्या आई।');
                 return;
             }
 
-            let botHtml = data.answer.replace(/\n/g, '<br>');
+            // Clean formatted response
+            let formattedText = data.answer.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+            let botContent = `<div>${formattedText}</div>`;
+
+            // Video clips section
             if (data.sources && data.sources.length > 0) {
-                botHtml += '<div class="source-card"><b>📺 संबन्धित वीडियो क्लिप देखें:</b><br>';
-                data.sources.forEach((s, i) => {
-                    botHtml += `<a href="${s.video_url}" target="_blank" class="video-btn">▶️ [${s.duration}] ${s.title.substring(0, 30)}...</a><br>`;
+                botContent += `<div class="source-section"><div class="source-title">📺 सटीक वीडियो क्लिप देखें:</div>`;
+                data.sources.forEach(s => {
+                    botContent += `<a href="${s.video_url}" target="_blank" class="clip-btn">▶️ [${s.duration}] ${s.title.substring(0, 32)}...</a><br>`;
                 });
-                botHtml += '</div>';
+                botContent += `</div>`;
             }
 
-            appendMessage(botHtml, 'bot-msg', true);
+            // Interactive Suggestions Chips
+            if (data.suggestions && data.suggestions.length > 0) {
+                botContent += `<div class="suggestions">`;
+                data.suggestions.forEach(sug => {
+                    botContent += `<span class="chip" onclick="sendMsg('${sug}')">${sug}</span>`;
+                });
+                botContent += `</div>`;
+            }
+
+            appendBotMsg(botContent);
+
         } catch (err) {
             plantLoader.style.display = 'none';
-            appendMessage('Network issue. Kripya dobara koshish karein.', 'bot-msg');
+            appendBotMsg('नेटवर्क संपर्क नहीं हो पाया। कृपया पुनः प्रयास करें।');
         }
         chatBody.scrollTop = chatBody.scrollHeight;
     }
 
-    function appendMessage(content, className, isHtml = false) {
-        const div = document.createElement('div');
-        div.className = `msg ${className}`;
-        if (isHtml) div.innerHTML = content;
-        else div.textContent = content;
-        chatBody.appendChild(div);
+    function appendBotMsg(htmlContent) {
+        const botHtml = `
+            <div class="bubble bot-bubble">
+                ${htmlContent}
+                <div class="bubble-meta"><span>${getTimeString()}</span></div>
+            </div>`;
+        chatBody.insertAdjacentHTML('beforeend', botHtml);
         chatBody.scrollTop = chatBody.scrollHeight;
     }
 </script>
