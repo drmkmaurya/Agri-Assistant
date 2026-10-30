@@ -6,10 +6,6 @@ from pydantic import BaseModel
 from supabase import create_client, Client
 from google import genai
 from google.genai import types
-from dotenv import load_dotenv
-
-# Local development me .env load karega, Vercel me automatically system env use karega
-load_dotenv()
 
 app = FastAPI()
 
@@ -21,16 +17,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Environment Variables se keys uthayenge
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://wvptpethggrslyeqsjdn.supabase.co")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
-if not SUPABASE_URL or not SUPABASE_KEY or not GEMINI_API_KEY:
-    raise RuntimeError("Missing Environment Variables: Check SUPABASE_URL, SUPABASE_KEY, GEMINI_API_KEY")
+supabase: Client = None
+client: genai.Client = None
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-client = genai.Client(api_key=GEMINI_API_KEY)
+if SUPABASE_URL and SUPABASE_KEY:
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+if GEMINI_API_KEY:
+    client = genai.Client(api_key=GEMINI_API_KEY)
 
 # Rate Limiter: Per Minute Max 7, Daily Max 100
 rate_limit_records = {}
@@ -43,37 +40,36 @@ def check_rate_limit(client_ip: str):
     day_window = now - 86400
     minute_window = now - 60
     
-    recent_requests = [t for t in rate_limit_records[client_ip] if t > day_window]
-    rate_limit_records[client_ip] = recent_requests
+    recent = [t for t in rate_limit_records[client_ip] if t > day_window]
+    rate_limit_records[client_ip] = recent
     
-    minute_requests = [t for t in recent_requests if t > minute_window]
+    minute_requests = [t for t in recent if t > minute_window]
     
     if len(minute_requests) >= 7:
-        raise HTTPException(
-            status_code=429, 
-            detail="Aapne ek minute me request limit cross kar di hai. Kripya 1 minute intzaar karein."
-        )
-    if len(recent_requests) >= 100:
-        raise HTTPException(
-            status_code=429, 
-            detail="Aapki daily query limit (100) poori ho gayi hai. Kal dobara koshish karein."
-        )
+        raise HTTPException(status_code=429, detail="Aapne ek minute me query limit (7) cross kar di hai. Kripya 1 minute wait karein.")
+    if len(recent) >= 100:
+        raise HTTPException(status_code=429, detail="Aapki daily query limit (100) poori ho gayi hai. Kal dobara koshish karein.")
     
     rate_limit_records[client_ip].append(now)
 
 class QueryRequest(BaseModel):
     query: str
 
+# Dono routes bind kiye gaye hain taaki Vercel path issue na kare
 @app.post("/api/ask")
+@app.post("/ask")
 async def ask_assistant(req: QueryRequest, request: Request):
-    client_ip = request.client.host or "127.0.0.1"
+    if not supabase or not client:
+        raise HTTPException(status_code=500, detail="Server keys missing. Kripya Vercel Environment Variables check karein.")
+
+    client_ip = request.headers.get("x-forwarded-for", request.client.host or "127.0.0.1").split(",")[0].strip()
     check_rate_limit(client_ip)
     
     user_query = req.query.strip()
     if not user_query:
         raise HTTPException(status_code=400, detail="Query empty nahi honi chahiye.")
 
-    # 1. 768-Dimension Query Vector Embedding
+    # 1. 768-Dimension Query Vector
     emb_res = client.models.embed_content(
         model="models/gemini-embedding-001",
         contents=user_query,
@@ -81,25 +77,26 @@ async def ask_assistant(req: QueryRequest, request: Request):
     )
     q_vec = emb_res.embeddings[0].values
 
-    # 2. Supabase Match Query
+    # 2. Supabase Match
     matches_res = supabase.rpc("match_tcbt_chunks", {
         "query_embedding": q_vec,
-        "match_threshold": 0.50,
+        "match_threshold": 0.45,
         "match_count": 3
     }).execute()
     
     matches = matches_res.data or []
     if not matches:
         return {
-            "answer": "Maaf kijiye, is vishay par TCBT channel se match karta hua koi video chunk nahi mila. Kripya thoda alag shabdon me sawal puchhein.",
-            "sources": []
+            "answer": "नमस्ते! आपके इस सवाल से संबंधित स्पष्ट जानकारी अभी TCBT वीडियो लाइब्रेरी में नहीं मिली। क्या आप फसल या विषय का नाम बदल कर पूछना चाहेंगे?",
+            "sources": [],
+            "suggestions": ["पंच महाभूत कृषि क्या है?", "3G कटिंग कैसे करें?", "जीवामृत बनाने की विधि"]
         }
 
     # 3. Context compilation
     context_text = ""
     sources = []
     for m in matches:
-        context_text += f"- Video: {m['title']} (Time: {m['duration_label']})\n  Vishay: {m['topic']}\n  Detail: {m['summary']}\n\n"
+        context_text += f"- Video: {m['title']} ({m['duration_label']})\n  Vishay: {m['topic']}\n  Detail: {m['summary']}\n\n"
         sources.append({
             "title": m["title"],
             "duration": m["duration_label"],
@@ -108,10 +105,10 @@ async def ask_assistant(req: QueryRequest, request: Request):
             "video_url": f"https://www.youtube.com/watch?v={m['video_id']}&t={m['start_seconds']}s"
         })
 
-    # 4. Gemini 3.1 Flash Lite Final Response Generation
+    # 4. Gemini 3.1 Flash Lite Response Polish
     system_prompt = f"""
     Aap Tarachand Belji ji ke TCBT (Panch Mahabhut Krishi) ke kisan sahayak hain.
-    Neeche diye gaye video context ke aadhar par kisan ke sawal ka saral, aadarpoorvak aur spasht Hindi me uttar dein:
+    Neeche diye gaye video context ke aadhar par kisan ke sawal ka vyavharik, aadarpoorvak aur point-by-point Hindi me uttar dein.
     
     Context:
     {context_text}
@@ -119,8 +116,9 @@ async def ask_assistant(req: QueryRequest, request: Request):
     Sawal: {user_query}
     
     Niyam:
-    - Jawaab sidha aur vyavharik ho.
-    - Context se bahar ki baatein add na karein.
+    - Bhasha bilkul saral aur kisan bhaiyon ke samajh aane yogya ho.
+    - Important points ko bold (**) karein.
+    - Ant me 1 ya 2 chote follow-up sawal sujhayen jo kisan puch sakte hain.
     """
     
     response = client.models.generate_content(
@@ -130,5 +128,6 @@ async def ask_assistant(req: QueryRequest, request: Request):
 
     return {
         "answer": response.text,
-        "sources": sources
+        "sources": sources,
+        "suggestions": ["3G कटिंग का सही समय क्या है?", "पंच महाभूत से मिट्टी कैसे सुधरेगी?"]
     }
