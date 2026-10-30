@@ -1,0 +1,21 @@
+{
+  "name": "TCBT कृषि मित्र",
+  "short_name": "TCBT मित्र",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#075e54",
+  "theme_color": "#075e54",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/606/606553.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/606/606553.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
