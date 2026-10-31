@@ -90,11 +90,23 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.25);
         }
 
-        /* Super Control Announcement / Promotion Banner */
+        /* Super Control Announcement Banner */
         .promotion-banner {
             display: none; background: linear-gradient(90deg, #fef3c7, #fef9c3);
             border-bottom: 1.5px solid #facc15; padding: 6px 12px;
             font-size: 11.5px; color: #854d0e; font-weight: 600; text-align: center;
+        }
+
+        /* Welcome Offer Banner */
+        .claim-welcome-banner {
+            display: none; background: linear-gradient(90deg, #ecfdf5, #dcfce7);
+            border-bottom: 1.5px solid #86efac; padding: 7px 12px;
+            font-size: 11.5px; color: #065f46; font-weight: 600;
+            justify-content: space-between; align-items: center;
+        }
+        .claim-welcome-btn {
+            background: #059669; color: #fff; border: none; padding: 3px 9px;
+            border-radius: 12px; font-size: 10.5px; cursor: pointer; font-weight: bold;
         }
 
         .low-credit-banner {
@@ -107,7 +119,7 @@
             padding: 2px 7px; border-radius: 10px; font-size: 10.5px; cursor: pointer;
         }
 
-        /* Canvas with Ultra-Dim Agri Pattern */
+        /* Canvas with Ultra-Dim Agri Wallpaper */
         .chat-canvas {
             flex: 1; overflow-y: auto; padding: 12px;
             display: flex; flex-direction: column; gap: 10px;
@@ -155,7 +167,7 @@
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
 
-        /* Transient WhatsApp Meta AI Style Action Icons (Visible ONLY under the latest response) */
+        /* Transient WhatsApp Style Icons (Visible ONLY under latest bot response) */
         .transient-action-bar {
             display: flex; align-items: center; justify-content: flex-end; gap: 12px;
             margin-top: 5px; padding-top: 3px;
@@ -273,16 +285,25 @@
         .credits-val { font-size: 12px; color: #166534; margin-top: 4px; font-weight: 500; }
         .duration-val { font-size: 10.5px; color: #64748b; margin-top: 2px; }
 
-        .coupon-box {
-            margin-top: 14px; padding-top: 12px; border-top: 1px dashed #cbd5e1;
-            display: flex; gap: 8px;
+        /* Clear, Dedicated Coupon Section */
+        .coupon-section {
+            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
+            padding: 10px 12px; margin-top: 12px;
         }
+        .coupon-box { display: flex; gap: 6px; margin-top: 6px; }
         .coupon-input {
-            flex: 1; padding: 8px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px;
-            font-size: 12.5px; text-transform: uppercase; font-weight: 600; outline: none;
+            flex: 1; padding: 7px 10px; border: 1.5px solid #cbd5e1; border-radius: 6px;
+            font-size: 12px; text-transform: uppercase; font-weight: 600; outline: none;
             background: #ffffff; color: #0f172a;
         }
         .coupon-input:focus { border-color: #008069; }
+        .coupon-apply-btn {
+            background: #008069; color: #fff; border: none; padding: 7px 12px;
+            border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;
+        }
+        .coupon-feedback {
+            font-size: 11px; margin-top: 5px; font-weight: 500; display: none;
+        }
 
         .form-group { margin-bottom: 12px; }
         .form-label { display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px; }
@@ -402,9 +423,15 @@
         </div>
     </header>
 
-    <!-- Super Control Announcement / Promotion Banner -->
+    <!-- Super Control Announcement Banner -->
     <div class="promotion-banner" id="promoBanner">
         <span id="promoBannerText">📢 विशेष कृषि सलाह एवं नए ऑफर्स!</span>
+    </div>
+
+    <!-- Welcome 10 Credits Offer Banner -->
+    <div class="claim-welcome-banner" id="welcomeBanner">
+        <span>🎁 10 निःशुल्क क्रेडिट्स (वैधता: 30 दिन) क्लेम करें!</span>
+        <button class="claim-welcome-btn" onclick="openWelcomeModal()">क्लेम करें</button>
     </div>
 
     <!-- Low Credit Warning -->
@@ -418,8 +445,8 @@
         <div class="menu-header">
             <b id="userName">किसान साथी</b><br>
             <span style="font-size:11.5px; color:#008069; font-weight:600;" id="userPlanName">प्लान: Free</span><br>
-            <span style="font-size:11px; color:#64748b;" id="quotaSummary">उपलब्ध क्रेडिट: 3</span><br>
-            <span style="font-size:10.5px; color:#059669; font-weight:500;" id="planExpiryText">वैधता: दैनिक रीसेट</span>
+            <span style="font-size:11px; color:#64748b;" id="quotaSummary">उपलब्ध क्रेडिट: 0</span><br>
+            <span style="font-size:10.5px; color:#059669; font-weight:500;" id="planExpiryText">वैधता: सक्रिय</span>
         </div>
         <div class="menu-item" onclick="openPricing()">💳 प्लान अपग्रेड / विवरण</div>
         <div class="menu-item" onclick="openPaymentHistoryModal()">🧾 बिल एवं भुगतान इतिहास</div>
@@ -473,7 +500,7 @@
         </button>
     </footer>
 
-    <!-- Non-Dismissible Pending Approval View -->
+    <!-- Non-Dismissible Pending Screen -->
     <div class="pending-screen" id="pendingScreen">
         <div class="pending-card">
             <div style="font-size:42px; margin-bottom:10px;">⏳</div>
@@ -517,7 +544,7 @@
     </div>
 </div>
 
-<!-- Modal 1: 2-Plan Pricing Modal (100 & 300 Credits) -->
+<!-- Modal 1: 2-Plan Pricing Modal (100 & 300 Credits) with Clear Coupon Field -->
 <div class="modal-overlay" id="pricingModal">
     <div class="modal-card">
         <div class="modal-header">
@@ -525,7 +552,20 @@
             <button class="modal-close" onclick="closePricing()">✕</button>
         </div>
         <div class="modal-body">
-            <p style="font-size:12.5px; color:#475569;">अपनी आवश्यकतानुसार प्लान चुनें (फोटो जांच व प्राथमिकता सहायता उपलब्ध):</p>
+            <!-- Dedicated Coupon Section -->
+            <div class="coupon-section">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:11.5px; font-weight:700; color:#334155;">कूपन कोड (वैकल्पिक / Optional):</span>
+                    <span style="font-size:10.5px; color:#64748b;">यदि कोई कोड हो</span>
+                </div>
+                <div class="coupon-box">
+                    <input type="text" id="couponInput" class="coupon-input" placeholder="कोड दर्ज करें (उदा. VIP100)">
+                    <button class="coupon-apply-btn" onclick="applyCouponFeedback()">लागू करें</button>
+                </div>
+                <div id="couponFeedbackMsg" class="coupon-feedback"></div>
+            </div>
+
+            <p style="font-size:12px; color:#475569; margin-top:14px; font-weight:600;">अपनी आवश्यकतानुसार प्लान चुनें:</p>
             <div class="pricing-grid">
                 <div class="price-box" onclick="initiatePayment('basic')">
                     <span class="plan-badge badge-basic">Basic Plan</span>
@@ -541,13 +581,10 @@
                 </div>
             </div>
 
-            <div class="coupon-box">
-                <input type="text" id="couponInput" class="coupon-input" placeholder="कूपन कोड (उदा. VIP100)">
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-                <span style="font-size:11px; color:#64748b;">💡 कूपन दर्ज करने के बाद प्लान चुनें।</span>
-                <button onclick="openContactModal('payment')" style="background:none; border:none; color:#008069; font-size:11px; font-weight:600; cursor:pointer;">
-                    ❓ भुगतान सहायता चाहिए?
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:8px; border-top:1px dashed #cbd5e1;">
+                <span style="font-size:11px; color:#64748b;">बिना कूपन के सीधे प्लान पर क्लिक करें।</span>
+                <button onclick="closePricing(); openContactModal('payment');" style="background:none; border:none; color:#008069; font-size:11px; font-weight:600; cursor:pointer;">
+                    ❓ भुगतान सहायता
                 </button>
             </div>
         </div>
@@ -571,7 +608,24 @@
     </div>
 </div>
 
-<!-- Modal 3: Universal Contact & Priority Support Form -->
+<!-- Modal 3: Welcome 10 Credits Claim Modal -->
+<div class="modal-overlay" id="welcomeClaimModal">
+    <div class="modal-card" style="text-align:center; padding:24px 20px;">
+        <div style="font-size:46px;">🎁</div>
+        <h2 style="color:#008069; font-size:18px; margin-top:8px;">स्वागत है किसान भाई!</h2>
+        <p style="font-size:13px; color:#475569; margin:10px 0 16px 0; line-height:1.5;">
+            आपका खाता स्वीकृत हो चुका है। शुरुआत के लिए <b>10 निःशुल्क क्रेडिट्स (वैधता: 30 दिन)</b> तुरंत क्लेम करें!
+        </p>
+        <button onclick="claimWelcomeCredits()" style="background:#00a884; color:#fff; border:none; padding:11px 24px; border-radius:24px; font-weight:700; font-size:14px; cursor:pointer; width:100%; box-shadow:0 2px 8px rgba(0,168,132,0.3);">
+            ✨ 10 Free Credits क्लेम करें
+        </button>
+        <button onclick="closeWelcomeModal()" style="background:none; border:none; color:#64748b; font-size:12px; margin-top:12px; cursor:pointer;">
+            बाद में (Skip)
+        </button>
+    </div>
+</div>
+
+<!-- Modal 4: Universal Contact & Priority Support Form -->
 <div class="modal-overlay" id="contactModal">
     <div class="modal-card">
         <div class="modal-header">
@@ -609,7 +663,7 @@
     </div>
 </div>
 
-<!-- Modal 4: Payment History & Invoices -->
+<!-- Modal 5: Payment History & Invoices -->
 <div class="modal-overlay" id="historyModal">
     <div class="modal-card">
         <div class="modal-header">
@@ -628,11 +682,11 @@
     </div>
 </div>
 
-<!-- Modal 5: Purchase Celebration Modal -->
+<!-- Modal 6: Purchase Celebration Modal -->
 <div class="modal-overlay" id="successModal">
     <div class="modal-card" style="text-align:center; padding:25px;">
         <div style="font-size:44px;">🎉</div>
-        <h2 style="color:#008069; margin-top:8px;" id="successModalTitle">प्लान सक्रिय!</h2>
+        <h2 style="color:#008069; margin-top:8px;" id="successModalTitle">सक्रिय सफल!</h2>
         <div id="creditRollCount" style="font-size:32px; font-weight:bold; color:#008069; margin:10px 0;">+100 क्रेडिट्स</div>
         <p style="font-size:13px; color:#475569; line-height:1.5;" id="successMsg">
             आपके खाते में नए क्रेडिट्स सफलतापूर्वक जोड़ दिए गए हैं।
@@ -642,7 +696,7 @@
     </div>
 </div>
 
-<!-- Modal 6: Modular Policies Modal -->
+<!-- Modal 7: Modular Policies Modal -->
 <div class="modal-overlay" id="policyModal">
     <div class="modal-card">
         <div class="modal-header">
@@ -726,7 +780,7 @@
         }
     }
 
-    // Attachment trigger: Lock for Free Tier
+    // Attachment: Lock for Free Tier
     function triggerAttachmentPicker() {
         if (!isUserPaidActive) {
             document.getElementById('featureLockModal').style.display = 'flex';
@@ -739,7 +793,7 @@
         document.getElementById('featureLockModal').style.display = 'none';
     }
 
-    // Attachment: Max 2 Files, Images & PDF only, Max 10MB each
+    // Attachment Selection: Max 2 files, 10MB each
     function handleFileSelected(event) {
         const files = Array.from(event.target.files);
         if (!files.length) return;
@@ -862,7 +916,7 @@
     }
 
     function formatPreciseDate(isoStr) {
-        if (!isoStr) return 'दैनिक रीसेट';
+        if (!isoStr) return 'सक्रिय';
         const d = new Date(isoStr);
         return d.toLocaleDateString('hi-IN', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' +
                d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -905,6 +959,7 @@
             const res = await apiRequest('/user-stats?user_id=' + currentUser.id);
             const data = await res.json();
             
+            // Non-Dismissible Pending Screen
             if (data.status === 'pending') {
                 document.getElementById('pendingScreen').style.display = 'flex';
                 document.getElementById('inputFooterBar').style.display = 'none';
@@ -914,7 +969,7 @@
                 document.getElementById('inputFooterBar').style.display = 'flex';
             }
 
-            // Super Control Promotion Banner
+            // Announcement Banner
             const sc = data.super_control;
             if (sc && sc.banner_enabled && sc.banner_text) {
                 document.getElementById('promoBanner').style.display = 'block';
@@ -923,20 +978,31 @@
                 document.getElementById('promoBanner').style.display = 'none';
             }
 
+            // Welcome Offer Trigger for Approved Users
+            if (!data.is_trial_claimed) {
+                document.getElementById('welcomeBanner').style.display = 'flex';
+                if (!sessionStorage.getItem('welcome_modal_shown')) {
+                    openWelcomeModal();
+                    sessionStorage.setItem('welcome_modal_shown', '1');
+                }
+            } else {
+                document.getElementById('welcomeBanner').style.display = 'none';
+            }
+
             const total = data.total_credits || 0;
-            const maxPack = data.max_pack_credits || (total > 0 ? total : 3);
+            const maxPack = data.max_pack_credits || (total > 0 ? total : 10);
             const plan = data.plan_type || 'free';
             currentUserPlan = plan;
             isUserPaidActive = data.is_paid_active || false;
 
             document.getElementById('ringBadge').textContent = total;
-            document.getElementById('userPlanName').textContent = 'प्लान: ' + (isUserPaidActive ? plan.toUpperCase() : 'Free (3 दैनिक सवाल)');
+            document.getElementById('userPlanName').textContent = 'प्लान: ' + (isUserPaidActive ? plan.toUpperCase() : 'Free');
             document.getElementById('quotaSummary').textContent = `उपलब्ध क्रेडिट: ${total} / ${maxPack}`;
             
-            if (isUserPaidActive && data.plan_expires_at) {
+            if (data.plan_expires_at) {
                 document.getElementById('planExpiryText').textContent = 'वैधता: ' + formatPreciseDate(data.plan_expires_at);
             } else {
-                document.getElementById('planExpiryText').textContent = 'वैधता: 12:00 AM IST रीसेट';
+                document.getElementById('planExpiryText').textContent = 'वैधता: सक्रिय';
             }
 
             document.getElementById('lowCreditBanner').style.display = (total <= 1) ? 'flex' : 'none';
@@ -970,6 +1036,9 @@
         document.getElementById('pricingModal').style.display = 'flex'; 
     }
     function closePricing() { document.getElementById('pricingModal').style.display = 'none'; }
+
+    function openWelcomeModal() { document.getElementById('welcomeClaimModal').style.display = 'flex'; }
+    function closeWelcomeModal() { document.getElementById('welcomeClaimModal').style.display = 'none'; }
     
     function openContactModal(category = 'general') { 
         document.getElementById('userMenu').style.display = 'none'; 
@@ -984,6 +1053,27 @@
         loadPaymentHistory();
     }
     function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
+
+    // Instant Coupon Visual Feedback
+    function applyCouponFeedback() {
+        const val = (document.getElementById('couponInput').value || '').trim().toUpperCase();
+        const msgEl = document.getElementById('couponFeedbackMsg');
+        if (!val) {
+            msgEl.style.display = 'block';
+            msgEl.style.color = '#dc2626';
+            msgEl.textContent = 'कृपया कूपन कोड दर्ज करें।';
+            return;
+        }
+        if (val === 'VIP100') {
+            msgEl.style.display = 'block';
+            msgEl.style.color = '#15803d';
+            msgEl.textContent = '✓ VIP100 लागू: 100% निःशुल्क सक्रियण!';
+        } else {
+            msgEl.style.display = 'block';
+            msgEl.style.color = '#008069';
+            msgEl.textContent = `कोड "${val}" सेट हुआ। प्लान चुनने पर सत्यापित होगा।`;
+        }
+    }
 
     async function loadPaymentHistory() {
         if (!currentUser) return;
@@ -1039,6 +1129,32 @@
         document.getElementById('policyContent').innerHTML = (typeof policyDocs !== 'undefined' && policyDocs[t]) ? policyDocs[t] : '<p>विवरण लोड हो रहा है...</p>';
     }
 
+    // Claim Welcome 10 Free Credits
+    async function claimWelcomeCredits() {
+        if (!currentUser) return;
+        showSpinner("स्वागत क्रेडिट्स सक्रिय हो रहे हैं...");
+        try {
+            const res = await apiRequest('/claim-welcome', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ user_id: currentUser.id })
+            });
+            const data = await res.json();
+            hideSpinner();
+            closeWelcomeModal();
+
+            if (res.ok) {
+                triggerPaymentSuccess(data.credits || 10, data.plan_expires_at);
+                fetchStats();
+            } else {
+                alert(data.detail || 'क्रेडिट्स क्लेम करने में त्रुटि आई।');
+            }
+        } catch(e) {
+            hideSpinner();
+            alert('नेटवर्क त्रुटि आई।');
+        }
+    }
+
     async function submitUniversalSupportRequest() {
         if (!currentUser) return;
         const phone = document.getElementById('contactPhone').value.trim();
@@ -1087,11 +1203,9 @@
         }
     }
 
+    // Direct Payment vs Coupon Flow
     async function initiatePayment(planId) {
-        if (!currentUser) {
-            alert('कृपया पहले लॉगिन करें।');
-            return;
-        }
+        if (!currentUser) return;
         const couponVal = (document.getElementById('couponInput').value || '').trim();
 
         showSpinner("ऑर्डर तैयार हो रहा है...");
@@ -1107,24 +1221,21 @@
             });
 
             hideSpinner();
-
-            // Handle non-200 safely
             if (!ordRes.ok) {
-                let errText = "Error " + ordRes.status;
+                let errText = "ऑर्डर तैयार करने में समस्या आई।";
                 try {
                     const errData = await ordRes.json();
                     errText = errData.detail || errText;
                 } catch(e) {
                     errText = await ordRes.text();
                 }
-                alert("ऑर्डर त्रुटि: " + errText);
+                alert(errText);
                 return;
             }
 
             const ordData = await ordRes.json();
             closePricing();
 
-            // Free VIP Coupon Bypass
             if (ordData.is_free) {
                 showSpinner("VIP कूपन सक्रिय हो रहा है...");
                 const vRes = await apiRequest('/verify-payment', {
@@ -1146,13 +1257,6 @@
                 return;
             }
 
-            // Check Razorpay Key
-            if (!ordData.key_id) {
-                alert("Razorpay Key ID सर्वर पर उपलब्ध नहीं है। Vercel Environment Variables जांचें।");
-                return;
-            }
-
-            // Razorpay Checkout Popup
             const options = {
                 key: ordData.key_id,
                 amount: ordData.amount,
@@ -1182,31 +1286,26 @@
                     }
                 },
                 prefill: {
-                    name: currentUser.user_metadata.full_name || '',
-                    email: currentUser.email || ''
+                    name: currentUser.user_metadata.full_name,
+                    email: currentUser.email
                 },
                 theme: { color: "#008069" }
             };
-
             const rzp = new Razorpay(options);
-            rzp.on('payment.failed', function (resp) {
-                alert("भुगतान विफल रहा: " + (resp.error.description || "त्रुटि"));
-            });
             rzp.open();
-
         } catch(e) {
             hideSpinner();
             console.error("Payment initiation error:", e);
-            alert("भुगतान आरंभ करने में समस्या आई: " + (e.message || e));
+            alert('भुगतान आरंभ करने में त्रुटि आई। कृपया पुनः प्रयास करें।');
         }
     }
 
     function triggerPaymentSuccess(creditsAdded, expiryIso) {
         confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
         document.getElementById('successModal').style.display = 'flex';
-        document.getElementById('successModalTitle').textContent = '🎉 भुगतान सफल!';
+        document.getElementById('successModalTitle').textContent = '🎉 बधाई किसान भाई!';
         document.getElementById('creditRollCount').textContent = `+${creditsAdded} क्रेडिट्स`;
-        document.getElementById('successMsg').textContent = `बधाई किसान भाई! आपके खाते में ${creditsAdded} क्रेडिट्स जोड़ दिए गए हैं।`;
+        document.getElementById('successMsg').textContent = `आपके खाते में ${creditsAdded} क्रेडिट्स सफलतापूर्वक जोड़ दिए गए हैं।`;
         if (expiryIso) {
             document.getElementById('trialDatesLabel').textContent = `वैधता: ${formatPreciseDate(expiryIso)} तक`;
         }
