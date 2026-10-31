@@ -6,8 +6,13 @@
     <title>Agri Assistant</title>
     
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#008069">
+    <meta name="theme-color" content="#075e54">
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/606/606553.png">
+
+    <!-- Supabase, Razorpay & Confetti SDKs -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -19,7 +24,7 @@
             height: 100dvh;
             width: 100%;
             overflow: hidden;
-            background: #d8deda;
+            background: #0b141a;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             justify-content: center;
@@ -35,18 +40,18 @@
             background: #efeae2;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
         }
 
-        /* Clean Header */
+        /* Dark Premium Agri Header */
         .chat-header {
-            background: #008069;
+            background: #075e54;
             color: #ffffff;
-            padding: 10px 14px;
+            padding: 9px 14px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.25);
             z-index: 50;
             flex-shrink: 0;
         }
@@ -58,55 +63,68 @@
         }
 
         .dp-avatar {
-            width: 40px;
-            height: 40px;
+            width: 38px;
+            height: 38px;
             border-radius: 50%;
-            background: #10a37f;
+            background: #128c7e;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 20px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
 
-        .header-titles h1 {
-            font-size: 16px;
-            font-weight: 600;
-        }
+        .header-titles h1 { font-size: 15.5px; font-weight: 600; }
+        .status-badge { font-size: 11px; color: #a7f3d0; display: flex; align-items: center; gap: 4px; }
+        .status-dot { width: 7px; height: 7px; background: #25d366; border-radius: 50%; }
 
-        .status-badge {
-            font-size: 11px;
-            color: #d1fae5;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            margin-top: 1px;
-        }
-        .status-dot {
-            width: 7px;
-            height: 7px;
-            background: #22c55e;
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        /* Info Header Button */
-        .info-btn {
-            background: rgba(255,255,255,0.18);
-            border: 1px solid rgba(255,255,255,0.3);
-            padding: 5px 11px;
-            border-radius: 14px;
-            font-size: 12px;
-            color: #ffffff;
+        /* Top-Right Profile with SVG Progress Ring */
+        .profile-ring-container {
+            position: relative;
+            width: 40px;
+            height: 40px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 4px;
-            font-weight: 500;
+            justify-content: center;
         }
-        .info-btn:active { background: rgba(255,255,255,0.3); }
+        .progress-ring { transform: rotate(-90deg); position: absolute; top: 0; left: 0; }
+        .progress-ring__circle {
+            stroke: #25d366;
+            stroke-dasharray: 113;
+            stroke-dashoffset: 20;
+            transition: stroke-dashoffset 0.35s;
+        }
+        .user-dp {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #fff;
+        }
 
-        /* Canvas */
+        /* Warning Banner */
+        .low-credit-banner {
+            display: none;
+            background: #fee2e2;
+            color: #991b1b;
+            font-size: 12px;
+            padding: 6px 12px;
+            font-weight: 500;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #fecaca;
+        }
+        .banner-buy-btn {
+            background: #dc2626;
+            color: #fff;
+            border: none;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        /* Chat Canvas with Agri Doodle Background */
         .chat-canvas {
             flex: 1;
             overflow-y: auto;
@@ -115,20 +133,9 @@
             flex-direction: column;
             gap: 10px;
             background-color: #efeae2;
-            background-image: radial-gradient(#d3cbbe 1.2px, transparent 1.2px);
-            background-size: 18px 18px;
+            /* Subtle Agri SVG Doodle */
+            background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23687768' fill-opacity='0.06'%3E%3Cpath d='M20 20c2-5 8-8 12-4s2 10-3 12-9-3-9-8zm40 40c2-5 8-8 12-4s2 10-3 12-9-3-9-8zM15 55l5-10 5 10zm45-35l5-10 5 10z'/%3E%3Ccircle cx='40' cy='40' r='3'/%3E%3C/g%3E%3C/svg%3E");
             scroll-behavior: smooth;
-        }
-
-        .date-divider {
-            align-self: center;
-            background: #ffffff;
-            color: #54656f;
-            font-size: 11px;
-            padding: 4px 12px;
-            border-radius: 8px;
-            box-shadow: 0 1px 1px rgba(0,0,0,0.06);
-            margin-bottom: 4px;
         }
 
         .msg-row { display: flex; width: 100%; }
@@ -145,7 +152,6 @@
             box-shadow: 0 1px 1.5px rgba(0,0,0,0.1);
             position: relative;
         }
-
         .user-bubble { background: #e7fedc; border-top-right-radius: 2px; color: #111b21; }
         .bot-bubble { background: #ffffff; border-top-left-radius: 2px; color: #111b21; }
 
@@ -163,7 +169,7 @@
         .tick { font-size: 13px; color: #8696a0; }
         .tick.blue { color: #53bdeb; }
 
-        /* Clip Cards */
+        /* Video Clip Cards */
         .sources-wrapper {
             margin-top: 10px;
             padding-top: 8px;
@@ -191,24 +197,28 @@
             overflow: hidden;
         }
 
+        /* Clean Icon Buttons for Copy and Share */
         .msg-action-bar {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-top: 8px;
-            padding-top: 5px;
-            border-top: 1px solid #f1f5f9;
+            justify-content: flex-end;
+            gap: 14px;
+            margin-top: 6px;
+            padding-top: 4px;
         }
-        .action-link {
-            font-size: 11px;
-            color: #64748b;
+        .icon-btn {
             background: none;
             border: none;
             cursor: pointer;
-            text-decoration: none;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
         }
-        .action-link.wa { color: #16a34a; font-weight: 500; }
+        .icon-btn:hover { color: #008069; }
 
+        /* Suggestions Chips */
         .chips-box { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
         .chip {
             background: #f0fdf4;
@@ -221,7 +231,7 @@
             font-weight: 500;
         }
 
-        /* Plant Sprout Animation */
+        /* Sprouting Loader */
         .plant-loader-row {
             display: none;
             align-self: flex-start;
@@ -291,12 +301,38 @@
             flex-shrink: 0;
         }
 
-        /* Information Popup Modal */
+        /* Modals & Dropdown */
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 55px;
+            right: 12px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            width: 240px;
+            z-index: 200;
+            overflow: hidden;
+        }
+        .menu-header { padding: 12px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+        .menu-item {
+            padding: 11px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: #334155;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .menu-item:hover { background: #f8fafc; }
+
+        /* Generic Modal */
         .modal-overlay {
             display: none;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.55);
+            background: rgba(0,0,0,0.6);
             z-index: 1000;
             justify-content: center;
             align-items: center;
@@ -308,13 +344,12 @@
             max-width: 420px;
             border-radius: 14px;
             overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
             display: flex;
             flex-direction: column;
             max-height: 85vh;
         }
         .modal-header {
-            background: #008069;
+            background: #075e54;
             color: white;
             padding: 12px 16px;
             display: flex;
@@ -322,36 +357,53 @@
             align-items: center;
         }
         .modal-header h3 { font-size: 15px; font-weight: 600; }
-        .modal-close {
-            background: none; border: none; color: white; font-size: 20px; cursor: pointer;
-        }
-        .modal-body {
-            padding: 16px;
-            overflow-y: auto;
-            font-size: 13.5px;
-            color: #334155;
-            line-height: 1.55;
-        }
-        .info-fact-box {
+        .modal-close { background: none; border: none; color: white; font-size: 18px; cursor: pointer; }
+        .modal-body { padding: 16px; overflow-y: auto; font-size: 13px; color: #334155; line-height: 1.55; }
+
+        /* Pricing Card Grid */
+        .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .price-box {
+            border: 1.5px solid #bbf7d0;
             background: #f0fdf4;
-            border-left: 4px solid #16a34a;
-            padding: 10px;
-            border-radius: 4px;
-            margin: 10px 0;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
         }
-        .yt-channel-btn {
+        .price-box.popular { border-color: #008069; background: #e6fffa; }
+        .price-val { font-size: 18px; font-weight: bold; color: #075e54; }
+        .credits-val { font-size: 12px; color: #166534; margin-top: 4px; }
+
+        /* Tabs for Policies */
+        .tab-headers { display: flex; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+        .tab-btn { flex: 1; padding: 10px; font-size: 11.5px; border: none; background: none; cursor: pointer; color: #64748b; }
+        .tab-btn.active { color: #008069; font-weight: bold; border-bottom: 2px solid #008069; background: #fff; }
+
+        /* Login Screen Overlay */
+        .auth-screen {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #efeae2;
+            z-index: 500;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 30px 20px 15px 20px;
+        }
+        .google-btn {
+            background: #fff;
+            color: #3c4043;
+            border: 1px solid #dadce0;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 8px;
-            background: #ff0000;
-            color: white;
-            text-decoration: none;
-            padding: 10px;
-            border-radius: 8px;
-            font-weight: 600;
-            margin-top: 12px;
-            font-size: 13px;
+            gap: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
     </style>
 </head>
@@ -364,21 +416,44 @@
             <div class="dp-avatar">🌱</div>
             <div class="header-titles">
                 <h1>Agri Assistant</h1>
-                <div class="status-badge">
-                    <span class="status-dot"></span> ऑनलाइन • प्राकृतिक कृषि सहायक
-                </div>
+                <div class="status-badge"><span class="status-dot"></span> ऑनलाइन</div>
             </div>
         </div>
-        <button class="info-btn" onclick="openModal()">ℹ️ परिचय</button>
+        
+        <div class="profile-ring-container" onclick="toggleMenu()">
+            <svg class="progress-ring" width="40" height="40">
+                <circle class="progress-ring__circle" stroke-width="2.5" fill="transparent" r="18" cx="20" cy="20" id="creditRing"/>
+            </svg>
+            <img src="https://lh3.googleusercontent.com/a/default-user=s96-c" id="userAvatar" class="user-dp" alt="Avatar">
+        </div>
     </header>
+
+    <!-- Low Credit Highlight Banner -->
+    <div class="low-credit-banner" id="lowCreditBanner">
+        <span>⚠️ आपके क्रेडिट्स समाप्त होने वाले हैं!</span>
+        <button class="banner-buy-btn" onclick="openPricing()">रिचार्ज करें</button>
+    </div>
+
+    <!-- Dropdown Menu -->
+    <div class="dropdown-menu" id="userMenu">
+        <div class="menu-header">
+            <b id="userName">किसान भाई</b><br>
+            <span style="font-size:11px; color:#64748b;" id="quotaSummary">उपलब्ध: 20 / 20</span>
+        </div>
+        <div class="menu-item" onclick="openPricing()">💳 क्रेडिट खरीदें (Recharge)</div>
+        <div class="menu-item" onclick="openInfoModal()">ℹ️ प्राकृतिक कृषि परिचय</div>
+        <div class="menu-item" onclick="openPolicyModal()">📜 नियम व नीतियां (Policies)</div>
+        <div class="menu-item" onclick="contactSupport()">📞 सहायता एवं संपर्क (Support)</div>
+        <div class="menu-item" onclick="signOutUser()" style="color:#dc2626;">🚪 लॉगआउट</div>
+    </div>
 
     <!-- Canvas -->
     <main class="chat-canvas" id="chatCanvas">
-        <div class="date-divider">आज</div>
+        <div class="date-divider" style="align-self:center; background:#fff; font-size:11px; padding:3px 10px; border-radius:6px; color:#64748b;">आज</div>
         <div class="msg-row bot">
             <div class="bubble bot-bubble">
                 प्रणाम किसान भाई! 🙏<br>
-                मैं आपका डिजिटल कृषि सहायक हूँ। आप प्राकृतिक खेती, पंच महाभूत संतुलन, जीवामृत या 3G कटिंग से जुड़ा कोई भी सवाल यहाँ पूछ सकते हैं।
+                मैं आपका डिजिटल कृषि सहायक हूँ। आप प्राकृतिक खेती, जीवामृत या 3G कटिंग से जुड़ा कोई भी सवाल यहाँ पूछ सकते हैं।
                 <div class="meta-info"><span id="initClock"></span></div>
             </div>
         </div>
@@ -389,111 +464,285 @@
         </div>
     </main>
 
-    <!-- Footer -->
+    <!-- Footer Input Bar -->
     <footer class="input-bar">
         <div class="input-box">
             <textarea id="msgField" class="chat-input" rows="1" placeholder="लक्षण या समस्या यहाँ लिखें..." oninput="autoExpand(this)" onkeydown="keyMonitor(event)"></textarea>
         </div>
         <button class="send-btn" onclick="submitMessage()">➤</button>
     </footer>
+
+    <!-- Auth Login Overlay -->
+    <div class="auth-screen" id="authScreen" style="display:none;">
+        <div style="text-align:center; margin-top:50px;">
+            <div style="font-size:48px;">🌱</div>
+            <h2 style="color:#075e54; margin-top:10px;">Agri Assistant</h2>
+            <p style="color:#64748b; font-size:13px; margin-top:6px;">प्राकृतिक कृषि समाधान मंच</p>
+        </div>
+
+        <button class="google-btn" onclick="loginWithGoogle()">
+            <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.173 0 7.548 0 9s.347 2.827.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/></svg>
+            Google से साइन इन करें
+        </button>
+
+        <div style="font-size:11px; color:#64748b; text-align:center;">
+            लॉगिन करके आप हमारे <a href="javascript:void(0)" onclick="openPolicyModal('terms')">नियम</a> एवं <a href="javascript:void(0)" onclick="openPolicyModal('privacy')">गोपनीयता नीति</a> स्वीकार करते हैं।
+        </div>
+    </div>
 </div>
 
-<!-- Modal Popup -->
-<div class="modal-overlay" id="infoModal" onclick="closeModalDirect(event)">
+<!-- Modal 1: Pricing / Buy Credits -->
+<div class="modal-overlay" id="pricingModal">
     <div class="modal-card">
         <div class="modal-header">
-            <h3>🌾 प्राकृतिक कृषि एवं TCBT परिचय</h3>
-            <button class="modal-close" onclick="closeModal()">✕</button>
+            <h3>💳 क्रेडिट रिचार्ज करें</h3>
+            <button class="modal-close" onclick="closePricing()">✕</button>
         </div>
         <div class="modal-body">
-            <p><b>ताराचंद बेलजी (TCBT):</b> प्राकृतिक कृषि वैज्ञानिक एवं शोधकर्ता, जिन्होंने रसायनों के बिना प्रकृति के 5 तत्वों (भूमि, गगन, वायु, अग्नि, नीर) के समन्वय से खेती की पद्धति विकसित की।</p>
-            
-            <div class="info-fact-box">
-                <b>📊 मुख्य लाभ एवं आर्थिक तथ्य (Profitability):</b><br>
-                • <b>शून्य बाज़ार लागत:</b> खाद एवं कीटनाशक बाज़ार से खरीदने के बजाय देशी गाय के गोमूत्र, छाछ, गुड़ और वनस्पति रस से तैयार होते हैं।<br>
-                • <b>प्रति एकड़ ₹15,000–₹25,000 की बचत:</b> रासायनिक खादों (DAP/Urea) का खर्च समाप्त।<br>
-                • <b>गुणवत्ता एवं बेहतर दाम:</b> मिट्टी की उर्वरा शक्ति बढ़ने से जहरमुक्त फसल को बाज़ार में 1.5x से 2x तक के प्रीमियम भाव मिलते हैं।
+            <p>अपनी सुविधानुसार पैक चुनें (तत्काल सक्रिय):</p>
+            <div class="pricing-grid">
+                <div class="price-box" onclick="initiatePayment('p5')">
+                    <div class="price-val">₹5</div>
+                    <div class="credits-val">5 क्रेडिट्स</div>
+                </div>
+                <div class="price-box" onclick="initiatePayment('p30')">
+                    <div class="price-val">₹30</div>
+                    <div class="credits-val">50 क्रेडिट्स</div>
+                </div>
+                <div class="price-box popular" onclick="initiatePayment('p50')">
+                    <div class="price-val">₹50</div>
+                    <div class="credits-val">100 क्रेडिट्स</div>
+                </div>
+                <div class="price-box" onclick="initiatePayment('p150')">
+                    <div class="price-val">₹150</div>
+                    <div class="credits-val">500 क्रेडिट्स</div>
+                </div>
             </div>
+        </div>
+    </div>
+</div>
 
-            <p>इस ऐप का उद्देश्य किसानों तक उनके द्वारा सिखाई गई विधियों को बिना किसी भ्रम के सटीक वीडियो क्लिप संदर्भ के साथ पहुँचाना है।</p>
+<!-- Modal 2: Confetti Celebration & Animated Rolling Count -->
+<div class="modal-overlay" id="successModal">
+    <div class="modal-card" style="text-align:center; padding:25px;">
+        <div style="font-size:44px;">🎉</div>
+        <h2 style="color:#008069; margin-top:8px;">भुगतान सफल!</h2>
+        <div id="creditRollCount" style="font-size:36px; font-weight:bold; color:#075e54; margin:12px 0;">+0</div>
+        <p style="font-size:13px; color:#64748b;">क्रेडिट्स आपके खाते में सफलतापूर्वक जोड़ दिए गए हैं।</p>
+        <button onclick="closeSuccessModal()" style="margin-top:16px; background:#00a884; color:#fff; border:none; padding:8px 22px; border-radius:18px; font-weight:600; cursor:pointer;">पूछना शुरू करें</button>
+    </div>
+</div>
 
-            <a href="https://www.youtube.com/@tcbtnaturalfarming" target="_blank" class="yt-channel-btn">
-                ▶️ आधिकारिक YouTube चैनल देखें
-            </a>
+<!-- Modal 3: Mandatory Razorpay Compliance & Policy Tabs -->
+<div class="modal-overlay" id="policyModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>📜 नीतियां व नियम (Compliance)</h3>
+            <button class="modal-close" onclick="closePolicyModal()">✕</button>
+        </div>
+        <div class="tab-headers">
+            <button class="tab-btn active" onclick="switchTab('terms')">Terms</button>
+            <button class="tab-btn" onclick="switchTab('privacy')">Privacy</button>
+            <button class="tab-btn" onclick="switchTab('refund')">Refund</button>
+            <button class="tab-btn" onclick="switchTab('contact')">Contact</button>
+        </div>
+        <div class="modal-body" id="policyContent">
+            <!-- Dynamic Tab Content -->
         </div>
     </div>
 </div>
 
 <script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+    // 1. Supabase Client Setup
+    const SUPABASE_URL = "https://wvptpethggrslyeqsjdn.supabase.co";
+    const SUPABASE_ANON = "YOUR_SUPABASE_ANON_KEY"; // Settings -> API -> anon key
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+    let currentUser = null;
+    let userStatsData = null;
+
+    // Check Auth State
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+        if (session && session.user) {
+            currentUser = session.user;
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('userAvatar').src = currentUser.user_metadata.avatar_url || document.getElementById('userAvatar').src;
+            document.getElementById('userName').textContent = currentUser.user_metadata.full_name || 'किसान साथी';
+            fetchStats();
+        } else {
+            currentUser = null;
+            document.getElementById('authScreen').style.display = 'flex';
+        }
+    });
+
+    async function loginWithGoogle() {
+        await supabaseClient.auth.signInWithOAuth({
+            provider: 'google',
+            options: { redirectTo: window.location.origin }
+        });
     }
 
-    const chatCanvas = document.getElementById('chatCanvas');
-    const msgField = document.getElementById('msgField');
-    const plantLoader = document.getElementById('plantLoader');
-    const appFrame = document.getElementById('appFrame');
-    const infoModal = document.getElementById('infoModal');
+    async function signOutUser() {
+        await supabaseClient.auth.signOut();
+        location.reload();
+    }
 
-    function openModal() { infoModal.style.display = 'flex'; }
-    function closeModal() { infoModal.style.display = 'none'; }
-    function closeModalDirect(e) { if(e.target === infoModal) closeModal(); }
+    async function fetchStats() {
+        if (!currentUser) return;
+        try {
+            const res = await fetch(`/api/user-stats?user_id=${currentUser.id}`);
+            const data = await res.json();
+            userStatsData = data;
+            
+            // Update Ring & Quota Display
+            const total = data.total_available;
+            document.getElementById('quotaSummary').textContent = `उपलब्ध क्रेडिट: ${total}`;
+            
+            // Low Credit Warning
+            if (total <= 3) {
+                document.getElementById('lowCreditBanner').style.display = 'flex';
+            } else {
+                document.getElementById('lowCreditBanner').style.display = 'none';
+            }
 
+            // Ring calculation (circumference: 113)
+            const circle = document.getElementById('creditRing');
+            const ratio = Math.min(1, total / 20);
+            circle.style.strokeDashoffset = 113 - (113 * ratio);
+        } catch(e) {}
+    }
+
+    function toggleMenu() {
+        const m = document.getElementById('userMenu');
+        m.style.display = m.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // Modal Handlers
+    function openPricing() { document.getElementById('userMenu').style.display='none'; document.getElementById('pricingModal').style.display = 'flex'; }
+    function closePricing() { document.getElementById('pricingModal').style.display = 'none'; }
+    function openPolicyModal(tab = 'terms') { document.getElementById('userMenu').style.display='none'; document.getElementById('policyModal').style.display = 'flex'; switchTab(tab); }
+    function closePolicyModal() { document.getElementById('policyModal').style.display = 'none'; }
+    function closeSuccessModal() { document.getElementById('successModal').style.display = 'none'; }
+    function contactSupport() { window.open('mailto:support@agriassistant.in', '_blank'); }
+
+    // Razorpay Integration
+    async function initiatePayment(planId) {
+        if (!currentUser) return;
+        try {
+            const ordRes = await fetch('/api/create-order', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ user_id: currentUser.id, plan_id: planId })
+            });
+            const ordData = await ordRes.json();
+            closePricing();
+
+            const options = {
+                key: ordData.key_id,
+                amount: ordData.amount,
+                currency: "INR",
+                name: "Agri Assistant",
+                description: "AI Query Credits Recharge",
+                order_id: ordData.order_id,
+                handler: async function (response) {
+                    const vRes = await fetch('/api/verify-payment', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            user_id: currentUser.id,
+                            order_id: response.razorpay_order_id,
+                            payment_id: response.razorpay_payment_id,
+                            signature: response.razorpay_signature,
+                            plan_id: planId
+                        })
+                    });
+                    const vData = await vRes.json();
+                    if (vData.status === 'success') {
+                        triggerCelebration(vData.credits_added);
+                        fetchStats();
+                    }
+                },
+                prefill: {
+                    name: currentUser.user_metadata.full_name,
+                    email: currentUser.email
+                },
+                theme: { color: "#008069" }
+            };
+            const rzp = new Razorpay(options);
+            rzp.open();
+        } catch(e) {
+            alert('भुगतान आरंभ करने में त्रुटि आई।');
+        }
+    }
+
+    // Confetti + Rolling Number Animation
+    function triggerCelebration(credits) {
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        document.getElementById('successModal').style.display = 'flex';
+        
+        let count = 0;
+        const target = credits;
+        const elem = document.getElementById('creditRollCount');
+        const interval = setInterval(() => {
+            count += Math.ceil(target / 15);
+            if (count >= target) {
+                elem.textContent = `+${target}`;
+                clearInterval(interval);
+            } else {
+                elem.textContent = `+${count}`;
+            }
+        }, 40);
+    }
+
+    // Policy Tab Switcher (Mandatory for Razorpay Gateway)
+    const policyDocs = {
+        terms: `<b>Terms & Conditions:</b><br>Agri Assistant provides informational agriculture advisory derived from structured video libraries. All advice is guidance-only and does not guarantee specific yields. Users are responsible for evaluating inputs before application on commercial crops.`,
+        privacy: `<b>Privacy Policy:</b><br>We respect your privacy. Google email and name are securely handled for account management. We do not sell or trade user data. All transactions are securely processed via certified payment gateways.`,
+        refund: `<b>Refund & Cancellation Policy:</b><br>Credits purchased are digital commodities activated immediately. However, if funds are deducted and credits are not reflected within 2 hours, 100% refund will be credited back to the source account within 5-7 working days.`,
+        contact: `<b>Contact & Support:</b><br>For queries, technical support or billing resolution:<br>• <b>Email:</b> support@agriassistant.in<br>• <b>Operational Address:</b> Jaunpur, Uttar Pradesh, India.`
+    };
+
+    function switchTab(t) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('policyContent').innerHTML = policyDocs[t];
+    }
+
+    // Visual Viewport Keyboard Fix
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', () => {
-            appFrame.style.height = `${window.visualViewport.height}px`;
+            document.getElementById('appFrame').style.height = `${window.visualViewport.height}px`;
             toBottom();
         });
     }
 
-    function nowTime() {
-        return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
+    function nowTime() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
     document.getElementById('initClock').textContent = nowTime();
-
-    function autoExpand(el) {
-        el.style.height = 'auto';
-        el.style.height = Math.min(el.scrollHeight, 90) + 'px';
-    }
-
-    function keyMonitor(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            submitMessage();
-        }
-    }
-
-    function toBottom() {
-        chatCanvas.scrollTop = chatCanvas.scrollHeight;
-    }
+    function autoExpand(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 90) + 'px'; }
+    function keyMonitor(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitMessage(); } }
+    function toBottom() { const c = document.getElementById('chatCanvas'); c.scrollTop = c.scrollHeight; }
 
     function copyAnswer(text) {
-        navigator.clipboard.writeText(text).then(() => {
-            alert('उत्तर कॉपी हो गया है!');
-        }).catch(() => {});
+        navigator.clipboard.writeText(text).then(() => alert('उत्तर कॉपी हो गया!')).catch(() => {});
     }
 
     async function submitMessage(customTxt = null) {
-        const text = (customTxt || msgField.value).trim();
+        const text = (customTxt || document.getElementById('msgField').value).trim();
         if (!text) return;
+        if (!currentUser) { alert('कृपया पहले Google से लॉगिन करें।'); return; }
 
         const time = nowTime();
         const rowId = 'usr-' + Date.now();
-
         const uHtml = `
             <div class="msg-row user" id="${rowId}">
                 <div class="bubble user-bubble">
                     ${text.replace(/\n/g, '<br>')}
-                    <div class="meta-info">
-                        <span>${time}</span>
-                        <span class="tick status-tick">✓</span>
-                    </div>
+                    <div class="meta-info"><span>${time}</span><span class="tick status-tick">✓</span></div>
                 </div>
             </div>`;
-        plantLoader.insertAdjacentHTML('beforebegin', uHtml);
-        msgField.value = '';
-        msgField.style.height = 'auto';
-        plantLoader.style.display = 'flex';
+        document.getElementById('plantLoader').insertAdjacentHTML('beforebegin', uHtml);
+        document.getElementById('msgField').value = '';
+        document.getElementById('msgField').style.height = 'auto';
+        document.getElementById('plantLoader').style.display = 'flex';
         toBottom();
 
         setTimeout(() => {
@@ -502,22 +751,13 @@
         }, 400);
 
         try {
-            let res = await fetch('/api/ask', {
+            const res = await fetch('/api/ask', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: text })
+                body: JSON.stringify({ query: text, user_id: currentUser.id })
             });
-
-            if (res.status === 404) {
-                res = await fetch('/ask', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query: text })
-                });
-            }
-
             const data = await res.json();
-            plantLoader.style.display = 'none';
+            document.getElementById('plantLoader').style.display = 'none';
 
             const r = document.getElementById(rowId);
             if (r) {
@@ -527,9 +767,12 @@
             }
 
             if (!res.ok) {
-                renderBot(data.detail || 'तकनीकी समस्या आई, कृपया पुनः प्रयास करें।');
+                renderBot(data.detail || 'तकनीकी समस्या आई। आपका क्रेडिट नहीं काटा गया है।');
                 return;
             }
+
+            // Update user balance locally
+            fetchStats();
 
             const rawText = data.answer.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
             let finalContent = `<div>${rawText}</div>`;
@@ -546,28 +789,24 @@
                 finalContent += `</div>`;
             }
 
+            // Clean Material SVG Icons for Copy & WhatsApp Share
             const shareText = encodeURIComponent(`${data.answer}\n\nस्रोतः Agri Assistant`);
             const escapedRawForCopy = data.answer.replace(/'/g, "\\'").replace(/\n/g, " ");
 
             finalContent += `
                 <div class="msg-action-bar">
-                    <button class="action-link" onclick="copyAnswer('${escapedRawForCopy}')">📋 कॉपी करें</button>
-                    <a href="https://api.whatsapp.com/send?text=${shareText}" target="_blank" class="action-link wa">📲 WhatsApp पर भेजें</a>
+                    <button class="icon-btn" onclick="copyAnswer('${escapedRawForCopy}')" title="कॉपी करें">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    </button>
+                    <a href="https://api.whatsapp.com/send?text=${shareText}" target="_blank" class="icon-btn" title="WhatsApp पर साझा करें" style="color:#16a34a;">
+                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.587 1.961.954 3.031.954 3.179 0 5.765-2.587 5.767-5.766.001-3.187-2.575-5.77-5.767-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.072-2.18-.544-1.636-.677-2.735-2.343-2.825-2.459-.09-.115-.657-.872-.657-1.66 0-.788.414-1.174.559-1.332.144-.158.315-.198.42-.198.106 0 .211.002.304.007.098.005.23-.037.36.275.144.344.488 1.192.531 1.28.043.088.072.19.014.305-.058.115-.087.188-.173.289l-.26.309c-.087.09-.178.188-.077.362.102.175.452.745.97 1.206.669.596 1.232.781 1.406.868.174.088.276.077.378-.04.103-.116.438-.51.555-.685.118-.175.235-.146.395-.088.16.058 1.016.479 1.191.566.175.088.291.132.334.204.043.073.043.424-.101.829z"/></svg>
+                    </a>
                 </div>`;
 
-            if (data.suggestions && data.suggestions.length > 0) {
-                finalContent += `<div class="chips-box">`;
-                data.suggestions.forEach(sug => {
-                    finalContent += `<button class="chip" onclick="submitMessage('${sug}')">${sug}</button>`;
-                });
-                finalContent += `</div>`;
-            }
-
             renderBot(finalContent);
-
-        } catch (err) {
-            plantLoader.style.display = 'none';
-            renderBot('सर्वर से उत्तर आने में अधिक समय लग रहा है। कृपया पुनः प्रयास करें।');
+        } catch(e) {
+            document.getElementById('plantLoader').style.display = 'none';
+            renderBot('सर्वर से संपर्क नहीं हो सका। आपका कोई क्रेडिट नहीं काटा गया है।');
         }
         toBottom();
     }
@@ -580,7 +819,7 @@
                     <div class="meta-info"><span>${nowTime()}</span></div>
                 </div>
             </div>`;
-        plantLoader.insertAdjacentHTML('beforebegin', bHtml);
+        document.getElementById('plantLoader').insertAdjacentHTML('beforebegin', bHtml);
         toBottom();
     }
 </script>
