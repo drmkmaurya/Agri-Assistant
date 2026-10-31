@@ -17,7 +17,6 @@
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        
         ::-webkit-scrollbar { width: 0px; height: 0px; }
         * { scrollbar-width: none; -ms-overflow-style: none; }
 
@@ -37,13 +36,12 @@
             position: relative; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
         }
 
-        /* WhatsApp Green Header */
+        /* WhatsApp Header */
         .chat-header {
             background: #008069; color: #ffffff; padding: 9px 12px;
             display: flex; align-items: center; justify-content: space-between;
             box-shadow: 0 1px 3px rgba(0,0,0,0.2); z-index: 50; flex-shrink: 0;
         }
-
         .header-left { display: flex; align-items: center; gap: 8px; }
         .dp-avatar {
             width: 38px; height: 38px; border-radius: 50%;
@@ -57,7 +55,6 @@
 
         .header-right { display: flex; align-items: center; gap: 10px; }
 
-        /* Sleek Plan Button */
         .header-quick-buy {
             background: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.3);
             color: #ffffff; border-radius: 18px; padding: 5px 10px; font-size: 11.5px;
@@ -67,7 +64,6 @@
         .header-quick-buy:active { transform: scale(0.95); background: rgba(255, 255, 255, 0.25); }
         .buy-svg { width: 14px; height: 14px; fill: currentColor; }
 
-        /* Profile Ring */
         .profile-ring-container {
             position: relative; width: 42px; height: 42px;
             cursor: pointer; display: flex; align-items: center; justify-content: center;
@@ -86,7 +82,6 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.25);
         }
 
-        /* Free Trial Claim Alert Banner */
         .claim-trial-banner {
             display: none; background: linear-gradient(90deg, #fef3c7, #ecfdf5);
             border-bottom: 1.5px solid #6ee7b7; padding: 7px 12px;
@@ -108,7 +103,7 @@
             padding: 3px 8px; border-radius: 10px; font-size: 11px; cursor: pointer;
         }
 
-        /* Light Canvas with Ultra-Dim Doodle */
+        /* Light Canvas with Ultra-Dim Agri Pattern */
         .chat-canvas {
             flex: 1; overflow-y: auto; padding: 12px;
             display: flex; flex-direction: column; gap: 10px;
@@ -119,7 +114,8 @@
 
         .date-divider {
             align-self: center; background: #ffffff; color: #54656f; font-size: 11px;
-            padding: 3px 10px; border-radius: 6px; box-shadow: 0 1px 1px rgba(0,0,0,0.06); margin-bottom: 2px;
+            padding: 3px 12px; border-radius: 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.06); margin-bottom: 2px;
+            font-weight: 500;
         }
 
         .msg-row { display: flex; width: 100%; }
@@ -127,39 +123,45 @@
         .msg-row.bot { justify-content: flex-start; }
 
         .bubble {
-            max-width: 86%; padding: 8px 12px 6px 12px; border-radius: 8.5px;
-            font-size: 14.2px; line-height: 1.5; word-wrap: break-word;
+            max-width: 86%; padding: 7px 10px 5px 11px; border-radius: 8.5px;
+            font-size: 14.2px; line-height: 1.45; word-wrap: break-word;
             box-shadow: 0 1px 1px rgba(0,0,0,0.12); position: relative;
         }
         .user-bubble { background: #d9fdd3; border-top-right-radius: 2px; color: #111b21; }
         .bot-bubble { background: #ffffff; border-top-left-radius: 2px; color: #111b21; }
 
-        .meta-info {
-            display: flex; align-items: center; justify-content: flex-end; gap: 4px;
-            font-size: 10px; color: #667781; margin-top: 4px; float: right; margin-left: 10px;
+        /* Authentic WhatsApp Style Inline Metadata */
+        .bubble-meta {
+            display: inline-flex; align-items: center; gap: 3px;
+            font-size: 10px; color: #667781; float: right; margin-left: 8px;
+            margin-top: 4px; vertical-align: bottom;
         }
-        .tick { font-size: 13px; color: #8696a0; }
-        .tick.blue { color: #53bdeb; }
+        .tick-svg { width: 15px; height: 11px; fill: #8696a0; }
+        .tick-svg.blue { fill: #53bdeb; }
 
         /* Video Clips */
-        .sources-wrapper { margin-top: 10px; padding-top: 8px; border-top: 1px dashed #cbd5e1; }
-        .sources-title { font-size: 12px; font-weight: 600; color: #008069; margin-bottom: 6px; }
+        .sources-wrapper { margin-top: 8px; padding-top: 6px; border-top: 1px dashed #cbd5e1; }
+        .sources-title { font-size: 11.5px; font-weight: 700; color: #008069; margin-bottom: 5px; }
         .clip-card {
             display: block; background: #f8fafc; border: 1px solid #e2e8f0;
-            border-radius: 8px; padding: 8px 10px; margin-top: 6px; text-decoration: none;
+            border-radius: 8px; padding: 7px 9px; margin-top: 5px; text-decoration: none;
         }
-        .clip-header { font-size: 12px; font-weight: 600; color: #dc2626; }
+        .clip-header { font-size: 11.5px; font-weight: 700; color: #dc2626; }
         .clip-summary {
-            font-size: 12px; color: #475569; margin-top: 3px; line-height: 1.35;
+            font-size: 11.5px; color: #475569; margin-top: 2px; line-height: 1.35;
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
 
         .msg-action-bar {
-            display: flex; align-items: center; justify-content: flex-end; gap: 14px;
+            display: flex; align-items: center; justify-content: flex-end; gap: 12px;
             margin-top: 6px; padding-top: 4px;
         }
-        .icon-btn { background: none; border: none; cursor: pointer; color: #64748b; display: flex; padding: 4px; }
-        .icon-btn:hover { color: #008069; }
+        .icon-btn {
+            background: none; border: none; cursor: pointer; color: #64748b;
+            display: flex; align-items: center; gap: 4px; padding: 3px 6px;
+            border-radius: 4px; font-size: 11px;
+        }
+        .icon-btn:hover { background: #f1f5f9; color: #008069; }
 
         .chips-box { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
         .chip {
@@ -311,7 +313,7 @@
         .history-badge { font-size: 10.5px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
         .badge-success { background: #dcfce7; color: #15803d; }
 
-        /* Pending Approval Home View */
+        /* Non-Dismissible Pending Approval Screen */
         .pending-screen {
             display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: #edf5ef; z-index: 400;
@@ -319,10 +321,17 @@
             padding: 24px; text-align: center;
         }
         .pending-card {
-            background: #ffffff; border-radius: 16px; padding: 24px 20px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.1); width: 100%; max-width: 380px;
+            background: #ffffff; border-radius: 16px; padding: 26px 20px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.12); width: 100%; max-width: 380px;
             color: #1e293b; border: 1px solid #e2e8f0;
         }
+        .refresh-status-btn {
+            background: #f1f5f9; border: 1px solid #cbd5e1; color: #0f172a;
+            padding: 8px 14px; border-radius: 18px; font-size: 12px; font-weight: 600;
+            margin-top: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+            transition: all 0.2s;
+        }
+        .refresh-status-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
         /* Login Screen */
         .auth-screen {
@@ -346,7 +355,7 @@
         }
         .toast-popup.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
-        /* Full Screen Loading Spinner */
+        /* Full Screen Spinner */
         .loading-overlay {
             display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(255, 255, 255, 0.7); z-index: 1500;
@@ -381,7 +390,7 @@
             </button>
 
             <!-- Profile & Dynamic Circular Ring -->
-            <div class="profile-ring-container" id="btnProfileRing" onclick="toggleMenu()" title="खाता व कोटा विवरण">
+            <div class="profile-ring-container" id="btnProfileRing" onclick="toggleMenu(event)" title="खाता व कोटा विवरण">
                 <svg class="progress-ring" width="44" height="44">
                     <circle class="progress-ring__circle" stroke-width="3" fill="transparent" r="20" cx="22" cy="22" id="creditRing"/>
                 </svg>
@@ -403,7 +412,7 @@
         <button class="banner-buy-btn" onclick="openPricing()">प्लान अपग्रेड</button>
     </div>
 
-    <!-- Dropdown Menu -->
+    <!-- Dropdown Menu (With Outside Click Dismiss) -->
     <div class="dropdown-menu" id="userMenu">
         <div class="menu-header">
             <b id="userName">किसान साथी</b><br>
@@ -421,12 +430,14 @@
 
     <!-- Canvas -->
     <main class="chat-canvas" id="chatCanvas">
-        <div class="date-divider">आज</div>
+        <div class="date-divider" id="todayDateDivider">आज</div>
         <div class="msg-row bot">
             <div class="bubble bot-bubble">
                 प्रणाम किसान भाई! 🙏<br>
                 मैं आपका डिजिटल कृषि सहायक हूँ। आप प्राकृतिक खेती, जीवामृत या 3G कटिंग से जुड़ा कोई भी सवाल यहाँ पूछ सकते हैं।
-                <div class="meta-info"><span id="initClock"></span></div>
+                <div class="bubble-meta">
+                    <span id="initClock"></span>
+                </div>
             </div>
         </div>
 
@@ -439,13 +450,14 @@
     <!-- Footer Input Bar with Attachment, 4-Line Expandable Textarea & Carrier Pigeon -->
     <footer class="input-bar" id="inputFooterBar">
         <div class="attachment-preview-chip" id="attachmentChip">
-            <span id="attachedFileName">📎 file.jpg</span>
+            <span id="attachedFileName">📎 1 फाइल संलग्न</span>
             <span class="chip-remove" onclick="removeAttachment()">✕</span>
         </div>
 
-        <input type="file" id="fileInput" accept="image/*,.pdf,.doc,.docx" style="display:none;" onchange="handleFileSelected(event)">
+        <!-- File Input Limited to Max 2 Files, Images & PDF only -->
+        <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,application/pdf" multiple style="display:none;" onchange="handleFileSelected(event)">
 
-        <button class="attach-btn" onclick="document.getElementById('fileInput').click()" title="फोटो या फाइल जोड़ें">
+        <button class="attach-btn" onclick="document.getElementById('fileInput').click()" title="फोटो या PDF जोड़ें (अधिकतम 2 फाइलें, 10MB)">
             <svg class="attach-icon" viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H9v9.5a3 3 0 0 0 6 0V5a4 4 0 0 0-8 0v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
         </button>
 
@@ -460,17 +472,26 @@
         </button>
     </footer>
 
-    <!-- Pending Approval View -->
+    <!-- Non-Dismissible Pending Approval View -->
     <div class="pending-screen" id="pendingScreen">
         <div class="pending-card">
             <div style="font-size:42px; margin-bottom:10px;">⏳</div>
             <h3 style="color:#008069; font-size:17px; margin-bottom:6px;">खाता स्वीकृति विचाराधीन है</h3>
             <p style="font-size:13px; color:#64748b; line-height:1.5; margin-bottom:16px;">
-                आपका खाता समीक्षा (Review) में है। सुरक्षा एवं गुणवत्ता बनाए रखने हेतु एडमिन स्वीकृति अनिवार्य है।
+                सुरक्षा एवं गुणवत्ता सुनिश्चित करने हेतु आपका खाता एडमिन समीक्षा में है। स्वीकृति मिलते ही आप तुरंत उपयोग शुरू कर सकेंगे।
             </p>
             <button onclick="openContactModal('approval')" style="background:#008069; color:#fff; border:none; padding:10px 18px; border-radius:20px; font-weight:600; font-size:13px; cursor:pointer; width:100%;">
                 ⚡ शीघ्र स्वीकृति हेतु संपर्क करें (Fast Approval)
             </button>
+            
+            <!-- Refresh Button with 2-Click 2-Minute Cooldown Timer -->
+            <div style="margin-top:14px;">
+                <button class="refresh-status-btn" id="btnRefreshStatus" onclick="handleRefreshApproval()">
+                    🔄 स्थिति जांचें (Refresh Status)
+                </button>
+                <div id="refreshTimerLabel" style="font-size:11px; color:#dc2626; margin-top:5px; display:none;"></div>
+            </div>
+
             <button onclick="signOutUser()" style="background:none; border:none; color:#dc2626; font-size:12px; margin-top:14px; cursor:pointer;">
                 लॉगआउट करें
             </button>
@@ -496,7 +517,7 @@
     </div>
 </div>
 
-<!-- Modal 1: 2-Plan Pricing Modal with Coupon & Direct Payment Support -->
+<!-- Modal 1: 2-Plan Pricing Modal with Direct Payment Support -->
 <div class="modal-overlay" id="pricingModal">
     <div class="modal-card">
         <div class="modal-header">
@@ -607,13 +628,16 @@
     </div>
 </div>
 
-<!-- Modal 5: Confetti Celebration & Animated Rolling Count -->
+<!-- Modal 5: Welcome Offer Activated Celebration Modal -->
 <div class="modal-overlay" id="successModal">
     <div class="modal-card" style="text-align:center; padding:25px;">
         <div style="font-size:44px;">🎉</div>
-        <h2 style="color:#008069; margin-top:8px;">सक्रियण सफल!</h2>
-        <div id="creditRollCount" style="font-size:32px; font-weight:bold; color:#008069; margin:10px 0;">सक्रिय!</div>
-        <p style="font-size:13px; color:#475569;" id="successMsg">आपका दैनिक क्रेडिट कोटा सक्रिय कर दिया गया है।</p>
+        <h2 style="color:#008069; margin-top:8px;" id="successModalTitle">स्वागत उपहार सक्रिय!</h2>
+        <div id="creditRollCount" style="font-size:32px; font-weight:bold; color:#008069; margin:10px 0;">15 सवाल / दिन</div>
+        <p style="font-size:13px; color:#475569; line-height:1.5;" id="successMsg">
+            आपको 7-दिवसीय निःशुल्क ट्रायल के रूप में Basic Plan दिया गया है।
+        </p>
+        <div id="trialDatesLabel" style="font-size:11.5px; color:#059669; font-weight:600; margin-top:6px;"></div>
         <button onclick="closeSuccessModal()" style="margin-top:16px; background:#00a884; color:#fff; border:none; padding:8px 22px; border-radius:18px; font-weight:600; cursor:pointer;">पूछना शुरू करें</button>
     </div>
 </div>
@@ -652,7 +676,14 @@
 
     let currentUser = null;
     let currentUserPlan = 'none';
-    let selectedAttachment = null;
+    let selectedAttachments = [];
+
+    // Pending Refresh Rate Limiting (2 clicks -> 2 minutes countdown lock)
+    let refreshClickCount = 0;
+    let refreshLockTimer = null;
+
+    // 24-Hour Sliding Window Storage Key
+    const CHAT_STORAGE_KEY = 'agri_chat_history_v1';
 
     function showToast(msg, duration = 2500) {
         const t = document.getElementById('toastNotice');
@@ -670,6 +701,15 @@
         document.getElementById('loadingOverlay').style.display = 'none';
     }
 
+    // Dismiss Dropdown Menu on Outside Click
+    document.addEventListener('click', (e) => {
+        const menu = document.getElementById('userMenu');
+        const profileRing = document.getElementById('btnProfileRing');
+        if (menu.style.display === 'block' && !menu.contains(e.target) && !profileRing.contains(e.target)) {
+            menu.style.display = 'none';
+        }
+    });
+
     function autoGrowTextarea(el) {
         el.style.height = 'auto';
         const newHeight = el.scrollHeight;
@@ -682,20 +722,88 @@
         }
     }
 
+    // Attachment: Max 2 Files, Images & PDF only, Max 10MB each
     function handleFileSelected(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        selectedAttachment = file;
+        const files = Array.from(event.target.files);
+        if (!files.length) return;
+
+        if (files.length > 2) {
+            alert('आप एक बार में अधिकतम 2 फाइलें ही संलग्न कर सकते हैं।');
+            event.target.value = '';
+            return;
+        }
+
+        const validFiles = [];
+        for (let f of files) {
+            if (f.size > 10 * 1024 * 1024) {
+                alert(`फाइल "${f.name}" 10MB से अधिक है। कृपया 10MB से छोटी फाइल चुनें।`);
+                event.target.value = '';
+                return;
+            }
+            const isImage = f.type.startsWith('image/');
+            const isPdf = f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf');
+            if (!isImage && !isPdf) {
+                alert(`फाइल "${f.name}" अमान्य है। केवल इमेज (फोटो) या PDF ही मान्य हैं।`);
+                event.target.value = '';
+                return;
+            }
+            validFiles.push(f);
+        }
+
+        selectedAttachments = validFiles;
         const chip = document.getElementById('attachmentChip');
         const fileNameEl = document.getElementById('attachedFileName');
-        fileNameEl.textContent = '📎 ' + (file.name.length > 20 ? file.name.substring(0, 18) + '...' : file.name);
+        fileNameEl.textContent = `📎 ${validFiles.length} फाइल संलग्न (${validFiles.map(f => f.name.substring(0, 10)).join(', ')})`;
         chip.style.display = 'flex';
     }
 
     function removeAttachment() {
-        selectedAttachment = null;
+        selectedAttachments = [];
         document.getElementById('fileInput').value = '';
         document.getElementById('attachmentChip').style.display = 'none';
+    }
+
+    // 24-Hour Rolling Local Storage Management
+    function cleanAndLoadLocalHistory() {
+        try {
+            const raw = localStorage.getItem(CHAT_STORAGE_KEY);
+            if (!raw) return;
+            const messages = JSON.parse(raw);
+            const now = Date.now();
+            const dayAgo = now - (24 * 60 * 60 * 1000); // 24-hour window
+
+            // Keep only items within last 24 hours
+            const valid = messages.filter(m => m.timestamp > dayAgo);
+            localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(valid));
+
+            // Render existing messages
+            valid.forEach(m => {
+                if (m.type === 'user') {
+                    renderUserBubbleDirect(m.html, m.time, true);
+                } else {
+                    renderBotBubbleDirect(m.html, m.time);
+                }
+            });
+        } catch(e) {
+            console.error("Local history error:", e);
+        }
+    }
+
+    function saveLocalMessage(type, html, time) {
+        try {
+            const raw = localStorage.getItem(CHAT_STORAGE_KEY);
+            const messages = raw ? JSON.parse(raw) : [];
+            messages.push({ type, html, time, timestamp: Date.now() });
+            localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
+        } catch(e) {}
+    }
+
+    // Date Divider Formatting
+    function updateDateDivider() {
+        const d = new Date();
+        const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+        const dateStr = d.toLocaleDateString('hi-IN', options);
+        document.getElementById('todayDateDivider').textContent = `आज • ${dateStr}`;
     }
 
     supabaseClient.auth.onAuthStateChange((event, session) => {
@@ -742,9 +850,42 @@
     }
 
     function formatDate(isoStr) {
-        if (!isoStr) return 'असीमित';
+        if (!isoStr) return 'सक्रिय';
         const d = new Date(isoStr);
         return d.toLocaleDateString('hi-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    // Refresh Approval Status Handler with 2-minute cooldown after 2 clicks
+    async function handleRefreshApproval() {
+        const btn = document.getElementById('btnRefreshStatus');
+        const timerLabel = document.getElementById('refreshTimerLabel');
+
+        refreshClickCount++;
+        if (refreshClickCount >= 2) {
+            btn.disabled = true;
+            let secondsLeft = 120;
+            timerLabel.style.display = 'block';
+            timerLabel.textContent = `सीमा पूर्ण: कृपया ${secondsLeft} सेकंड प्रतीक्षा करें।`;
+
+            refreshLockTimer = setInterval(() => {
+                secondsLeft--;
+                const mins = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
+                const secs = String(secondsLeft % 60).padStart(2, '0');
+                timerLabel.textContent = `कृपया ${mins}:${secs} मिनट प्रतीक्षा करें...`;
+
+                if (secondsLeft <= 0) {
+                    clearInterval(refreshLockTimer);
+                    btn.disabled = false;
+                    refreshClickCount = 0;
+                    timerLabel.style.display = 'none';
+                }
+            }, 1000);
+        }
+
+        showSpinner("स्थिति जांची जा रही है...");
+        await fetchStats();
+        hideSpinner();
+        showToast("ताज़ा स्थिति जांची गई।");
     }
 
     async function fetchStats() {
@@ -753,6 +894,7 @@
             const res = await apiRequest('/user-stats?user_id=' + currentUser.id);
             const data = await res.json();
             
+            // Non-Dismissible Pending Screen
             if (data.status === 'pending') {
                 document.getElementById('pendingScreen').style.display = 'flex';
                 document.getElementById('inputFooterBar').style.display = 'none';
@@ -768,7 +910,6 @@
             const plan = data.plan_type || 'none';
             currentUserPlan = plan;
 
-            // Check if 7 days trial is unclaimed
             if (data.eligible_for_trial && !data.is_trial_claimed) {
                 document.getElementById('claimTrialBanner').style.display = 'flex';
                 if (!sessionStorage.getItem('onboarding_shown')) {
@@ -779,13 +920,12 @@
                 document.getElementById('claimTrialBanner').style.display = 'none';
             }
 
-            // Update Header Ring Badge & Menu Info
             document.getElementById('ringBadge').textContent = remaining;
             document.getElementById('userPlanName').textContent = 'प्लान: ' + (plan !== 'none' ? plan.toUpperCase() : 'कोई सक्रिय प्लान नहीं');
             document.getElementById('quotaSummary').textContent = 'आज का उपयोग: ' + used + ' / ' + limit + ' (शेष: ' + remaining + ')';
             
             if (data.plan_expires_at) {
-                document.getElementById('planExpiryText').textContent = 'वैधता: ' + formatDate(data.plan_expires_at) + ' तक';
+                document.getElementById('planExpiryText').textContent = 'वैधता: ' + formatDate(data.plan_expires_at) + ' (11:59 PM IST)';
             } else {
                 document.getElementById('planExpiryText').textContent = plan === 'none' ? 'कृपया प्लान सक्रिय करें' : 'वैधता: सक्रिय';
             }
@@ -809,7 +949,8 @@
         }
     }
 
-    function toggleMenu() {
+    function toggleMenu(e) {
+        if (e) e.stopPropagation();
         const m = document.getElementById('userMenu');
         m.style.display = (m.style.display === 'block') ? 'none' : 'block';
     }
@@ -862,7 +1003,7 @@
                     <div class="history-item">
                         <div>
                             <b style="font-size:13px; color:#1e293b;">${t.credits_added} सवाल / दिन प्लान</b><br>
-                            <span class="history-date">${dateStr} • ID: ${t.payment_id.substring(0, 16)}...</span>
+                            <span class="history-date">${dateStr} • ID: ${t.payment_id ? t.payment_id.substring(0, 16) : 'N/A'}...</span>
                         </div>
                         <div style="text-align:right;">
                             <div class="history-amount">${amt}</div>
@@ -891,7 +1032,6 @@
         document.getElementById('policyContent').innerHTML = (typeof policyDocs !== 'undefined' && policyDocs[t]) ? policyDocs[t] : '<p>विवरण लोड हो रहा है...</p>';
     }
 
-    // Universal Contact & Priority Support Submitter
     async function submitUniversalSupportRequest() {
         if (!currentUser) return;
         const phone = document.getElementById('contactPhone').value.trim();
@@ -903,7 +1043,6 @@
             return;
         }
 
-        // Priority logic: Pro users or Payment category = 'high', Basic = 'medium', others = 'normal'
         let priority = 'normal';
         if (category === 'payment' || currentUserPlan === 'pro') {
             priority = 'high';
@@ -930,14 +1069,14 @@
             hideSpinner();
 
             if (res.ok) {
-                showToast('अनुरोध प्राप्त हो गया! प्राथमिकता स्तर: ' + priority.toUpperCase());
+                showToast('अनुरोध प्राप्त हुआ! प्राथमिकता स्तर: ' + priority.toUpperCase());
                 closeContactModal();
             } else {
-                alert('अनुरोध भेजने में समस्या आई। कृपया पुनः प्रयास करें।');
+                alert('अनुरोध भेजने में समस्या आई।');
             }
         } catch(e) {
             hideSpinner();
-            alert('सर्वर त्रुटि। कृपया पुनः प्रयास करें।');
+            alert('सर्वर त्रुटि। पुनः प्रयास करें।');
         }
     }
 
@@ -955,7 +1094,7 @@
             closeTrialModal();
 
             if (res.ok) {
-                triggerCelebration(data.daily_limit || 15);
+                triggerWelcomeOfferActivated(data.daily_limit || 15, data.plan_expires_at);
                 fetchStats();
             } else {
                 alert(data.detail || 'ट्रायल क्लेम करने में त्रुटि आई।');
@@ -1007,7 +1146,7 @@
                 hideSpinner();
                 const vData = await vRes.json();
                 if (vData.status === 'success') {
-                    triggerCelebration(vData.daily_limit);
+                    triggerWelcomeOfferActivated(vData.daily_limit);
                     fetchStats();
                 }
                 return;
@@ -1037,7 +1176,7 @@
                     hideSpinner();
                     const vData = await vRes.json();
                     if (vData.status === 'success') {
-                        triggerCelebration(vData.daily_limit);
+                        triggerWelcomeOfferActivated(vData.daily_limit);
                         fetchStats();
                     }
                 },
@@ -1051,26 +1190,35 @@
             rzp.open();
         } catch(e) {
             hideSpinner();
-            alert('भुगतान आरंभ करने में त्रुटि आई।');
+            console.error("Payment initiation error:", e);
+            alert('भुगतान आरंभ करने में त्रुटि आई। कृपया पुनः प्रयास करें।');
         }
     }
 
-    function triggerCelebration(dailyLimit) {
-        confetti({ particleCount: 110, spread: 75, origin: { y: 0.6 } });
+    // Polished "Welcome Offer Activated" Modal Trigger
+    function triggerWelcomeOfferActivated(dailyLimit, expiryIso) {
+        confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
         document.getElementById('successModal').style.display = 'flex';
+        document.getElementById('successModalTitle').textContent = '🎉 Welcome Offer Activated!';
         
         let count = 0;
         const target = dailyLimit;
         const elem = document.getElementById('creditRollCount');
         const interval = setInterval(() => {
             count += 1;
-            elem.textContent = count + ' सवाल / दिन';
+            elem.textContent = `${count} सवाल / दिन`;
             if (count >= target) {
                 clearInterval(interval);
             }
         }, 50);
 
-        document.getElementById('successMsg').textContent = 'बधाई! आपका प्लान सक्रिय हो गया है। आपको प्रतिदिन ' + dailyLimit + ' सवाल पूछने की सुविधा मिलेगी।';
+        document.getElementById('successMsg').textContent = `बधाई किसान भाई! आपको 7-दिवसीय निःशुल्क ट्रायल के रूप में Basic Plan दिया गया है। आप प्रतिदिन ${dailyLimit} सवाल पूछ सकते हैं।`;
+        
+        if (expiryIso) {
+            document.getElementById('trialDatesLabel').textContent = `वैधता: ${formatDate(expiryIso)} रात 11:59 PM IST तक (कोई रोलओवर नहीं)`;
+        } else {
+            document.getElementById('trialDatesLabel').textContent = '';
+        }
     }
 
     if (window.visualViewport) {
@@ -1096,32 +1244,67 @@
         navigator.clipboard.writeText(text).then(() => showToast('उत्तर कॉपी हो गया!')).catch(() => {});
     }
 
+    function shareOnWhatsApp(text) {
+        const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text + '\n\n— Agri Assistant')}`;
+        window.open(url, '_blank');
+    }
+
+    // Render User Bubble with Authentic WhatsApp Tick Layout
+    function renderUserBubbleDirect(textHtml, time, isHistory = false) {
+        const rowId = 'usr-' + Date.now();
+        const uHtml = `
+            <div class="msg-row user" id="${rowId}">
+                <div class="bubble user-bubble">
+                    ${textHtml}
+                    <div class="bubble-meta">
+                        <span>${time}</span>
+                        <svg class="tick-svg ${isHistory ? 'blue' : ''}" viewBox="0 0 16 11">
+                            <path d="M11.5 0L6.5 5.5 4.5 3.5 3 5l3.5 3.5 6.5-7.5zM15 0L10 5.5 11 6.5 15.5 1.5z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>`;
+        document.getElementById('plantLoader').insertAdjacentHTML('beforebegin', uHtml);
+        toBottom();
+        return rowId;
+    }
+
+    // Render Bot Bubble with Compact Suggested Video Clips
+    function renderBotBubbleDirect(innerHtml, time) {
+        const bHtml = `
+            <div class="msg-row bot">
+                <div class="bubble bot-bubble">
+                    ${innerHtml}
+                    <div class="bubble-meta">
+                        <span>${time}</span>
+                    </div>
+                </div>
+            </div>`;
+        document.getElementById('plantLoader').insertAdjacentHTML('beforebegin', bHtml);
+        toBottom();
+    }
+
     async function submitMessage(customTxt) {
         const text = (customTxt || document.getElementById('msgField').value).trim();
-        if (!text && !selectedAttachment) return;
+        if (!text && !selectedAttachments.length) return;
         if (!currentUser) { alert('कृपया पहले Google से लॉगिन करें।'); return; }
 
+        // Carrier Bird take-off animation
         const sendBtn = document.getElementById('sendBtnEl');
         sendBtn.classList.add('flying-anim');
         setTimeout(() => { sendBtn.classList.remove('flying-anim'); }, 700);
 
         const time = nowTime();
-        const rowId = 'usr-' + Date.now();
         
         let displayMsg = text;
-        if (selectedAttachment) {
-            displayMsg = (text ? text + '<br>' : '') + `<small style="color:#065f46; font-weight:600;">📎 संलग्न फाइल: ${selectedAttachment.name}</small>`;
+        if (selectedAttachments.length > 0) {
+            const fileList = selectedAttachments.map(f => f.name).join(', ');
+            displayMsg = (text ? text + '<br>' : '') + `<small style="color:#065f46; font-weight:600;">📎 ${selectedAttachments.length} संलग्न फाइलें: ${fileList}</small>`;
         }
 
         const safeUserText = displayMsg.split('\n').join('<br>');
-        const uHtml = `
-            <div class="msg-row user" id="${rowId}">
-                <div class="bubble user-bubble">
-                    ${safeUserText}
-                    <div class="meta-info"><span>${time}</span><span class="tick status-tick">✓</span></div>
-                </div>
-            </div>`;
-        document.getElementById('plantLoader').insertAdjacentHTML('beforebegin', uHtml);
+        const rowId = renderUserBubbleDirect(safeUserText, time, false);
+        saveLocalMessage('user', safeUserText, time);
         
         const field = document.getElementById('msgField');
         field.value = '';
@@ -1132,11 +1315,6 @@
         document.getElementById('plantLoader').style.display = 'flex';
         toBottom();
 
-        setTimeout(() => {
-            const r = document.getElementById(rowId);
-            if (r) r.querySelector('.status-tick').textContent = '✓✓';
-        }, 400);
-
         try {
             const res = await apiRequest('/ask', {
                 method: 'POST',
@@ -1146,15 +1324,15 @@
             const data = await res.json();
             document.getElementById('plantLoader').style.display = 'none';
 
+            // Mark Double Blue Tick on successful response
             const r = document.getElementById(rowId);
             if (r) {
-                const tk = r.querySelector('.status-tick');
-                tk.textContent = '✓✓';
-                tk.classList.add('blue');
+                const tick = r.querySelector('.tick-svg');
+                if (tick) tick.classList.add('blue');
             }
 
             if (!res.ok) {
-                renderBot(data.detail || 'तकनीकी समस्या आई। आपका क्रेडिट नहीं काटा गया है।');
+                renderBotBubbleDirect(data.detail || 'तकनीकी समस्या आई। आपका क्रेडिट नहीं काटा गया है।', nowTime());
                 return;
             }
 
@@ -1164,8 +1342,9 @@
             rawText = rawText.split('\n').join('<br>');
             let finalContent = '<div>' + rawText + '</div>';
 
+            // Compact Hindi Video Clips
             if (data.sources && data.sources.length > 0) {
-                finalContent += '<div class="sources-wrapper"><div class="sources-title">📺 संदर्भ वीडियो क्लिप:</div>';
+                finalContent += '<div class="sources-wrapper"><div class="sources-title">📺 संदर्भ वीडियो क्लिप (सटीक भाग):</div>';
                 data.sources.forEach(s => {
                     finalContent += `
                         <a href="${s.video_url}" target="_blank" class="clip-card">
@@ -1176,38 +1355,36 @@
                 finalContent += '</div>';
             }
 
-            const shareText = encodeURIComponent(data.answer + '\n\nस्रोतः Agri Assistant');
             const escapedRawForCopy = data.answer.replace(/'/g, "\\'").replace(/\n/g, ' ');
 
+            // Clean Copy & WhatsApp Share Icons
             finalContent += `
                 <div class="msg-action-bar">
                     <button class="icon-btn" onclick="copyAnswer('${escapedRawForCopy}')" title="कॉपी करें">
-                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        <span>कॉपी</span>
                     </button>
-                    <a href="https://api.whatsapp.com/send?text=${shareText}" target="_blank" class="icon-btn" title="WhatsApp पर साझा करें" style="color:#008069;">
-                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.587 1.961.954 3.031.954 3.179 0 5.765-2.587 5.767-5.766.001-3.187-2.575-5.77-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.072-2.18-.544-1.636-.677-2.735-2.343-2.825-2.459-.09-.115-.657-.872-.657-1.66 0-.788.414-1.174.559-1.332.144-.158.315-.198.42-.198.106 0 .211.002.304.007.098.005.23-.037.36.275.144.344.488 1.192.531 1.28.043.088.072.19.014.305-.058.115-.087.188-.173.289l-.26.309c-.087.09-.178.188-.077.362.102.175.452.745.97 1.206.669.596 1.232.781 1.406.868.174.088.276.077.378-.04.103-.116.438-.51.555-.685.118-.175.235-.146.395-.088.16.058 1.016.479 1.191.566.175.088.291.132.334.204.043.073.043.424-.101.829z"/></svg>
-                    </a>
+                    <button class="icon-btn" onclick="shareOnWhatsApp('${escapedRawForCopy}')" title="WhatsApp पर साझा करें" style="color:#008069; font-weight:600;">
+                        <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.587 1.961.954 3.031.954 3.179 0 5.765-2.587 5.767-5.766.001-3.187-2.575-5.77-5.767-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.072-2.18-.544-1.636-.677-2.735-2.343-2.825-2.459-.09-.115-.657-.872-.657-1.66 0-.788.414-1.174.559-1.332.144-.158.315-.198.42-.198.106 0 .211.002.304.007.098.005.23-.037.36.275.144.344.488 1.192.531 1.28.043.088.072.19.014.305-.058.115-.087.188-.173.289l-.26.309c-.087.09-.178.188-.077.362.102.175.452.745.97 1.206.669.596 1.232.781 1.406.868.174.088.276.077.378-.04.103-.116.438-.51.555-.685.118-.175.235-.146.395-.088.16.058 1.016.479 1.191.566.175.088.291.132.334.204.043.073.043.424-.101.829z"/></svg>
+                        <span>WhatsApp</span>
+                    </button>
                 </div>`;
 
-            renderBot(finalContent);
+            renderBotBubbleDirect(finalContent, nowTime());
+            saveLocalMessage('bot', finalContent, nowTime());
+
         } catch(e) {
             document.getElementById('plantLoader').style.display = 'none';
-            renderBot('सर्वर से संपर्क नहीं हो सका। आपका कोई क्रेडिट नहीं काटा गया है।');
+            renderBotBubbleDirect('सर्वर से संपर्क नहीं हो सका। आपका कोई क्रेडिट नहीं काटा गया है।', nowTime());
         }
         toBottom();
     }
 
-    function renderBot(html) {
-        const bHtml = `
-            <div class="msg-row bot">
-                <div class="bubble bot-bubble">
-                    ${html}
-                    <div class="meta-info"><span>${nowTime()}</span></div>
-                </div>
-            </div>`;
-        document.getElementById('plantLoader').insertAdjacentHTML('beforebegin', bHtml);
-        toBottom();
-    }
+    // Page Load Init
+    window.addEventListener('DOMContentLoaded', () => {
+        updateDateDivider();
+        cleanAndLoadLocalHistory();
+    });
 </script>
 
 </body>
