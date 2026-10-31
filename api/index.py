@@ -181,7 +181,7 @@ async def ask_endpoint(req: QueryReq, request: Request):
                 "video_url": f"https://www.youtube.com/watch?v={m['video_id']}&t={m['start_seconds']}s"
             })
 
-        # Strict Language Instruction
+        # Strict 100% Language Isolation Instruction
         if req.language == "en":
             lang_instruction = "CRITICAL: The user has selected English. You MUST respond 100% in pure English only. Do NOT use any Hindi or Hinglish words."
         else:
@@ -220,7 +220,7 @@ User Query:
         "plan_type": plan_type
     }
 
-# 2. Claim Welcome Offer (Controlled from app_settings)
+# 2. Claim Welcome Offer (Controlled dynamically from app_settings)
 @app.post("/api/claim-welcome")
 @app.post("/claim-welcome")
 async def claim_welcome_endpoint(req: ClaimWelcomeReq):
