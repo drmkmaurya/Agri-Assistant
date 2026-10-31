@@ -1,6 +1,6 @@
 import os
 import time
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -40,12 +40,14 @@ def apply_rate_limit(client_ip: str):
     recent = [t for t in rate_limit_records[client_ip] if t > minute_window]
     rate_limit_records[client_ip] = recent
     if len(recent) >= 7:
-        raise HTTPException(status_code=429, detail="आपने 1 मिनट में सीमा पार कर दी है। कृपया 1 मिनट प्रतीक्षा करें।")
+        raise HTTPException(status_code=429, detail="आपने 1 मिनट में सीमा (7 सवाल) पार कर दी है। कृपया 1 मिनट प्रतीक्षा करें।")
     rate_limit_records[client_ip].append(now)
 
 class QueryReq(BaseModel):
     query: str
     user_id: str
+    attachment_count: int = 0
+    language: str = "hi"
 
 class SupportReq(BaseModel):
     user_id: str
@@ -56,9 +58,6 @@ class SupportReq(BaseModel):
     category: str = "general"
     priority: str = "normal"
     user_plan: str = "none"
-
-class ClaimTrialReq(BaseModel):
-    user_id: str
 
 class OrderReq(BaseModel):
     user_id: str
@@ -73,7 +72,15 @@ class VerifyPaymentReq(BaseModel):
     plan_id: str
     coupon_code: str = ""
 
-# 1. Chat API (Meta AI Adaptive Intent Handling)
+def get_super_control_settings():
+    try:
+        res = supabase.table("app_settings").select("*").limit(1).execute()
+        if res.data:
+            return res.data[0]
+    except Exception:
+        pass
+    return {"maintenance_mode": False, "banner_enabled": False, "banner_text": ""}
+
 @app.post("/api/ask")
 @app.post("/ask")
 async def ask_endpoint(req: QueryReq, request: Request):
@@ -82,6 +89,10 @@ async def ask_endpoint(req: QueryReq, request: Request):
 
     if not req.user_id:
         raise HTTPException(status_code=401, detail="कृपया पहले Google से साइन इन करें।")
+
+    settings = get_super_control_settings()
+    if settings.get("maintenance_mode"):
+        raise HTTPException(status_code=503, detail="सिस्टम अभी रखरखाव (Maintenance) मोड में है। कृपया कुछ समय बाद प्रयास करें।")
 
     user_res = supabase.table("user_profiles").select("*").eq("id", req.user_id).limit(1).execute()
     if not user_res.data:
@@ -93,38 +104,54 @@ async def ask_endpoint(req: QueryReq, request: Request):
     if profile.get("status") == "banned":
         raise HTTPException(status_code=403, detail="आपका खाता ब्लॉक कर दिया गया है।")
 
-    # Expiry Check
-    if profile.get("plan_expires_at"):
-        exp = datetime.fromisoformat(profile["plan_expires_at"].replace("Z", "+00:00"))
-        if datetime.now(exp.tzinfo) > exp:
-            raise HTTPException(status_code=402, detail="आपका प्लान समाप्त हो चुका है। कृपया प्लान अपग्रेड करें।")
+    plan_type = profile.get("plan_type") or "free"
+    plan_expires_at = profile.get("plan_expires_at")
+    total_credits = profile.get("total_credits", 0)
 
-    daily_limit = profile.get("daily_credits_limit") or 0
-    if daily_limit <= 0:
-        raise HTTPException(status_code=402, detail="कोई सक्रिय प्लान नहीं है। कृपया 7-दिन का फ्री ट्रायल क्लेम करें।")
+    is_paid_active = False
+    now_utc = datetime.now(timezone.utc)
+    if plan_type in ["basic", "pro"] and plan_expires_at:
+        exp_time = datetime.fromisoformat(plan_expires_at.replace("Z", "+00:00"))
+        if now_utc <= exp_time:
+            is_paid_active = True
+        else:
+            plan_type = "free"
+            supabase.table("user_profiles").update({"plan_type": "free"}).eq("id", req.user_id).execute()
 
-    # IST Date calculation
-    today_ist = (datetime.utcnow() + timedelta(hours=5, minutes=30)).date().isoformat()
-    daily_used = profile.get("daily_credits_used", 0)
+    if not is_paid_active and req.attachment_count > 0:
+        raise HTTPException(status_code=403, detail="फोटो / दस्तावेज जांच केवल Basic और Pro प्लान में उपलब्ध है। कृपया प्लान अपग्रेड करें।")
 
-    if profile.get("last_reset_date") != today_ist:
-        daily_used = 0
-        supabase.table("user_profiles").update({"daily_credits_used": 0, "last_reset_date": today_ist}).eq("id", req.user_id).execute()
+    if not is_paid_active:
+        today_ist = (datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)).date().isoformat()
+        last_reset = profile.get("daily_free_reset_date")
+        if str(last_reset) != today_ist:
+            total_credits = 3
+            supabase.table("user_profiles").update({
+                "total_credits": 3,
+                "max_pack_credits": 3,
+                "daily_free_reset_date": today_ist
+            }).eq("id", req.user_id).execute()
 
-    if daily_used >= daily_limit:
-        raise HTTPException(status_code=402, detail=f"आज का दैनिक कोटा ({daily_limit} सवाल) समाप्त हो गया है।")
+    credits_needed = 1 + min(2, req.attachment_count)
+
+    if total_credits < credits_needed:
+        if is_paid_active:
+            raise HTTPException(status_code=402, detail=f"इस सवाल के लिए {credits_needed} क्रेडिट चाहिए, जबकि आपके पास केवल {total_credits} क्रेडिट शेष हैं।")
+        else:
+            raise HTTPException(status_code=402, detail="आज का निःशुल्क दैनिक कोटा समाप्त हो गया है। रात 12:00 बजे 3 नए क्रेडिट मिलेंगे।")
 
     user_query = req.query.strip()
     clean_q = user_query.lower()
 
-    # Meta AI Simple Greeting Intent Handler
     greetings = ["hello", "hi", "namaste", "pranam", "hey", "नमस्ते", "प्रणाम", "राम राम"]
     if clean_q in greetings:
+        greeting_text = "नमस्ते किसान भाई! 🙏 बताइए, आज फसल या प्राकृतिक खेती से संबंधित क्या सहायता चाहिए?" if req.language == "hi" else "Hello Farmer Friend! 🙏 How can I assist you with your farming or crops today?"
         return {
-            "answer": "नमस्ते किसान भाई! 🙏 बताइए, आज फसल या प्राकृतिक खेती से संबंधित क्या जानकारी चाहिए?",
+            "answer": greeting_text,
             "sources": [],
-            "daily_limit": daily_limit,
-            "daily_used": daily_used # Greeting par quota nahi katega
+            "total_credits": total_credits,
+            "max_pack_credits": profile.get("max_pack_credits", 3),
+            "plan_type": plan_type
         }
 
     try:
@@ -153,16 +180,19 @@ async def ask_endpoint(req: QueryReq, request: Request):
                 "video_url": f"https://www.youtube.com/watch?v={m['video_id']}&t={m['start_seconds']}s"
             })
 
-        system_prompt = f"""
-        Aap ek Krishi Sahayak hain. Kisan ke sawal ka vyavharik, point-to-point aur spasht Devnagari Hindi me uttar dein.
-        Bina puche atirikt bhashan na dein. Jitna pucha gaya hai, utna hi 3-4 kramik points me batayein.
-        
-        Sandarbh:
-        {context_text}
-        
-        Sawal:
-        {user_query}
-        """
+        lang_instruction = "Give response strictly in clean, authentic Devnagari Hindi." if req.language == "hi" else "Give response in clear, concise English."
+
+        system_prompt = f"""Aap ek vishwasniya Krishi Sahayak (Agri Assistant) hain.
+{lang_instruction}
+Kisan ke sawal ka vyavharik, seedha aur sankshipt 3-4 points me uttar dein.
+Bina puche atirikt bhashan na dein.
+
+Sandarbh:
+{context_text}
+
+Sawal:
+{user_query}
+"""
 
         response = client.models.generate_content(
             model="gemini-3.1-flash-lite",
@@ -175,17 +205,17 @@ async def ask_endpoint(req: QueryReq, request: Request):
         print(f"Chat error: {e}")
         raise HTTPException(status_code=500, detail="उत्तर तैयार करने में समस्या आई। कोई क्रेडिट नहीं काटा गया।")
 
-    # Deduct credit only on successful response delivery
-    supabase.table("user_profiles").update({"daily_credits_used": daily_used + 1}).eq("id", req.user_id).execute()
+    new_balance = total_credits - credits_needed
+    supabase.table("user_profiles").update({"total_credits": new_balance}).eq("id", req.user_id).execute()
 
     return {
         "answer": answer_text,
         "sources": sources,
-        "daily_limit": daily_limit,
-        "daily_used": daily_used + 1
+        "total_credits": new_balance,
+        "max_pack_credits": profile.get("max_pack_credits", 3),
+        "plan_type": plan_type
     }
 
-# 2. Universal Support API -> public.user_queries
 @app.post("/api/request-approval")
 @app.post("/request-approval")
 async def support_endpoint(req: SupportReq):
@@ -208,33 +238,6 @@ async def support_endpoint(req: SupportReq):
     
     return {"status": "success", "priority": assigned_priority}
 
-# 3. Claim 7 Days Free Trial (Strict IST Midnight Cutoff on 7th Day)
-@app.post("/api/claim-trial")
-@app.post("/claim-trial")
-async def claim_trial(req: ClaimTrialReq):
-    user_res = supabase.table("user_profiles").select("*").eq("id", req.user_id).single().execute()
-    if not user_res.data:
-        raise HTTPException(status_code=404, detail="खाता नहीं मिला।")
-    
-    user = user_res.data
-    if user.get("is_trial_claimed"):
-        raise HTTPException(status_code=400, detail="आप पहले ही 7 दिन का फ्री ट्रायल ले चुके हैं।")
-
-    # Activation day counts as Day 1. Expires exactly at 11:59:59 PM IST on Day 7 (18:29:59 UTC).
-    now_utc = datetime.utcnow()
-    trial_expiry = (now_utc + timedelta(days=6)).replace(hour=18, minute=29, second=59).isoformat() + "Z"
-
-    supabase.table("user_profiles").update({
-        "is_trial_claimed": True,
-        "trial_claimed_at": now_utc.isoformat(),
-        "plan_type": "basic",
-        "daily_credits_limit": 15,
-        "plan_expires_at": trial_expiry
-    }).eq("id", req.user_id).execute()
-
-    return {"status": "success", "daily_limit": 15, "plan_expires_at": trial_expiry}
-
-# 4. User Stats API
 @app.get("/api/user-stats")
 @app.get("/user-stats")
 async def user_stats(user_id: str):
@@ -243,24 +246,47 @@ async def user_stats(user_id: str):
         raise HTTPException(status_code=404, detail="User not found")
     data = res.data
 
-    created_at_str = data.get("created_at")
-    eligible_for_trial = False
-    if created_at_str:
-        created_time = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
-        if (datetime.now(created_time.tzinfo) - created_time).days <= 10:
-            eligible_for_trial = True
+    settings = get_super_control_settings()
+
+    plan_type = data.get("plan_type") or "free"
+    plan_expires_at = data.get("plan_expires_at")
+    total_credits = data.get("total_credits", 3)
+    max_pack = data.get("max_pack_credits", 3)
+
+    is_paid_active = False
+    now_utc = datetime.now(timezone.utc)
+    if plan_type in ["basic", "pro"] and plan_expires_at:
+        exp_time = datetime.fromisoformat(plan_expires_at.replace("Z", "+00:00"))
+        if now_utc <= exp_time:
+            is_paid_active = True
+
+    if not is_paid_active:
+        plan_type = "free"
+        today_ist = (datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)).date().isoformat()
+        if str(data.get("daily_free_reset_date")) != today_ist:
+            total_credits = 3
+            max_pack = 3
+            supabase.table("user_profiles").update({
+                "total_credits": 3,
+                "max_pack_credits": 3,
+                "daily_free_reset_date": today_ist,
+                "plan_type": "free"
+            }).eq("id", user_id).execute()
 
     return {
         "status": data.get("status", "pending"),
-        "plan_type": data.get("plan_type") or "none",
-        "daily_limit": data.get("daily_credits_limit", 0),
-        "daily_used": data.get("daily_credits_used", 0),
-        "plan_expires_at": data.get("plan_expires_at"),
-        "is_trial_claimed": data.get("is_trial_claimed", False),
-        "eligible_for_trial": eligible_for_trial
+        "plan_type": plan_type,
+        "total_credits": total_credits,
+        "max_pack_credits": max_pack,
+        "plan_expires_at": plan_expires_at if is_paid_active else None,
+        "is_paid_active": is_paid_active,
+        "super_control": {
+            "maintenance_mode": settings.get("maintenance_mode", False),
+            "banner_enabled": settings.get("banner_enabled", False),
+            "banner_text": settings.get("banner_text", "")
+        }
     }
 
-# 5. Payment Order & Verify
 @app.post("/api/create-order")
 @app.post("/create-order")
 async def create_order_endpoint(req: OrderReq):

@@ -1,7 +1,7 @@
 import os
 import hmac
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException
 import razorpay
 
@@ -10,16 +10,17 @@ RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "")
 
 rz_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)) if (RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET) else None
 
+# Finalized 100 & 300 Credit Pack Architecture
 PLANS = {
     "basic": {
         "amount": 4900,         # ₹49 in paise
-        "daily_limit": 15,
-        "name": "Basic Plan (15 Sawal/Din)"
+        "credits": 100,
+        "name": "Basic Plan (100 Credits / 30 Days)"
     },
     "pro": {
         "amount": 9900,         # ₹99 in paise
-        "daily_limit": 50,
-        "name": "Pro Plan (50 Sawal/Din)"
+        "credits": 300,
+        "name": "Pro Plan (300 Credits / 30 Days)"
     }
 }
 
@@ -51,9 +52,10 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
     discount_pct, valid_code = validate_coupon(coupon_code, plan_id, supabase)
     final_amount = int(base_amount * (1 - (discount_pct / 100)))
 
+    # 100% Free VIP Coupon flow
     if final_amount == 0:
         return {
-            "order_id": f"free_{user_id[:8]}_{int(datetime.utcnow().timestamp())}",
+            "order_id": f"free_{user_id[:8]}_{int(datetime.now(timezone.utc).timestamp())}",
             "amount": 0,
             "is_free": True,
             "key_id": RAZORPAY_KEY_ID,
@@ -83,7 +85,7 @@ def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: s
         raise HTTPException(status_code=400, detail="अमान्य प्लान।")
 
     plan = PLANS[plan_id]
-    new_daily_limit = plan["daily_limit"]
+    credits_to_add = plan["credits"]
 
     if order_id.startswith("free_"):
         discount_pct, _ = validate_coupon(coupon_code, plan_id, supabase)
@@ -99,21 +101,36 @@ def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: s
         if expected_sig != signature:
             raise HTTPException(status_code=400, detail="भुगतान सत्यापन (Signature) विफल रहा।")
 
-    # 30 days expiry strictly ending at 11:59:59 PM IST
-    new_expiry = (datetime.utcnow() + timedelta(days=30)).replace(hour=18, minute=29, second=59).isoformat() + "Z"
+    # Precise minute/second 30 days timestamp
+    now = datetime.now(timezone.utc)
+    new_expiry = (now + timedelta(days=30)).isoformat()
+
+    # Fetch current user credits
+    user_res = supabase.table("user_profiles").select("total_credits").eq("id", user_id).single().execute()
+    current_credits = user_res.data.get("total_credits", 0) if user_res.data else 0
+    new_balance = current_credits + credits_to_add
+
+    # Update User Plan & Credits
     supabase.table("user_profiles").update({
         "plan_type": plan_id,
-        "daily_credits_limit": new_daily_limit,
+        "total_credits": new_balance,
+        "max_pack_credits": credits_to_add,
         "plan_expires_at": new_expiry
     }).eq("id", user_id).execute()
 
+    # Log Transaction
     supabase.table("credit_transactions").insert({
         "user_id": user_id,
         "order_id": order_id,
         "payment_id": payment_id or "VIP_COUPON",
         "amount_paid": 0 if order_id.startswith("free_") else plan["amount"] / 100,
-        "credits_added": new_daily_limit,
+        "credits_added": credits_to_add,
         "status": "success"
     }).execute()
 
-    return {"status": "success", "daily_limit": new_daily_limit}
+    return {
+        "status": "success",
+        "credits_added": credits_to_add,
+        "new_balance": new_balance,
+        "plan_expires_at": new_expiry
+    }
