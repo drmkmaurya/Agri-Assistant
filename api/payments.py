@@ -1,4 +1,5 @@
 import os
+import time
 import hmac
 import hashlib
 from datetime import datetime, timedelta, timezone
@@ -10,7 +11,6 @@ RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "")
 
 rz_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)) if (RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET) else None
 
-# Finalized 100 & 300 Credit Pack Architecture
 PLANS = {
     "basic": {
         "amount": 4900,         # ₹49 in paise
@@ -32,11 +32,11 @@ def validate_coupon(coupon_code: str, plan_id: str, supabase):
     res = supabase.table("coupons").select("*").eq("code", code).eq("is_active", True).execute()
     
     if not res.data:
-        raise HTTPException(status_code=400, detail="अमान्य (Invalid) कूपन कोड।")
+        raise HTTPException(status_code=400, detail="अमान्य (Invalid) कूपन कोड। कृपया सही कोड दर्ज करें।")
         
     c = res.data[0]
     if c.get("used_count", 0) >= c.get("max_uses", 9999):
-        raise HTTPException(status_code=400, detail="यह कूपन समाप्त हो चुका है।")
+        raise HTTPException(status_code=400, detail="यह कूपन समाप्त (Expired) हो चुका है।")
         
     allowed = c.get("allowed_plans") or ['basic', 'pro']
     if plan_id not in allowed:
@@ -49,13 +49,18 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
         raise HTTPException(status_code=400, detail="अमान्य प्लान चुना गया है।")
         
     base_amount = PLANS[plan_id]["amount"]
-    discount_pct, valid_code = validate_coupon(coupon_code, plan_id, supabase)
+    discount_pct = 0
+    valid_code = None
+
+    if coupon_code and coupon_code.strip():
+        discount_pct, valid_code = validate_coupon(coupon_code, plan_id, supabase)
+
     final_amount = int(base_amount * (1 - (discount_pct / 100)))
 
     # 100% Free VIP Coupon flow
     if final_amount == 0:
         return {
-            "order_id": f"free_{user_id[:8]}_{int(datetime.now(timezone.utc).timestamp())}",
+            "order_id": f"free_{user_id[:8]}_{int(time.time())}",
             "amount": 0,
             "is_free": True,
             "key_id": RAZORPAY_KEY_ID,
@@ -66,14 +71,15 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
         raise HTTPException(status_code=500, detail="Razorpay credentials Vercel Environment Variables me missing hain.")
 
     try:
+        receipt_id = f"rcpt_{user_id[:6]}_{int(time.time())}"[:40]
         order = rz_client.order.create({
             "amount": final_amount,
             "currency": "INR",
-            "receipt": f"rcpt_{user_id[:8]}_{int(time.time())}"[:40],
+            "receipt": receipt_id,
             "notes": {"user_id": str(user_id), "plan_id": str(plan_id), "coupon": str(valid_code or "")}
         })
     except Exception as rz_err:
-        print(f"Razorpay Order Creation Failed: {rz_err}")
+        print(f"Razorpay Order Error: {rz_err}")
         raise HTTPException(status_code=400, detail=f"Razorpay Order Error: {str(rz_err)}")
 
     return {
@@ -83,6 +89,7 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
         "key_id": RAZORPAY_KEY_ID,
         "applied_coupon": valid_code
     }
+
 def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: str, plan_id: str, coupon_code: str, supabase):
     if plan_id not in PLANS:
         raise HTTPException(status_code=400, detail="अमान्य प्लान।")
@@ -104,12 +111,12 @@ def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: s
         if expected_sig != signature:
             raise HTTPException(status_code=400, detail="भुगतान सत्यापन (Signature) विफल रहा।")
 
-    # Precise minute/second 30 days timestamp
+    # Precise minute/second timestamp for 30 days
     now = datetime.now(timezone.utc)
     new_expiry = (now + timedelta(days=30)).isoformat()
 
-    # Fetch current user credits
-    user_res = supabase.table("user_profiles").select("total_credits").eq("id", user_id).single().execute()
+    # Fetch current balance
+    user_res = supabase.table("user_profiles").select("total_credits, max_pack_credits").eq("id", user_id).single().execute()
     current_credits = user_res.data.get("total_credits", 0) if user_res.data else 0
     new_balance = current_credits + credits_to_add
 

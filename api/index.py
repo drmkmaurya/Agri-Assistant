@@ -72,6 +72,9 @@ class VerifyPaymentReq(BaseModel):
     plan_id: str
     coupon_code: str = ""
 
+class ClaimWelcomeReq(BaseModel):
+    user_id: str
+
 def get_super_control_settings():
     try:
         res = supabase.table("app_settings").select("*").limit(1).execute()
@@ -118,27 +121,17 @@ async def ask_endpoint(req: QueryReq, request: Request):
             plan_type = "free"
             supabase.table("user_profiles").update({"plan_type": "free"}).eq("id", req.user_id).execute()
 
+    # Free plan users: photo/attachment upload is strictly locked
     if not is_paid_active and req.attachment_count > 0:
-        raise HTTPException(status_code=403, detail="फोटो / दस्तावेज जांच केवल Basic और Pro प्लान में उपलब्ध है। कृपया प्लान अपग्रेड करें।")
-
-    if not is_paid_active:
-        today_ist = (datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)).date().isoformat()
-        last_reset = profile.get("daily_free_reset_date")
-        if str(last_reset) != today_ist:
-            total_credits = 3
-            supabase.table("user_profiles").update({
-                "total_credits": 3,
-                "max_pack_credits": 3,
-                "daily_free_reset_date": today_ist
-            }).eq("id", req.user_id).execute()
+        raise HTTPException(status_code=403, detail="फोटो / दस्तावेज़ जांच केवल Basic और Pro प्लान में उपलब्ध है। कृपया प्लान अपग्रेड करें।")
 
     credits_needed = 1 + min(2, req.attachment_count)
 
     if total_credits < credits_needed:
         if is_paid_active:
-            raise HTTPException(status_code=402, detail=f"इस सवाल के लिए {credits_needed} क्रेडिट चाहिए, जबकि आपके पास केवल {total_credits} क्रेडिट शेष हैं।")
+            raise HTTPException(status_code=402, detail=f"इस सवाल के लिए {credits_needed} क्रेडिट चाहिए, जबकि आपके पास केवल {total_credits} क्रेडिट शेष हैं। कृपया नया पैक खरीदें।")
         else:
-            raise HTTPException(status_code=402, detail="आज का निःशुल्क दैनिक कोटा समाप्त हो गया है। रात 12:00 बजे 3 नए क्रेडिट मिलेंगे।")
+            raise HTTPException(status_code=402, detail="आपके पास कोई क्रेडिट शेष नहीं है। कृपया Basic या Pro प्लान रिचार्ज करें।")
 
     user_query = req.query.strip()
     clean_q = user_query.lower()
@@ -150,7 +143,7 @@ async def ask_endpoint(req: QueryReq, request: Request):
             "answer": greeting_text,
             "sources": [],
             "total_credits": total_credits,
-            "max_pack_credits": profile.get("max_pack_credits", 3),
+            "max_pack_credits": profile.get("max_pack_credits", 10),
             "plan_type": plan_type
         }
 
@@ -212,9 +205,33 @@ Sawal:
         "answer": answer_text,
         "sources": sources,
         "total_credits": new_balance,
-        "max_pack_credits": profile.get("max_pack_credits", 3),
+        "max_pack_credits": profile.get("max_pack_credits", 10),
         "plan_type": plan_type
     }
+
+@app.post("/api/claim-welcome")
+@app.post("/claim-welcome")
+async def claim_welcome_endpoint(req: ClaimWelcomeReq):
+    user_res = supabase.table("user_profiles").select("*").eq("id", req.user_id).single().execute()
+    if not user_res.data:
+        raise HTTPException(status_code=404, detail="खाता नहीं मिला।")
+    
+    user = user_res.data
+    if user.get("is_trial_claimed"):
+        raise HTTPException(status_code=400, detail="आप पहले ही स्वागत क्रेडिट्स क्लेम कर चुके हैं।")
+
+    now_utc = datetime.now(timezone.utc)
+    expiry = (now_utc + timedelta(days=30)).isoformat()
+
+    supabase.table("user_profiles").update({
+        "is_trial_claimed": True,
+        "plan_type": "free",
+        "total_credits": 10,
+        "max_pack_credits": 10,
+        "plan_expires_at": expiry
+    }).eq("id", req.user_id).execute()
+
+    return {"status": "success", "credits": 10, "plan_expires_at": expiry}
 
 @app.post("/api/request-approval")
 @app.post("/request-approval")
@@ -250,8 +267,9 @@ async def user_stats(user_id: str):
 
     plan_type = data.get("plan_type") or "free"
     plan_expires_at = data.get("plan_expires_at")
-    total_credits = data.get("total_credits", 3)
-    max_pack = data.get("max_pack_credits", 3)
+    total_credits = data.get("total_credits", 0)
+    max_pack = data.get("max_pack_credits", 10)
+    is_claimed = data.get("is_trial_claimed", False)
 
     is_paid_active = False
     now_utc = datetime.now(timezone.utc)
@@ -260,26 +278,14 @@ async def user_stats(user_id: str):
         if now_utc <= exp_time:
             is_paid_active = True
 
-    if not is_paid_active:
-        plan_type = "free"
-        today_ist = (datetime.now(timezone.utc) + timedelta(hours=5, minutes=30)).date().isoformat()
-        if str(data.get("daily_free_reset_date")) != today_ist:
-            total_credits = 3
-            max_pack = 3
-            supabase.table("user_profiles").update({
-                "total_credits": 3,
-                "max_pack_credits": 3,
-                "daily_free_reset_date": today_ist,
-                "plan_type": "free"
-            }).eq("id", user_id).execute()
-
     return {
         "status": data.get("status", "pending"),
         "plan_type": plan_type,
         "total_credits": total_credits,
         "max_pack_credits": max_pack,
-        "plan_expires_at": plan_expires_at if is_paid_active else None,
+        "plan_expires_at": plan_expires_at,
         "is_paid_active": is_paid_active,
+        "is_trial_claimed": is_claimed,
         "super_control": {
             "maintenance_mode": settings.get("maintenance_mode", False),
             "banner_enabled": settings.get("banner_enabled", False),
