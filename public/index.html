@@ -50,7 +50,7 @@
         .chat-header {
             background: #075e54;
             color: #ffffff;
-            padding: 9px 14px;
+            padding: 9px 12px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -59,27 +59,76 @@
             flex-shrink: 0;
         }
 
-        .header-left { display: flex; align-items: center; gap: 10px; }
+        .header-left { display: flex; align-items: center; gap: 8px; }
         .dp-avatar {
-            width: 38px; height: 38px; border-radius: 50%;
+            width: 36px; height: 36px; border-radius: 50%;
             background: #128c7e; display: flex; align-items: center;
-            justify-content: center; font-size: 20px;
+            justify-content: center; font-size: 19px;
         }
-        .header-titles h1 { font-size: 15.5px; font-weight: 600; }
-        .status-badge { font-size: 11px; color: #a7f3d0; display: flex; align-items: center; gap: 4px; }
+        .header-titles h1 { font-size: 15px; font-weight: 600; }
+        .status-badge { font-size: 10.5px; color: #a7f3d0; display: flex; align-items: center; gap: 4px; }
         .status-dot { width: 7px; height: 7px; background: #25d366; border-radius: 50%; }
+
+        .header-right { display: flex; align-items: center; gap: 10px; }
+
+        /* Quick Purchase Icon */
+        .header-quick-buy {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fef08a;
+            border-radius: 20px;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .header-quick-buy:hover { background: rgba(255, 255, 255, 0.25); }
 
         /* Profile Ring */
         .profile-ring-container {
-            position: relative; width: 40px; height: 40px;
+            position: relative; width: 42px; height: 42px;
             cursor: pointer; display: flex; align-items: center; justify-content: center;
         }
         .progress-ring { transform: rotate(-90deg); position: absolute; top: 0; left: 0; }
         .progress-ring__circle {
-            stroke: #25d366; stroke-dasharray: 113; stroke-dashoffset: 20;
-            transition: stroke-dashoffset 0.35s;
+            stroke: #25d366; stroke-dasharray: 125.6; stroke-dashoffset: 0;
+            transition: stroke-dashoffset 0.4s ease, stroke 0.4s ease;
         }
         .user-dp { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: #fff; }
+        
+        .ring-credit-badge {
+            position: absolute; bottom: -2px; right: -2px;
+            background: #075e54; color: #ffffff; font-size: 8.5px; font-weight: bold;
+            padding: 1px 4px; border-radius: 8px; border: 1.5px solid #fff;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        /* Claim Trial Alert Banner */
+        .claim-trial-banner {
+            display: none;
+            background: linear-gradient(90deg, #fef3c7, #ecfdf5);
+            border-bottom: 1.5px solid #6ee7b7;
+            padding: 8px 12px;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #065f46;
+            font-weight: 600;
+            animation: pulseBanner 2.5s infinite;
+        }
+        @keyframes pulseBanner {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.92; }
+        }
+        .claim-btn-small {
+            background: #059669; color: #fff; border: none;
+            padding: 4px 10px; border-radius: 12px; font-size: 11px;
+            cursor: pointer; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        }
 
         /* Low Credit Alert */
         .low-credit-banner {
@@ -92,12 +141,14 @@
             padding: 3px 8px; border-radius: 10px; font-size: 11px; cursor: pointer;
         }
 
-        /* Agri Wallpaper Canvas */
+        /* Canvas with subtle green background */
         .chat-canvas {
             flex: 1; overflow-y: auto; padding: 12px;
             display: flex; flex-direction: column; gap: 10px;
-            background-color: #efeae2;
-            background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23687768' fill-opacity='0.06'%3E%3Cpath d='M20 20c2-5 8-8 12-4s2 10-3 12-9-3-9-8zm40 40c2-5 8-8 12-4s2 10-3 12-9-3-9-8zM15 55l5-10 5 10zm45-35l5-10 5 10z'/%3E%3Ccircle cx='40' cy='40' r='3'/%3E%3C/g%3E%3C/svg%3E");
+            background-color: #e5ede3;
+            background-image: radial-gradient(#15803d 0.8px, transparent 0.8px),
+                              url("data:image/svg+xml,%3Csvg width='70' height='70' viewBox='0 0 70 70' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%231b4332' fill-opacity='0.08'%3E%3Cpath d='M15 15c3-6 10-6 14 0s0 12-7 14-7-8-7-14zm35 35c3-6 10-6 14 0s0 12-7 14-7-8-7-14zM12 50l6-12 6 12zm38-30l6-12 6 12z'/%3E%3Ccircle cx='35' cy='35' r='3.5'/%3E%3C/g%3E%3C/svg%3E");
+            background-size: 24px 24px, 70px 70px;
             scroll-behavior: smooth;
         }
 
@@ -110,7 +161,7 @@
             font-size: 14.2px; line-height: 1.5; word-wrap: break-word;
             box-shadow: 0 1px 1.5px rgba(0,0,0,0.1); position: relative;
         }
-        .user-bubble { background: #e7fedc; border-top-right-radius: 2px; color: #111b21; }
+        .user-bubble { background: #dcfce7; border-top-right-radius: 2px; color: #111b21; }
         .bot-bubble { background: #ffffff; border-top-left-radius: 2px; color: #111b21; }
 
         .meta-info {
@@ -122,7 +173,7 @@
 
         /* Video Clips */
         .sources-wrapper { margin-top: 10px; padding-top: 8px; border-top: 1px dashed #d1d7db; }
-        .sources-title { font-size: 12px; font-weight: 600; color: #075e54; margin-bottom: 6px; }
+        .sources-title { font-size: 12px; font-weight: 600; color: #008069; margin-bottom: 6px; }
         .clip-card {
             display: block; background: #f8fafc; border: 1px solid #e2e8f0;
             border-radius: 8px; padding: 8px 10px; margin-top: 6px; text-decoration: none;
@@ -138,7 +189,7 @@
             margin-top: 6px; padding-top: 4px;
         }
         .icon-btn { background: none; border: none; cursor: pointer; color: #64748b; display: flex; padding: 4px; }
-        .icon-btn:hover { color: #075e54; }
+        .icon-btn:hover { color: #008069; }
 
         .chips-box { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
         .chip {
@@ -181,9 +232,9 @@
 
         /* Dropdown & Modals */
         .dropdown-menu {
-            display: none; position: absolute; top: 55px; right: 12px;
+            display: none; position: absolute; top: 58px; right: 12px;
             background: #fff; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-            width: 240px; z-index: 200; overflow: hidden;
+            width: 250px; z-index: 200; overflow: hidden;
         }
         .menu-header { padding: 12px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
         .menu-item {
@@ -208,47 +259,62 @@
         .modal-close { background: none; border: none; color: white; font-size: 18px; cursor: pointer; }
         .modal-body { padding: 16px; overflow-y: auto; font-size: 13px; color: #334155; line-height: 1.55; }
 
-        /* Pricing Grid */
+        /* Pricing Card Grid: Basic (49) & Pro (99) */
         .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .price-box {
-            border: 1.5px solid #bbf7d0; background: #f0fdf4; padding: 12px;
+            border: 1.5px solid #bbf7d0; background: #f0fdf4; padding: 14px 10px;
             border-radius: 10px; text-align: center; cursor: pointer; transition: all 0.2s;
         }
-        .price-box:hover { border-color: #075e54; background: #e6fffa; }
-        .price-val { font-size: 18px; font-weight: bold; color: #075e54; }
-        .credits-val { font-size: 12px; color: #166534; margin-top: 4px; }
+        .price-box:hover { transform: translateY(-2px); }
+        .price-box.pro { border-color: #eab308; background: #fefce8; }
+        .plan-badge { font-size: 10.5px; font-weight: bold; text-transform: uppercase; padding: 2px 6px; border-radius: 6px; display: inline-block; margin-bottom: 4px; }
+        .badge-basic { background: #dcfce7; color: #15803d; }
+        .badge-pro { background: #fef08a; color: #854d0e; }
+        .price-val { font-size: 20px; font-weight: bold; color: #075e54; }
+        .credits-val { font-size: 12px; color: #166534; margin-top: 4px; font-weight: 500; }
+        .duration-val { font-size: 10.5px; color: #64748b; margin-top: 2px; }
 
         /* Coupon Field */
-        .coupon-wrapper {
-            margin-top: 14px;
-            padding: 10px;
-            background: #f8fafc;
-            border: 1px dashed #cbd5e1;
-            border-radius: 8px;
-            display: flex;
-            gap: 8px;
-            align-items: center;
+        .coupon-box {
+            margin-top: 14px; padding-top: 12px; border-top: 1px dashed #cbd5e1;
+            display: flex; gap: 8px;
         }
         .coupon-input {
-            flex: 1;
-            border: 1px solid #cbd5e1;
-            padding: 7px 10px;
-            border-radius: 6px;
-            font-size: 13px;
-            text-transform: uppercase;
-            font-weight: 600;
-            outline: none;
+            flex: 1; padding: 8px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px;
+            font-size: 12.5px; text-transform: uppercase; font-weight: 600; outline: none;
         }
-        .coupon-hint {
-            font-size: 11px;
-            color: #64748b;
-            margin-top: 5px;
+        .coupon-input:focus { border-color: #008069; }
+
+        /* Form Inputs for Approval Request */
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 4px; }
+        .form-input, .form-textarea {
+            width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1;
+            border-radius: 8px; font-size: 13px; outline: none; font-family: inherit;
+        }
+        .form-input:focus, .form-textarea:focus { border-color: #008069; }
+        .submit-btn {
+            background: #008069; color: #fff; border: none; padding: 10px; width: 100%;
+            border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
         }
 
         /* Tab Header */
         .tab-headers { display: flex; border-bottom: 1px solid #e2e8f0; background: #f8fafc; overflow-x: auto; }
         .tab-btn { flex: 1; padding: 10px 6px; font-size: 11px; border: none; background: none; cursor: pointer; color: #64748b; white-space: nowrap; }
-        .tab-btn.active { color: #075e54; font-weight: bold; border-bottom: 2px solid #075e54; background: #fff; }
+        .tab-btn.active { color: #008069; font-weight: bold; border-bottom: 2px solid #008069; background: #fff; }
+
+        /* Pending Approval Home View */
+        .pending-screen {
+            display: none;
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: #efeae2; z-index: 400;
+            flex-direction: column; justify-content: center; align-items: center;
+            padding: 24px; text-align: center;
+        }
+        .pending-card {
+            background: #fff; border-radius: 16px; padding: 24px 20px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1); width: 100%; max-width: 380px;
+        }
 
         /* Login Screen */
         .auth-screen {
@@ -276,16 +342,32 @@
             </div>
         </div>
         
-        <div class="profile-ring-container" onclick="toggleMenu()">
-            <svg class="progress-ring" width="40" height="40">
-                <circle class="progress-ring__circle" stroke-width="2.5" fill="transparent" r="18" cx="20" cy="20" id="creditRing"/>
-            </svg>
-            <img src="https://lh3.googleusercontent.com/a/default-user=s96-c" id="userAvatar" class="user-dp" alt="Avatar">
+        <div class="header-right">
+            <!-- 1-Click Purchase Icon -->
+            <button class="header-quick-buy" onclick="openPricing()" title="प्लान खरीदें">
+                💳 रिचार्ज
+            </button>
+
+            <!-- Profile & Dynamic Circular Ring -->
+            <div class="profile-ring-container" onclick="toggleMenu()" title="खाता व कोटा विवरण">
+                <svg class="progress-ring" width="44" height="44">
+                    <circle class="progress-ring__circle" stroke-width="3" fill="transparent" r="20" cx="22" cy="22" id="creditRing"/>
+                </svg>
+                <img src="https://lh3.googleusercontent.com/a/default-user=s96-c" id="userAvatar" class="user-dp" alt="Avatar">
+                <div class="ring-credit-badge" id="ringBadge">--</div>
+            </div>
         </div>
     </header>
 
+    <!-- Claim 7 Days Free Trial Banner (Shown up to 10 days if unclaimed) -->
+    <div class="claim-trial-banner" id="claimTrialBanner">
+        <span>🎁 7 दिन का Basic Plan (15 सवाल/दिन) फ्री क्लेम करें!</span>
+        <button class="claim-btn-small" onclick="openTrialOnboardingModal()">क्लेम करें</button>
+    </div>
+
+    <!-- Low Credit Warning -->
     <div class="low-credit-banner" id="lowCreditBanner">
-        <span>⚠️ आपके क्रेडिट्स समाप्त होने वाले हैं!</span>
+        <span>⚠️ आज का क्रेडिट कोटा समाप्त होने वाला है!</span>
         <button class="banner-buy-btn" onclick="openPricing()">रिचार्ज करें</button>
     </div>
 
@@ -293,12 +375,13 @@
     <div class="dropdown-menu" id="userMenu">
         <div class="menu-header">
             <b id="userName">किसान साथी</b><br>
-            <span style="font-size:11px; color:#64748b;" id="quotaSummary">उपलब्ध: 20 / 20</span>
+            <span style="font-size:11.5px; color:#075e54; font-weight:600;" id="userPlanName">प्लान: Basic</span><br>
+            <span style="font-size:11px; color:#64748b;" id="quotaSummary">आज का उपयोग: 0 / 15</span>
         </div>
-        <div class="menu-item" onclick="openPricing()">💳 क्रेडिट खरीदें (Recharge)</div>
+        <div class="menu-item" onclick="openPricing()">💳 प्लान अपग्रेड / रिचार्ज</div>
         <div class="menu-item" onclick="openPolicyModal('terms')">📜 नियम व नीतियां (Policies)</div>
         <div class="menu-item" onclick="openPolicyModal('pricing')">🏷️ मूल्य निर्धारण (Pricing)</div>
-        <div class="menu-item" onclick="openPolicyModal('contact')">📞 सहायता एवं संपर्क (Support)</div>
+        <div class="menu-item" onclick="openContactModal()">📝 संपर्क व स्वीकृति अनुरोध (Support)</div>
         <div class="menu-item" onclick="signOutUser()" style="color:#dc2626;">🚪 लॉगआउट</div>
     </div>
 
@@ -320,12 +403,29 @@
     </main>
 
     <!-- Footer Input Bar -->
-    <footer class="input-bar">
+    <footer class="input-bar" id="inputFooterBar">
         <div class="input-box">
             <textarea id="msgField" class="chat-input" rows="1" placeholder="लक्षण या समस्या यहाँ लिखें..." oninput="autoExpand(this)" onkeydown="keyMonitor(event)"></textarea>
         </div>
         <button class="send-btn" onclick="submitMessage()">➤</button>
     </footer>
+
+    <!-- Pending Approval View -->
+    <div class="pending-screen" id="pendingScreen">
+        <div class="pending-card">
+            <div style="font-size:42px; margin-bottom:10px;">⏳</div>
+            <h3 style="color:#075e54; font-size:17px; margin-bottom:6px;">खाता स्वीकृति विचाराधीन है</h3>
+            <p style="font-size:13px; color:#64748b; line-height:1.5; margin-bottom:16px;">
+                आपका खाता समीक्षा (Review) में है। सुरक्षा एवं गुणवत्ता बनाए रखने हेतु एडमिन स्वीकृति अनिवार्य है।
+            </p>
+            <button onclick="openContactModal()" style="background:#008069; color:#fff; border:none; padding:10px 18px; border-radius:20px; font-weight:600; font-size:13px; cursor:pointer; width:100%;">
+                ⚡ शीघ्र स्वीकृति हेतु संपर्क करें (Fast Approval)
+            </button>
+            <button onclick="signOutUser()" style="background:none; border:none; color:#dc2626; font-size:12px; margin-top:14px; cursor:pointer;">
+                लॉगआउट करें
+            </button>
+        </div>
+    </div>
 
     <!-- Auth Login Overlay -->
     <div class="auth-screen" id="authScreen" style="display:none;">
@@ -346,54 +446,99 @@
     </div>
 </div>
 
-<!-- Modal 1: Pricing / Buy Credits with Coupon Support -->
+<!-- Modal 1: Clean 2-Plan Pricing Modal with Coupon -->
 <div class="modal-overlay" id="pricingModal">
     <div class="modal-card">
         <div class="modal-header">
-            <h3>💳 क्रेडिट रिचार्ज करें</h3>
+            <h3>💳 प्लान अपग्रेड / रिचार्ज</h3>
             <button class="modal-close" onclick="closePricing()">✕</button>
         </div>
         <div class="modal-body">
-            <p>अपनी सुविधानुसार पैक चुनें:</p>
+            <p style="font-size:12.5px; color:#475569;">अपनी आवश्यकतानुसार प्लान चुनें (दैनिक कोटा स्वतः रीसेट होगा):</p>
             <div class="pricing-grid">
-                <div class="price-box" onclick="initiatePayment('p5')">
-                    <div class="price-val">₹5</div>
-                    <div class="credits-val">5 क्रेडिट्स</div>
+                <!-- Basic Plan -->
+                <div class="price-box" onclick="initiatePayment('basic')">
+                    <span class="plan-badge badge-basic">Basic Plan</span>
+                    <div class="price-val">₹49</div>
+                    <div class="credits-val">15 सवाल / दिन</div>
+                    <div class="duration-val">वैधता: 30 दिन</div>
                 </div>
-                <div class="price-box" onclick="initiatePayment('p30')">
-                    <div class="price-val">₹30</div>
-                    <div class="credits-val">50 क्रेडिट्स</div>
-                </div>
-                <div class="price-box" onclick="initiatePayment('p50')">
-                    <div class="price-val">₹50</div>
-                    <div class="credits-val">100 क्रेडिट्स</div>
-                </div>
-                <div class="price-box" onclick="initiatePayment('p150')">
-                    <div class="price-val">₹150</div>
-                    <div class="credits-val">500 क्रेडिट्स</div>
+                <!-- Pro Plan -->
+                <div class="price-box pro" onclick="initiatePayment('pro')">
+                    <span class="plan-badge badge-pro">⭐ Pro Plan</span>
+                    <div class="price-val">₹99</div>
+                    <div class="credits-val">50 सवाल / दिन</div>
+                    <div class="duration-val">वैधता: 30 दिन</div>
                 </div>
             </div>
 
-            <div class="coupon-wrapper">
-                <input type="text" id="couponCodeInput" class="coupon-input" placeholder="कूपन कोड (उदा. VIP100)">
+            <!-- Coupon Input -->
+            <div class="coupon-box">
+                <input type="text" id="couponInput" class="coupon-input" placeholder="कूपन कोड (उदा. VIP100)">
             </div>
-            <p class="coupon-hint">💡 कूपन लागू करने के बाद ऊपर दिए गए किसी भी पैक पर क्लिक करें। VIP पास (100% OFF) तुरंत सक्रिय हो जाएगा।</p>
+            <span style="font-size:11px; color:#64748b; margin-top:4px; display:block;">💡 कूपन दर्ज करने के बाद ऊपर दिए गए प्लान पर क्लिक करें।</span>
         </div>
     </div>
 </div>
 
-<!-- Modal 2: Confetti Celebration & Animated Rolling Count -->
+<!-- Modal 2: Welcome Onboarding & Claim 7 Days Free Trial -->
+<div class="modal-overlay" id="trialOnboardingModal">
+    <div class="modal-card" style="text-align:center; padding:24px 20px;">
+        <div style="font-size:46px;">🎁</div>
+        <h2 style="color:#075e54; font-size:18px; margin-top:8px;">स्वागत है किसान भाई!</h2>
+        <p style="font-size:13px; color:#475569; margin:10px 0 16px 0; line-height:1.5;">
+            आपका खाता स्वीकृत हो चुका है। शुरुआत के लिए <b>7 दिन का Basic Plan (प्रतिदिन 15 सवाल)</b> निःशुल्क सक्रिय करें!
+        </p>
+        <button onclick="claimSevenDaysTrial()" style="background:#059669; color:#fff; border:none; padding:11px 24px; border-radius:24px; font-weight:700; font-size:14px; cursor:pointer; width:100%; box-shadow:0 2px 8px rgba(5,150,105,0.3);">
+            ✨ 7 Days Free Trial क्लेम करें
+        </button>
+        <button onclick="closeTrialModal()" style="background:none; border:none; color:#64748b; font-size:12px; margin-top:12px; cursor:pointer;">
+            बाद में क्लेम करें (Skip for now)
+        </button>
+    </div>
+</div>
+
+<!-- Modal 3: Fast Approval Contact Form -->
+<div class="modal-overlay" id="contactModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>⚡ खाता स्वीकृति एवं सहायता अनुरोध</h3>
+            <button class="modal-close" onclick="closeContactModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">नाम</label>
+                <input type="text" id="contactName" class="form-input" readonly>
+            </div>
+            <div class="form-group">
+                <label class="form-label">ईमेल</label>
+                <input type="email" id="contactEmail" class="form-input" readonly>
+            </div>
+            <div class="form-group">
+                <label class="form-label">मोबाइल / WhatsApp नंबर</label>
+                <input type="tel" id="contactPhone" class="form-input" placeholder="अपना 10 अंकों का मोबाइल नंबर दर्ज करें">
+            </div>
+            <div class="form-group">
+                <label class="form-label">संदेश / विवरण (Concern)</label>
+                <textarea id="contactConcern" class="form-textarea" rows="3" placeholder="आप किस फसल या उद्देश्य के लिए Agri Assistant का उपयोग करना चाहते हैं?"></textarea>
+            </div>
+            <button class="submit-btn" onclick="submitApprovalRequest()">अनुरोध भेजें (Submit)</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 4: Confetti Celebration & Animated Rolling Count -->
 <div class="modal-overlay" id="successModal">
     <div class="modal-card" style="text-align:center; padding:25px;">
         <div style="font-size:44px;">🎉</div>
-        <h2 style="color:#008069; margin-top:8px;">सफल रिचार्ज!</h2>
-        <div id="creditRollCount" style="font-size:36px; font-weight:bold; color:#075e54; margin:12px 0;">+0</div>
-        <p style="font-size:13px; color:#64748b;">क्रेडिट्स आपके खाते में सफलतापूर्वक जोड़ दिए गए हैं।</p>
+        <h2 style="color:#008069; margin-top:8px;">सक्रियण सफल!</h2>
+        <div id="creditRollCount" style="font-size:32px; font-weight:bold; color:#075e54; margin:10px 0;">सक्रिय!</div>
+        <p style="font-size:13px; color:#64748b;" id="successMsg">आपका दैनिक क्रेडिट कोटा सक्रिय कर दिया गया है।</p>
         <button onclick="closeSuccessModal()" style="margin-top:16px; background:#00a884; color:#fff; border:none; padding:8px 22px; border-radius:18px; font-weight:600; cursor:pointer;">पूछना शुरू करें</button>
     </div>
 </div>
 
-<!-- Modal 3: Modular Policies Modal -->
+<!-- Modal 5: Modular Policies Modal -->
 <div class="modal-overlay" id="policyModal">
     <div class="modal-card">
         <div class="modal-header">
@@ -424,6 +569,11 @@
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('userAvatar').src = currentUser.user_metadata.avatar_url || document.getElementById('userAvatar').src;
             document.getElementById('userName').textContent = currentUser.user_metadata.full_name || 'किसान साथी';
+            
+            // Prefill Contact Modal
+            document.getElementById('contactName').value = currentUser.user_metadata.full_name || '';
+            document.getElementById('contactEmail').value = currentUser.email || '';
+
             fetchStats();
         } else {
             currentUser = null;
@@ -448,15 +598,57 @@
         try {
             const res = await fetch(`/api/user-stats?user_id=${currentUser.id}`);
             const data = await res.json();
-            const total = data.total_available;
-            document.getElementById('quotaSummary').textContent = `उपलब्ध क्रेडिट: ${total}`;
             
-            document.getElementById('lowCreditBanner').style.display = total <= 3 ? 'flex' : 'none';
+            // Check Approval Status
+            if (data.status === 'pending') {
+                document.getElementById('pendingScreen').style.display = 'flex';
+                document.getElementById('inputFooterBar').style.display = 'none';
+                return;
+            } else {
+                document.getElementById('pendingScreen').style.display = 'none';
+                document.getElementById('inputFooterBar').style.display = 'flex';
+            }
 
+            const limit = data.daily_limit || 15;
+            const used = data.daily_used || 0;
+            const remaining = Math.max(0, limit - used);
+            const plan = data.plan_type || 'basic';
+
+            // Check if 7 days trial is claimed or eligible to claim within 10 days
+            if (data.eligible_for_trial && !data.is_trial_claimed) {
+                document.getElementById('claimTrialBanner').style.display = 'flex';
+                // First time popup trigger if not seen
+                if (!sessionStorage.getItem('onboarding_shown')) {
+                    openTrialOnboardingModal();
+                    sessionStorage.setItem('onboarding_shown', '1');
+                }
+            } else {
+                document.getElementById('claimTrialBanner').style.display = 'none';
+            }
+
+            // Update Header Ring Badge & Menu
+            document.getElementById('ringBadge').textContent = remaining;
+            document.getElementById('userPlanName').textContent = `प्लान: ${plan.toUpperCase()} (${limit} सवाल/दिन)`;
+            document.getElementById('quotaSummary').textContent = `आज का उपयोग: ${used} / ${limit} (शेष: ${remaining})`;
+
+            // Low Credit Warning
+            document.getElementById('lowCreditBanner').style.display = remaining <= 2 ? 'flex' : 'none';
+
+            // Ring calculation (circumference 125.6 for r=20)
             const circle = document.getElementById('creditRing');
-            const ratio = Math.min(1, total / 20);
-            circle.style.strokeDashoffset = 113 - (113 * ratio);
-        } catch(e) {}
+            const ratio = Math.max(0, Math.min(1, remaining / limit));
+            circle.style.strokeDashoffset = 125.6 * (1 - ratio);
+
+            // Ring Color: Gold for Pro, Green for Basic
+            if (plan === 'pro') {
+                circle.style.stroke = '#eab308'; // Gold ring for pro
+            } else {
+                circle.style.stroke = '#25d366'; // Green ring for basic
+            }
+
+        } catch(e) {
+            console.error("fetchStats error:", e);
+        }
     }
 
     function toggleMenu() {
@@ -468,20 +660,24 @@
         document.getElementById('userMenu').style.display='none'; 
         document.getElementById('pricingModal').style.display = 'flex'; 
     }
-    function closePricing() { 
-        document.getElementById('pricingModal').style.display = 'none'; 
+    function closePricing() { document.getElementById('pricingModal').style.display = 'none'; }
+    
+    function openTrialOnboardingModal() { document.getElementById('trialOnboardingModal').style.display = 'flex'; }
+    function closeTrialModal() { document.getElementById('trialOnboardingModal').style.display = 'none'; }
+
+    function openContactModal() { 
+        document.getElementById('userMenu').style.display='none'; 
+        document.getElementById('contactModal').style.display = 'flex'; 
     }
+    function closeContactModal() { document.getElementById('contactModal').style.display = 'none'; }
+
     function openPolicyModal(tab = 'terms') { 
         document.getElementById('userMenu').style.display='none'; 
         document.getElementById('policyModal').style.display = 'flex'; 
         switchTab(tab); 
     }
-    function closePolicyModal() { 
-        document.getElementById('policyModal').style.display = 'none'; 
-    }
-    function closeSuccessModal() { 
-        document.getElementById('successModal').style.display = 'none'; 
-    }
+    function closePolicyModal() { document.getElementById('policyModal').style.display = 'none'; }
+    function closeSuccessModal() { document.getElementById('successModal').style.display = 'none'; }
 
     function switchTab(t) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -490,10 +686,68 @@
         document.getElementById('policyContent').innerHTML = (typeof policyDocs !== 'undefined' && policyDocs[t]) ? policyDocs[t] : '<p>विवरण लोड हो रहा है...</p>';
     }
 
-    // Razorpay + Coupon Integrated Checkout Handler
+    // Submit Approval Request
+    async function submitApprovalRequest() {
+        if (!currentUser) return;
+        const phone = document.getElementById('contactPhone').value.trim();
+        const concern = document.getElementById('contactConcern').value.trim();
+
+        if (!phone) {
+            alert('कृपया अपना मोबाइल नंबर दर्ज करें।');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/request-approval', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    user_id: currentUser.id,
+                    name: currentUser.user_metadata.full_name || '',
+                    email: currentUser.email || '',
+                    phone: phone,
+                    concern: concern
+                })
+            });
+
+            if (res.ok) {
+                alert('आपका अनुरोध सफलतापूर्वक प्राप्त हो गया है। हमारी टीम शीघ्र आपके खाते को सक्रिय करेगी।');
+                closeContactModal();
+            } else {
+                alert('अनुरोध भेजने में समस्या आई। कृपया पुनः प्रयास करें।');
+            }
+        } catch(e) {
+            alert('सर्वर त्रुटि। कृपया पुनः प्रयास करें।');
+        }
+    }
+
+    // Claim 7 Days Free Trial
+    async function claimSevenDaysTrial() {
+        if (!currentUser) return;
+        try {
+            const res = await fetch('/api/claim-trial', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ user_id: currentUser.id })
+            });
+            const data = await res.json();
+            closeTrialModal();
+
+            if (res.ok) {
+                triggerCelebration(data.daily_limit || 15);
+                fetchStats();
+            } else {
+                alert(data.detail || 'ट्रायल क्लेम करने में त्रुटि आई।');
+            }
+        } catch(e) {
+            alert('नेटवर्क त्रुटि आई।');
+        }
+    }
+
+    // Payment & Coupon Checkout
     async function initiatePayment(planId) {
         if (!currentUser) return;
-        const couponVal = (document.getElementById('couponCodeInput').value || '').trim().toUpperCase();
+        const couponVal = (document.getElementById('couponInput').value || '').trim();
 
         try {
             const ordRes = await fetch('/api/create-order', {
@@ -501,20 +755,21 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ 
                     user_id: currentUser.id, 
-                    plan_id: planId,
+                    plan_id: planId, 
                     coupon_code: couponVal 
                 })
             });
 
-            const ordData = await ordRes.json();
             if (!ordRes.ok) {
-                alert(ordData.detail || 'ऑर्डर बनाने में त्रुटि आई।');
+                const errData = await ordRes.json();
+                alert(errData.detail || 'ऑर्डर तैयार करने में समस्या आई।');
                 return;
             }
 
+            const ordData = await ordRes.json();
             closePricing();
 
-            // 1. VIP 100% Free Coupon Bypass Flow
+            // VIP / 100% Free Coupon Case
             if (ordData.is_free) {
                 const vRes = await fetch('/api/verify-payment', {
                     method: 'POST',
@@ -528,21 +783,19 @@
                 });
                 const vData = await vRes.json();
                 if (vData.status === 'success') {
-                    triggerCelebration(vData.credits_added);
+                    triggerCelebration(vData.daily_limit);
                     fetchStats();
-                } else {
-                    alert('फ्री कूपन सत्यापन असफल रहा।');
                 }
                 return;
             }
 
-            // 2. Standard Razorpay Paid Gateway Flow
+            // Regular Razorpay Checkout Flow
             const options = {
                 key: ordData.key_id,
                 amount: ordData.amount,
                 currency: "INR",
                 name: "Agri Assistant",
-                description: "AI Query Credits Recharge",
+                description: `${planId.toUpperCase()} Plan Subscription`,
                 order_id: ordData.order_id,
                 handler: async function (response) {
                     const vRes = await fetch('/api/verify-payment', {
@@ -559,7 +812,7 @@
                     });
                     const vData = await vRes.json();
                     if (vData.status === 'success') {
-                        triggerCelebration(vData.credits_added);
+                        triggerCelebration(vData.daily_limit);
                         fetchStats();
                     }
                 },
@@ -576,23 +829,23 @@
         }
     }
 
-    // Confetti Animation with Count-Up
-    function triggerCelebration(credits) {
-        confetti({ particleCount: 110, spread: 80, origin: { y: 0.6 } });
+    // Counter Animation from 0 to target
+    function triggerCelebration(dailyLimit) {
+        confetti({ particleCount: 110, spread: 75, origin: { y: 0.6 } });
         document.getElementById('successModal').style.display = 'flex';
         
         let count = 0;
-        const target = credits;
+        const target = dailyLimit;
         const elem = document.getElementById('creditRollCount');
         const interval = setInterval(() => {
-            count += Math.ceil(target / 15);
+            count += 1;
+            elem.textContent = `${count} सवाल / दिन`;
             if (count >= target) {
-                elem.textContent = `+${target}`;
                 clearInterval(interval);
-            } else {
-                elem.textContent = `+${count}`;
             }
-        }, 35);
+        }, 50);
+
+        document.getElementById('successMsg').textContent = `बधाई! आपका प्लान सक्रिय हो गया है। आपको प्रतिदिन ${dailyLimit} सवाल पूछने की सुविधा मिलेगी।`;
     }
 
     if (window.visualViewport) {
@@ -622,7 +875,8 @@
         const uHtml = `
             <div class="msg-row user" id="${rowId}">
                 <div class="bubble user-bubble">
-                    ${text.replace(/\n/g, '<br>')}
+                    ${text.replace(/
+/g, '<br>')}
                     <div class="meta-info"><span>${time}</span><span class="tick status-tick">✓</span></div>
                 </div>
             </div>`;
@@ -660,7 +914,8 @@
 
             fetchStats();
 
-            const rawText = data.answer.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+            const rawText = data.answer.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/
+/g, '<br>');
             let finalContent = `<div>${rawText}</div>`;
 
             if (data.sources && data.sources.length > 0) {
@@ -675,8 +930,11 @@
                 finalContent += `</div>`;
             }
 
-            const shareText = encodeURIComponent(`${data.answer}\n\nस्रोतः Agri Assistant`);
-            const escapedRawForCopy = data.answer.replace(/'/g, "\\'").replace(/\n/g, " ");
+            const shareText = encodeURIComponent(`${data.answer}
+
+स्रोतः Agri Assistant`);
+            const escapedRawForCopy = data.answer.replace(/'/g, "\'").replace(/
+/g, " ");
 
             finalContent += `
                 <div class="msg-action-bar">
