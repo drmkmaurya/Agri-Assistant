@@ -1,10 +1,10 @@
 {
-  "name": "TCBT कृषि मित्र",
-  "short_name": "TCBT मित्र",
+  "name": "Agri Mitra - कृषि मित्र",
+  "short_name": "Agri Mitra",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#075e54",
-  "theme_color": "#075e54",
+  "theme_color": "#008069",
   "orientation": "portrait",
   "icons": [
     {

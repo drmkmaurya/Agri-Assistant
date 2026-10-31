@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
-    <title>Agri Assistant</title>
+    <title>Agri Mitra - कृषि मित्र</title>
     
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#008069">
@@ -34,9 +34,10 @@
             width: 100%; max-width: 480px; height: 100%; height: 100dvh;
             display: flex; flex-direction: column; background: #edf5ef;
             position: relative; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            transition: height 0.1s ease-out;
         }
 
-        /* WhatsApp Header */
+        /* Header */
         .chat-header {
             background: #008069; color: #ffffff; padding: 8px 12px;
             display: flex; align-items: center; justify-content: space-between;
@@ -44,12 +45,12 @@
         }
         .header-left { display: flex; align-items: center; gap: 8px; }
         .dp-avatar {
-            width: 36px; height: 36px; border-radius: 50%;
+            width: 38px; height: 38px; border-radius: 50%;
             background: #00a884; display: flex; align-items: center;
-            justify-content: center; font-size: 19px;
+            justify-content: center; font-size: 20px;
             box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25);
         }
-        .header-titles h1 { font-size: 15px; font-weight: 600; letter-spacing: 0.2px; }
+        .header-titles h1 { font-size: 15.5px; font-weight: 600; letter-spacing: 0.2px; }
         .status-badge { font-size: 10.5px; color: #d1fae5; display: flex; align-items: center; gap: 4px; }
         .status-dot { width: 7px; height: 7px; background: #25d366; border-radius: 50%; }
 
@@ -97,7 +98,7 @@
             font-size: 11.5px; color: #854d0e; font-weight: 600; text-align: center;
         }
 
-        /* Welcome Offer Banner (Only for eligible unclaimed users) */
+        /* Welcome Offer Banner */
         .claim-welcome-banner {
             display: none; background: linear-gradient(90deg, #ecfdf5, #dcfce7);
             border-bottom: 1.5px solid #86efac; padding: 7px 12px;
@@ -139,13 +140,21 @@
         .msg-row.bot { justify-content: flex-start; }
 
         .bubble {
-            max-width: 86%; padding: 7px 10px 5px 11px; border-radius: 8.5px;
+            max-width: 86%; padding: 8px 11px 6px 12px; border-radius: 8.5px;
             font-size: 14.2px; line-height: 1.45; word-wrap: break-word;
             box-shadow: 0 1px 1px rgba(0,0,0,0.12); position: relative;
         }
         .user-bubble { background: #d9fdd3; border-top-right-radius: 2px; color: #111b21; }
         .bot-bubble { background: #ffffff; border-top-left-radius: 2px; color: #111b21; }
 
+        /* Meta AI Style Header inside Bubble */
+        .bubble-meta-header {
+            display: flex; align-items: center; gap: 5px; margin-bottom: 4px; padding-bottom: 3px;
+            border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 11px; font-weight: 600; color: #008069;
+        }
+        .meta-sparkle { font-size: 12px; }
+
+        /* WhatsApp Double Tick Inline */
         .bubble-meta {
             display: inline-flex; align-items: center; gap: 3px;
             font-size: 10px; color: #667781; float: right; margin-left: 8px;
@@ -167,17 +176,22 @@
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
 
-        /* Transient WhatsApp Meta AI Style Action Icons */
-        .transient-action-bar {
-            display: flex; align-items: center; justify-content: flex-end; gap: 12px;
-            margin-top: 5px; padding-top: 3px;
+        /* WhatsApp Meta AI Style Bottom Action Bar (Copy & Share Pills) */
+        .meta-action-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(0,0,0,0.06);
+            font-size: 11px; color: #64748b;
         }
-        .icon-action-btn {
-            background: none; border: none; cursor: pointer; color: #64748b;
-            display: flex; align-items: center; justify-content: center;
-            padding: 3px; border-radius: 4px; transition: color 0.15s;
+        .ai-gen-label {
+            display: flex; align-items: center; gap: 4px; font-size: 10.5px; color: #8696a0;
         }
-        .icon-action-btn:hover { color: #008069; }
+        .action-pills-group { display: flex; align-items: center; gap: 8px; }
+        .action-pill-btn {
+            background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px;
+            padding: 3px 8px; font-size: 11px; font-weight: 500; color: #334155;
+            display: flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.15s;
+        }
+        .action-pill-btn:hover { background: #e2e8f0; color: #008069; }
 
         /* Plant Loader */
         .plant-loader-row {
@@ -193,7 +207,7 @@
             100% { transform: scale(0.85) rotate(-10deg); opacity: 0.6; }
         }
 
-        /* Footer Input Area */
+        /* Footer Input Area (Smooth Virtual Keyboard Push) */
         .input-bar {
             background: #f0f2f5; padding: 6px 8px; display: flex; align-items: flex-end;
             gap: 6px; flex-shrink: 0; border-top: 1px solid #e9edef; z-index: 100; position: relative;
@@ -322,14 +336,14 @@
         .tab-btn { flex: 1; padding: 10px 6px; font-size: 11px; border: none; background: none; cursor: pointer; color: #64748b; white-space: nowrap; }
         .tab-btn.active { color: #008069; font-weight: bold; border-bottom: 2px solid #008069; background: #ffffff; }
 
-        /* Payment History List */
+        /* Last 3 Months Payment History List */
         .history-item {
             background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
             padding: 10px 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
         }
-        .history-date { font-size: 11px; color: #64748b; }
+        .history-date { font-size: 11px; color: #64748b; line-height: 1.4; }
         .history-amount { font-weight: bold; color: #075e54; font-size: 14px; }
-        .history-badge { font-size: 10.5px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+        .history-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
         .badge-success { background: #dcfce7; color: #15803d; }
 
         /* Non-Dismissible Pending Screen */
@@ -392,10 +406,10 @@
     <!-- Header -->
     <header class="chat-header">
         <div class="header-left">
-            <div class="dp-avatar">🌱</div>
+            <div class="dp-avatar">🌾</div>
             <div class="header-titles">
-                <h1>Agri Assistant</h1>
-                <div class="status-badge"><span class="status-dot"></span> ऑनलाइन</div>
+                <h1>Agri Mitra</h1>
+                <div class="status-badge"><span class="status-dot"></span> ऑनलाइन • कृषि मित्र</div>
             </div>
         </div>
         
@@ -428,7 +442,7 @@
         <span id="promoBannerText">📢 विशेष कृषि सलाह एवं नए ऑफर्स!</span>
     </div>
 
-    <!-- Welcome 10 Credits Offer Banner (Only for eligible unclaimed users) -->
+    <!-- Welcome 10 Credits Offer Banner -->
     <div class="claim-welcome-banner" id="welcomeBanner">
         <span id="welcomeBannerText">🎁 10 निःशुल्क स्वागत क्रेडिट्स (वैधता: 30 दिन) क्लेम करें!</span>
         <button class="claim-welcome-btn" onclick="openWelcomeModal()">क्लेम करें</button>
@@ -449,7 +463,7 @@
             <span style="font-size:10.5px; color:#059669; font-weight:500;" id="planExpiryText">वैधता: सक्रिय</span>
         </div>
         <div class="menu-item" onclick="openPricing()">💳 प्लान अपग्रेड / विवरण</div>
-        <div class="menu-item" onclick="openPaymentHistoryModal()">🧾 बिल एवं भुगतान इतिहास</div>
+        <div class="menu-item" onclick="openPaymentHistoryModal()">🧾 बिल एवं भुगतान इतिहास (3 माह)</div>
         <div class="menu-item" onclick="openContactModal('general')">📝 संपर्क व सहायता (Support)</div>
         <div class="menu-item" onclick="openPolicyModal('terms')">📜 नियम व नीतियां (Policies)</div>
         <div class="menu-item" onclick="openPolicyModal('pricing')">🏷️ मूल्य निर्धारण (Pricing)</div>
@@ -461,8 +475,12 @@
         <div class="date-divider" id="todayDateDivider">आज</div>
         <div class="msg-row bot">
             <div class="bubble bot-bubble">
+                <div class="bubble-meta-header">
+                    <span class="meta-sparkle">🌾</span>
+                    <span>Agri Mitra AI</span>
+                </div>
                 प्रणाम किसान भाई! 🙏<br>
-                मैं आपका डिजिटल कृषि सहायक हूँ। आप प्राकृतिक खेती, जीवामृत या 3G कटिंग से जुड़ा कोई भी सवाल यहाँ पूछ सकते हैं।
+                मैं आपका डिजिटल कृषि मित्र हूँ। आप प्राकृतिक खेती, जीवामृत या फसल उपचार से जुड़ा कोई भी सवाल यहाँ पूछ सकते हैं।
                 <div class="bubble-meta">
                     <span id="initClock"></span>
                 </div>
@@ -527,8 +545,8 @@
     <!-- Auth Login Overlay -->
     <div class="auth-screen" id="authScreen" style="display:none;">
         <div style="text-align:center; margin-top:50px;">
-            <div style="font-size:48px;">🌱</div>
-            <h2 style="color:#008069; margin-top:10px;">Agri Assistant</h2>
+            <div style="font-size:48px;">🌾</div>
+            <h2 style="color:#008069; margin-top:10px;">Agri Mitra (कृषि मित्र)</h2>
             <p style="color:#64748b; font-size:13px; margin-top:6px;">प्राकृतिक कृषि समाधान मंच</p>
         </div>
 
@@ -543,7 +561,7 @@
     </div>
 </div>
 
-<!-- Modal 1: 2-Plan Pricing Modal (100 & 300 Credits) with Clear Coupon Field -->
+<!-- Modal 1: 2-Plan Pricing Modal (100 & 300 Credits) with 1,000 Cap Safeguard -->
 <div class="modal-overlay" id="pricingModal">
     <div class="modal-card">
         <div class="modal-header">
@@ -554,7 +572,7 @@
             <!-- Dedicated Coupon Section -->
             <div class="coupon-section">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-size:11.5px; font-weight:700; color:#334155;">कूपन कोड (वैकल्पिक / Optional):</span>
+                    <span style="font-size:11.5px; font-weight:700; color:#334155;">कूपन कोड (वैकल्पिक):</span>
                     <span style="font-size:10.5px; color:#64748b;">यदि कोई कोड हो</span>
                 </div>
                 <div class="coupon-box">
@@ -581,7 +599,7 @@
             </div>
 
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:8px; border-top:1px dashed #cbd5e1;">
-                <span style="font-size:11px; color:#64748b;">बिना कूपन के सीधे प्लान पर क्लिक करें।</span>
+                <span style="font-size:11px; color:#64748b;">बिना कूपन के सीधे प्लान चुनें। (अधिकतम सीमा: 1,000 क्रेडिट)</span>
                 <button onclick="closePricing(); openContactModal('payment');" style="background:none; border:none; color:#008069; font-size:11px; font-weight:600; cursor:pointer;">
                     ❓ भुगतान सहायता
                 </button>
@@ -662,11 +680,11 @@
     </div>
 </div>
 
-<!-- Modal 5: Payment History & Invoices -->
+<!-- Modal 5: Last 3 Months Payment History & Invoices -->
 <div class="modal-overlay" id="historyModal">
     <div class="modal-card">
         <div class="modal-header">
-            <h3>🧾 भुगतान एवं बिलिंग इतिहास</h3>
+            <h3>🧾 भुगतान एवं बिलिंग इतिहास (विगत 3 माह)</h3>
             <button class="modal-close" onclick="closeHistoryModal()">✕</button>
         </div>
         <div class="modal-body" id="historyListContainer">
@@ -736,7 +754,7 @@
     let refreshClickCount = 0;
     let refreshLockTimer = null;
 
-    const CHAT_STORAGE_KEY = 'agri_chat_history_v2';
+    const CHAT_STORAGE_KEY = 'agri_mitra_chat_history_v1';
 
     function showToast(msg, duration = 2500) {
         const t = document.getElementById('toastNotice');
@@ -754,11 +772,13 @@
         document.getElementById('loadingOverlay').style.display = 'none';
     }
 
+    // Dynamic Language Selector Handler
     function handleLanguageChange(lang) {
         currentLanguage = lang;
-        showToast(lang === 'hi' ? 'भाषा: हिन्दी सक्रिय' : 'Language: English Active');
+        showToast(lang === 'hi' ? 'भाषा: हिन्दी सक्रिय (100% Hindi Response)' : 'Language: English Active (100% English Response)');
     }
 
+    // Dismiss Dropdown on Outside Click
     document.addEventListener('click', (e) => {
         const menu = document.getElementById('userMenu');
         const profileRing = document.getElementById('btnProfileRing');
@@ -791,6 +811,7 @@
         document.getElementById('featureLockModal').style.display = 'none';
     }
 
+    // Attachment Limit: Max 2 Files, Images & PDF only, Max 10MB each
     function handleFileSelected(event) {
         const files = Array.from(event.target.files);
         if (!files.length) return;
@@ -831,6 +852,7 @@
         document.getElementById('attachmentChip').style.display = 'none';
     }
 
+    // 24-Hour Rolling Local Storage
     function cleanAndLoadLocalHistory() {
         try {
             const raw = localStorage.getItem(CHAT_STORAGE_KEY);
@@ -980,8 +1002,7 @@
             currentUserPlan = plan;
             isUserPaidActive = data.is_paid_active || false;
 
-            // Welcome Offer Eligibility Rule:
-            // Only show welcome modal & banner if user has NOT claimed yet AND does NOT have an active paid plan!
+            // Welcome Offer Eligibility Check
             const isWelcomeEligible = (!data.is_trial_claimed) && (!isUserPaidActive) && (plan === 'free');
             if (isWelcomeEligible) {
                 const wCredits = (sc && sc.welcome_credits) || 10;
@@ -1058,7 +1079,6 @@
     }
     function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
 
-    // Instant Coupon Visual Feedback
     function applyCouponFeedback() {
         const val = (document.getElementById('couponInput').value || '').trim().toUpperCase();
         const msgEl = document.getElementById('couponFeedbackMsg');
@@ -1079,32 +1099,36 @@
         }
     }
 
+    // Load Last 3 Months Payment History with Buy Date & Expiry Date
     async function loadPaymentHistory() {
         if (!currentUser) return;
         const container = document.getElementById('historyListContainer');
-        container.innerHTML = '<p style="color:#64748b; font-size:12px;">लेनदेन लोड हो रहे हैं...</p>';
+        container.innerHTML = '<p style="color:#64748b; font-size:12px;">विगत 3 माह के लेनदेन लोड हो रहे हैं...</p>';
 
         try {
-            const { data, error } = await supabaseClient
-                .from('credit_transactions')
-                .select('*')
-                .eq('user_id', currentUser.id)
-                .order('created_at', { ascending: false });
+            const res = await apiRequest('/payment-history?user_id=' + currentUser.id);
+            const data = await res.json();
+            const txs = data.transactions || [];
 
-            if (error || !data || data.length === 0) {
-                container.innerHTML = '<p style="color:#64748b; font-size:12px; text-align:center; padding:20px 0;">कोई पूर्व लेनदेन रिकॉर्ड नहीं मिला।</p>';
+            if (txs.length === 0) {
+                container.innerHTML = '<p style="color:#64748b; font-size:12px; text-align:center; padding:20px 0;">विगत 3 माह में कोई लेनदेन रिकॉर्ड नहीं मिला।</p>';
                 return;
             }
 
             let html = '';
-            data.forEach(t => {
-                const dateStr = formatPreciseDate(t.created_at);
-                const amt = t.amount_paid == 0 ? 'मुफ़्त (कूपन)' : '₹' + t.amount_paid;
+            txs.forEach(t => {
+                const buyDate = formatPreciseDate(t.created_at);
+                const expDate = formatPreciseDate(t.expires_at);
+                const amt = t.amount_paid == 0 ? 'मुफ़्त (VIP कूपन)' : '₹' + t.amount_paid;
                 html += `
                     <div class="history-item">
                         <div>
-                            <b style="font-size:13px; color:#1e293b;">${t.credits_added} क्रेडिट्स पैक</b><br>
-                            <span class="history-date">${dateStr} • ID: ${t.payment_id ? t.payment_id.substring(0, 16) : 'N/A'}...</span>
+                            <b style="font-size:13px; color:#1e293b;">${t.plan_name || (t.credits_added + ' क्रेडिट्स')}</b><br>
+                            <span class="history-date">
+                                📅 <b>खरीद:</b> ${buyDate}<br>
+                                ⏳ <b>वैधता:</b> ${expDate}<br>
+                                🆔 ID: ${t.payment_id ? t.payment_id.substring(0, 18) : 'FREE'}
+                            </span>
                         </div>
                         <div style="text-align:right;">
                             <div class="history-amount">${amt}</div>
@@ -1133,7 +1157,6 @@
         document.getElementById('policyContent').innerHTML = (typeof policyDocs !== 'undefined' && policyDocs[t]) ? policyDocs[t] : '<p>विवरण लोड हो रहा है...</p>';
     }
 
-    // Claim Welcome Free Credits
     async function claimWelcomeCredits() {
         if (!currentUser) return;
         showSpinner("स्वागत क्रेडिट्स सक्रिय हो रहे हैं...");
@@ -1207,7 +1230,7 @@
         }
     }
 
-    // Direct Payment vs Coupon Flow
+    // Direct Payment Flow with Unique Fresh Order Creation
     async function initiatePayment(planId) {
         if (!currentUser) return;
         const couponVal = (document.getElementById('couponInput').value || '').trim();
@@ -1265,7 +1288,7 @@
                 key: ordData.key_id,
                 amount: ordData.amount,
                 currency: "INR",
-                name: "Agri Assistant",
+                name: "Agri Mitra",
                 description: planId.toUpperCase() + " Credit Pack",
                 order_id: ordData.order_id,
                 handler: async function (response) {
@@ -1290,12 +1313,15 @@
                     }
                 },
                 prefill: {
-                    name: currentUser.user_metadata.full_name,
-                    email: currentUser.email
+                    name: currentUser.user_metadata.full_name || '',
+                    email: currentUser.email || ''
                 },
                 theme: { color: "#008069" }
             };
             const rzp = new Razorpay(options);
+            rzp.on('payment.failed', function (resp) {
+                alert("भुगतान विफल रहा: " + (resp.error.description || "त्रुटि"));
+            });
             rzp.open();
         } catch(e) {
             hideSpinner();
@@ -1315,10 +1341,15 @@
         }
     }
 
+    // Modern Virtual Keyboard Smooth Glide using visualViewport
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', () => {
-            document.getElementById('appFrame').style.height = window.visualViewport.height + 'px';
-            toBottom();
+            const vHeight = window.visualViewport.height;
+            document.getElementById('appFrame').style.height = `${vHeight}px`;
+            setTimeout(toBottom, 50);
+        });
+        window.visualViewport.addEventListener('scroll', () => {
+            window.scrollTo(0, 0);
         });
     }
 
@@ -1339,7 +1370,7 @@
     }
 
     function shareOnWhatsApp(text) {
-        const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text + '\n\n— Agri Assistant')}`;
+        const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text + '\n\n— Agri Mitra (कृषि मित्र)')}`;
         window.open(url, '_blank');
     }
 
@@ -1362,26 +1393,39 @@
         return rowId;
     }
 
+    // WhatsApp Meta AI style Bot Bubble (Header Badge + Compact Action Pills)
     function renderBotBubbleDirect(innerHtml, time, isLatest = false, rawForCopy = '') {
-        document.querySelectorAll('.transient-action-bar').forEach(el => el.remove());
+        document.querySelectorAll('.meta-action-bar').forEach(el => el.remove());
 
         let actionsHtml = '';
         if (isLatest && rawForCopy) {
             const escaped = rawForCopy.replace(/'/g, "\\'").replace(/\n/g, ' ');
             actionsHtml = `
-                <div class="transient-action-bar">
-                    <button class="icon-action-btn" onclick="copyAnswer('${escaped}')" title="कॉपी करें">
-                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                    </button>
-                    <button class="icon-action-btn" onclick="shareOnWhatsApp('${escaped}')" title="WhatsApp पर साझा करें" style="color:#008069;">
-                        <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.587 1.961.954 3.031.954 3.179 0 5.765-2.587 5.767-5.766.001-3.187-2.575-5.77-5.767-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.072-2.18-.544-1.636-.677-2.735-2.343-2.825-2.459-.09-.115-.657-.872-.657-1.66 0-.788.414-1.174.559-1.332.144-.158.315-.198.42-.198.106 0 .211.002.304.007.098.005.23-.037.36.275.144.344.488 1.192.531 1.28.043.088.072.19.014.305-.058.115-.087.188-.173.289l-.26.309c-.087.09-.178.188-.077.362.102.175.452.745.97 1.206.669.596 1.232.781 1.406.868.174.088.276.077.378-.04.103-.116.438-.51.555-.685.118-.175.235-.146.395-.088.16.058 1.016.479 1.191.566.175.088.291.132.334.204.043.073.043.424-.101.829z"/></svg>
-                    </button>
+                <div class="meta-action-bar">
+                    <span class="ai-gen-label">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="#008069"><path d="M7.5 5.6L5 7l1.4-2.5L5 2l2.5 1.4L10 2 8.6 4.5 10 7 7.5 5.6zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14l-2.5 1.4zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5L22 2z"/></svg>
+                        AI Generated
+                    </span>
+                    <div class="action-pills-group">
+                        <button class="action-pill-btn" onclick="copyAnswer('${escaped}')" title="कॉपी करें">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                            <span>Copy</span>
+                        </button>
+                        <button class="action-pill-btn" onclick="shareOnWhatsApp('${escaped}')" title="WhatsApp पर साझा करें">
+                            <svg width="12" height="12" fill="#008069" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.587 1.961.954 3.031.954 3.179 0 5.765-2.587 5.767-5.766.001-3.187-2.575-5.77-5.767-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.072-2.18-.544-1.636-.677-2.735-2.343-2.825-2.459-.09-.115-.657-.872-.657-1.66 0-.788.414-1.174.559-1.332.144-.158.315-.198.42-.198.106 0 .211.002.304.007.098.005.23-.037.36.275.144.344.488 1.192.531 1.28.043.088.072.19.014.305-.058.115-.087.188-.173.289l-.26.309c-.087.09-.178.188-.077.362.102.175.452.745.97 1.206.669.596 1.232.781 1.406.868.174.088.276.077.378-.04.103-.116.438-.51.555-.685.118-.175.235-.146.395-.088.16.058 1.016.479 1.191.566.175.088.291.132.334.204.043.073.043.424-.101.829z"/></svg>
+                            <span>Share</span>
+                        </button>
+                    </div>
                 </div>`;
         }
 
         const bHtml = `
             <div class="msg-row bot">
                 <div class="bubble bot-bubble">
+                    <div class="bubble-meta-header">
+                        <span class="meta-sparkle">🌾</span>
+                        <span>Agri Mitra AI</span>
+                    </div>
                     ${innerHtml}
                     <div class="bubble-meta">
                         <span>${time}</span>
@@ -1398,7 +1442,7 @@
         if (!text && !selectedAttachments.length) return;
         if (!currentUser) { alert('कृपया पहले Google से लॉगिन करें।'); return; }
 
-        document.querySelectorAll('.transient-action-bar').forEach(el => el.remove());
+        document.querySelectorAll('.meta-action-bar').forEach(el => el.remove());
 
         const sendBtn = document.getElementById('sendBtnEl');
         sendBtn.classList.add('flying-anim');
