@@ -1,6 +1,7 @@
 import os
 import hmac
 import hashlib
+from datetime import datetime, timedelta
 from fastapi import HTTPException
 import razorpay
 
@@ -9,14 +10,21 @@ RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "")
 
 rz_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)) if (RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET) else None
 
+# Simplified 2-Plan Monthly Subscription Structure
 PLANS = {
-    "p5": {"amount": 500, "credits": 5, "name": "₹5 (5 Credits)"},
-    "p30": {"amount": 3000, "credits": 50, "name": "₹30 (50 Credits)"},
-    "p50": {"amount": 5000, "credits": 100, "name": "₹50 (100 Credits)"},
-    "p150": {"amount": 15000, "credits": 500, "name": "₹150 (500 Credits)"}
+    "basic": {
+        "amount": 4900,         # ₹49 (in paise)
+        "daily_limit": 15,
+        "name": "Basic Plan (15 Sawal/Din)"
+    },
+    "pro": {
+        "amount": 9900,         # ₹99 (in paise)
+        "daily_limit": 50,
+        "name": "Pro Plan (50 Sawal/Din)"
+    }
 }
 
-def validate_and_apply_coupon(coupon_code: str, plan_id: str, supabase):
+def validate_coupon(coupon_code: str, plan_id: str, supabase):
     if not coupon_code:
         return 0, None
         
@@ -24,14 +32,14 @@ def validate_and_apply_coupon(coupon_code: str, plan_id: str, supabase):
     res = supabase.table("coupons").select("*").eq("code", code).eq("is_active", True).execute()
     
     if not res.data:
-        raise HTTPException(status_code=400, detail="Amanavanya (Invalid) Coupon Code.")
+        raise HTTPException(status_code=400, detail="अमान्य (Invalid) कूपन कोड।")
         
     c = res.data[0]
     if c["used_count"] >= c["max_uses"]:
-        raise HTTPException(status_code=400, detail="Yeh coupon expire ho chuka hai.")
+        raise HTTPException(status_code=400, detail="यह कूपन समाप्त (Expired) हो चुका है।")
         
-    if plan_id not in c["allowed_plans"]:
-        raise HTTPException(status_code=400, detail="Yeh coupon is plan par laagu nahi hai.")
+    if plan_id not in c.get("allowed_plans", []):
+        raise HTTPException(status_code=400, detail="यह कूपन इस प्लान पर मान्य नहीं है।")
         
     return c["discount_percent"], code
 
@@ -40,14 +48,13 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
         raise HTTPException(status_code=400, detail="Invalid plan selected.")
         
     base_amount = PLANS[plan_id]["amount"]
-    discount_pct, valid_code = validate_and_apply_coupon(coupon_code, plan_id, supabase)
-    
+    discount_pct, valid_code = validate_coupon(coupon_code, plan_id, supabase)
     final_amount = int(base_amount * (1 - (discount_pct / 100)))
 
-    # Agar 100% discount hai (VIP coupon) toh Razorpay ki zarurat nahi
+    # 100% Free VIP Coupon flow
     if final_amount == 0:
         return {
-            "order_id": f"free_{user_id[:8]}_{int(os.times()[4])}",
+            "order_id": f"free_{user_id[:8]}_{int(datetime.utcnow().timestamp())}",
             "amount": 0,
             "is_free": True,
             "key_id": RAZORPAY_KEY_ID,
@@ -55,7 +62,7 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
         }
 
     if not rz_client:
-        raise HTTPException(status_code=500, detail="Razorpay credentials missing on server.")
+        raise HTTPException(status_code=500, detail="Razorpay credentials Vercel me missing hain.")
 
     order = rz_client.order.create({
         "amount": final_amount,
@@ -73,14 +80,17 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
     }
 
 def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: str, plan_id: str, coupon_code: str, supabase):
+    if plan_id not in PLANS:
+        raise HTTPException(status_code=400, detail="Plan valid nahi hai.")
+
     plan = PLANS[plan_id]
-    credits_to_add = plan["credits"]
+    new_daily_limit = plan["daily_limit"]
     
-    # 1. Free plan verification
+    # 1. VIP Free verification
     if order_id.startswith("free_"):
-        discount_pct, valid_code = validate_and_apply_coupon(coupon_code, plan_id, supabase)
+        discount_pct, _ = validate_coupon(coupon_code, plan_id, supabase)
         if discount_pct != 100:
-            raise HTTPException(status_code=400, detail="Fraudulent free transaction attempt.")
+            raise HTTPException(status_code=400, detail="Invalid free activation.")
     else:
         # 2. Razorpay Signature Verification
         msg = f"{order_id}|{payment_id}"
@@ -90,27 +100,24 @@ def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: s
             hashlib.sha256
         ).hexdigest()
         if expected_sig != signature:
-            raise HTTPException(status_code=400, detail="Signature verification failed.")
+            raise HTTPException(status_code=400, detail="भुगतान सत्यापन (Signature) विफल रहा।")
 
-    # 3. Add Credits
-    user_res = supabase.table("user_profiles").select("extra_purchased_credits").eq("id", user_id).single().execute()
-    curr = user_res.data.get("extra_purchased_credits", 0) if user_res.data else 0
-
+    # 3. Update User Plan for 30 Days
+    new_expiry = (datetime.utcnow() + timedelta(days=30)).isoformat()
     supabase.table("user_profiles").update({
-        "extra_purchased_credits": curr + credits_to_add
+        "plan_type": plan_id,
+        "daily_credits_limit": new_daily_limit,
+        "plan_expires_at": new_expiry
     }).eq("id", user_id).execute()
 
-    # 4. Update Coupon Counter & Log
-    if coupon_code:
-        supabase.rpc("increment_coupon_use", {"coupon_code": coupon_code.upper()}).execute()
-
+    # 4. Log Transaction
     supabase.table("credit_transactions").insert({
         "user_id": user_id,
         "order_id": order_id,
-        "payment_id": payment_id or "FREE_COUPON",
+        "payment_id": payment_id or "VIP_COUPON",
         "amount_paid": 0 if order_id.startswith("free_") else plan["amount"] / 100,
-        "credits_added": credits_to_add,
+        "credits_added": new_daily_limit,
         "status": "success"
     }).execute()
 
-    return {"status": "success", "credits_added": credits_to_add}
+    return {"status": "success", "daily_limit": new_daily_limit}
