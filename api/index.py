@@ -8,7 +8,6 @@ from supabase import create_client, Client
 from google import genai
 from google.genai import types
 
-# Robust Import for Vercel Serverless
 try:
     from api.payments import process_order, verify_and_credit
 except ImportError:
@@ -31,7 +30,6 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if (SUPABASE_URL and SUPABASE_KEY) else None
 client: genai.Client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
-# Rate limiter
 rate_limit_records = {}
 
 def apply_rate_limit(client_ip: str):
@@ -42,17 +40,9 @@ def apply_rate_limit(client_ip: str):
     recent = [t for t in rate_limit_records[client_ip] if t > minute_window]
     rate_limit_records[client_ip] = recent
     if len(recent) >= 7:
-        raise HTTPException(status_code=429, detail="आपने 1 मिनट में सीमा (7 सवाल) पार कर दी है। कृपया 1 मिनट प्रतीक्षा करें।")
+        raise HTTPException(status_code=429, detail="आपने 1 मिनट में सीमा पार कर दी है। कृपया 1 मिनट प्रतीक्षा करें।")
     rate_limit_records[client_ip].append(now)
 
-def get_system_prompt():
-    p = os.path.join(os.path.dirname(__file__), "system_prompt.txt")
-    if os.path.exists(p):
-        with open(p, "r", encoding="utf-8") as f:
-            return f.read().strip()
-    return "Aap ek Krishi Sahayak hain. Devnagari Hindi me sankshipt, satik aur vyavharik uttar dein."
-
-# Models
 class QueryReq(BaseModel):
     query: str
     user_id: str
@@ -83,7 +73,7 @@ class VerifyPaymentReq(BaseModel):
     plan_id: str
     coupon_code: str = ""
 
-# 1. Chat API (Dual Routing for Vercel)
+# 1. Chat API (Meta AI Adaptive Intent Handling)
 @app.post("/api/ask")
 @app.post("/ask")
 async def ask_endpoint(req: QueryReq, request: Request):
@@ -103,7 +93,7 @@ async def ask_endpoint(req: QueryReq, request: Request):
     if profile.get("status") == "banned":
         raise HTTPException(status_code=403, detail="आपका खाता ब्लॉक कर दिया गया है।")
 
-    # Check Plan Expiration
+    # Expiry Check
     if profile.get("plan_expires_at"):
         exp = datetime.fromisoformat(profile["plan_expires_at"].replace("Z", "+00:00"))
         if datetime.now(exp.tzinfo) > exp:
@@ -111,19 +101,32 @@ async def ask_endpoint(req: QueryReq, request: Request):
 
     daily_limit = profile.get("daily_credits_limit") or 0
     if daily_limit <= 0:
-        raise HTTPException(status_code=402, detail="आपके पास कोई सक्रिय प्लान नहीं है। कृपया 7-दिवसीय फ्री ट्रायल क्लेम करें या प्लान चुनें।")
+        raise HTTPException(status_code=402, detail="कोई सक्रिय प्लान नहीं है। कृपया 7-दिन का फ्री ट्रायल क्लेम करें।")
 
-    today = date.today().isoformat()
+    # IST Date calculation
+    today_ist = (datetime.utcnow() + timedelta(hours=5, minutes=30)).date().isoformat()
     daily_used = profile.get("daily_credits_used", 0)
 
-    if profile.get("last_reset_date") != today:
+    if profile.get("last_reset_date") != today_ist:
         daily_used = 0
-        supabase.table("user_profiles").update({"daily_credits_used": 0, "last_reset_date": today}).eq("id", req.user_id).execute()
+        supabase.table("user_profiles").update({"daily_credits_used": 0, "last_reset_date": today_ist}).eq("id", req.user_id).execute()
 
     if daily_used >= daily_limit:
         raise HTTPException(status_code=402, detail=f"आज का दैनिक कोटा ({daily_limit} सवाल) समाप्त हो गया है।")
 
     user_query = req.query.strip()
+    clean_q = user_query.lower()
+
+    # Meta AI Simple Greeting Intent Handler
+    greetings = ["hello", "hi", "namaste", "pranam", "hey", "नमस्ते", "प्रणाम", "राम राम"]
+    if clean_q in greetings:
+        return {
+            "answer": "नमस्ते किसान भाई! 🙏 बताइए, आज फसल या प्राकृतिक खेती से संबंधित क्या जानकारी चाहिए?",
+            "sources": [],
+            "daily_limit": daily_limit,
+            "daily_used": daily_used # Greeting par quota nahi katega
+        }
+
     try:
         emb_res = client.models.embed_content(
             model="models/gemini-embedding-001",
@@ -150,12 +153,20 @@ async def ask_endpoint(req: QueryReq, request: Request):
                 "video_url": f"https://www.youtube.com/watch?v={m['video_id']}&t={m['start_seconds']}s"
             })
 
-        base_prompt = get_system_prompt()
-        full_prompt = f"{base_prompt}\n\nSandarbh:\n{context_text}\n\nSawal: {user_query}\n\nUttar:"
+        system_prompt = f"""
+        Aap ek Krishi Sahayak hain. Kisan ke sawal ka vyavharik, point-to-point aur spasht Devnagari Hindi me uttar dein.
+        Bina puche atirikt bhashan na dein. Jitna pucha gaya hai, utna hi 3-4 kramik points me batayein.
+        
+        Sandarbh:
+        {context_text}
+        
+        Sawal:
+        {user_query}
+        """
 
         response = client.models.generate_content(
             model="gemini-3.1-flash-lite",
-            contents=full_prompt,
+            contents=system_prompt,
             config=types.GenerateContentConfig(temperature=0.2)
         )
         answer_text = response.text
@@ -164,7 +175,7 @@ async def ask_endpoint(req: QueryReq, request: Request):
         print(f"Chat error: {e}")
         raise HTTPException(status_code=500, detail="उत्तर तैयार करने में समस्या आई। कोई क्रेडिट नहीं काटा गया।")
 
-    # Safe deduct only on success
+    # Deduct credit only on successful response delivery
     supabase.table("user_profiles").update({"daily_credits_used": daily_used + 1}).eq("id", req.user_id).execute()
 
     return {
@@ -174,7 +185,7 @@ async def ask_endpoint(req: QueryReq, request: Request):
         "daily_used": daily_used + 1
     }
 
-# 2. Universal Support API with Priority Auto-tagging
+# 2. Universal Support API -> public.user_queries
 @app.post("/api/request-approval")
 @app.post("/request-approval")
 async def support_endpoint(req: SupportReq):
@@ -184,7 +195,7 @@ async def support_endpoint(req: SupportReq):
     elif req.user_plan == "basic":
         assigned_priority = "medium"
 
-    supabase.table("support_requests").insert({
+    supabase.table("user_queries").insert({
         "user_id": req.user_id,
         "name": req.name,
         "email": req.email,
@@ -197,7 +208,7 @@ async def support_endpoint(req: SupportReq):
     
     return {"status": "success", "priority": assigned_priority}
 
-# 3. Claim 7 Days Free Trial API
+# 3. Claim 7 Days Free Trial (Strict IST Midnight Cutoff on 7th Day)
 @app.post("/api/claim-trial")
 @app.post("/claim-trial")
 async def claim_trial(req: ClaimTrialReq):
@@ -209,12 +220,13 @@ async def claim_trial(req: ClaimTrialReq):
     if user.get("is_trial_claimed"):
         raise HTTPException(status_code=400, detail="आप पहले ही 7 दिन का फ्री ट्रायल ले चुके हैं।")
 
-    now = datetime.utcnow()
-    trial_expiry = (now + timedelta(days=7)).isoformat()
+    # Activation day counts as Day 1. Expires exactly at 11:59:59 PM IST on Day 7 (18:29:59 UTC).
+    now_utc = datetime.utcnow()
+    trial_expiry = (now_utc + timedelta(days=6)).replace(hour=18, minute=29, second=59).isoformat() + "Z"
 
     supabase.table("user_profiles").update({
         "is_trial_claimed": True,
-        "trial_claimed_at": now.isoformat(),
+        "trial_claimed_at": now_utc.isoformat(),
         "plan_type": "basic",
         "daily_credits_limit": 15,
         "plan_expires_at": trial_expiry
@@ -248,7 +260,7 @@ async def user_stats(user_id: str):
         "eligible_for_trial": eligible_for_trial
     }
 
-# 5. Payment Order & Verify Endpoints
+# 5. Payment Order & Verify
 @app.post("/api/create-order")
 @app.post("/create-order")
 async def create_order_endpoint(req: OrderReq):
