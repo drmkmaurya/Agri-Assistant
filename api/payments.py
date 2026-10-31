@@ -62,15 +62,19 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
             "applied_coupon": valid_code
         }
 
-    if not rz_client:
-        raise HTTPException(status_code=500, detail="Razorpay credentials Vercel me missing hain.")
+    if not rz_client or not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
+        raise HTTPException(status_code=500, detail="Razorpay credentials Vercel Environment Variables me missing hain.")
 
-    order = rz_client.order.create({
-        "amount": final_amount,
-        "currency": "INR",
-        "receipt": f"rcpt_{user_id[:8]}",
-        "notes": {"user_id": user_id, "plan_id": plan_id, "coupon": valid_code or ""}
-    })
+    try:
+        order = rz_client.order.create({
+            "amount": final_amount,
+            "currency": "INR",
+            "receipt": f"rcpt_{user_id[:8]}_{int(time.time())}"[:40],
+            "notes": {"user_id": str(user_id), "plan_id": str(plan_id), "coupon": str(valid_code or "")}
+        })
+    except Exception as rz_err:
+        print(f"Razorpay Order Creation Failed: {rz_err}")
+        raise HTTPException(status_code=400, detail=f"Razorpay Order Error: {str(rz_err)}")
 
     return {
         "order_id": order["id"],
@@ -79,7 +83,6 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
         "key_id": RAZORPAY_KEY_ID,
         "applied_coupon": valid_code
     }
-
 def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: str, plan_id: str, coupon_code: str, supabase):
     if plan_id not in PLANS:
         raise HTTPException(status_code=400, detail="अमान्य प्लान।")
