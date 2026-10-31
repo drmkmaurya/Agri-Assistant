@@ -1088,7 +1088,10 @@
     }
 
     async function initiatePayment(planId) {
-        if (!currentUser) return;
+        if (!currentUser) {
+            alert('कृपया पहले लॉगिन करें।');
+            return;
+        }
         const couponVal = (document.getElementById('couponInput').value || '').trim();
 
         showSpinner("ऑर्डर तैयार हो रहा है...");
@@ -1104,15 +1107,24 @@
             });
 
             hideSpinner();
+
+            // Handle non-200 safely
             if (!ordRes.ok) {
-                const errData = await ordRes.json();
-                alert(errData.detail || 'ऑर्डर तैयार करने में समस्या आई।');
+                let errText = "Error " + ordRes.status;
+                try {
+                    const errData = await ordRes.json();
+                    errText = errData.detail || errText;
+                } catch(e) {
+                    errText = await ordRes.text();
+                }
+                alert("ऑर्डर त्रुटि: " + errText);
                 return;
             }
 
             const ordData = await ordRes.json();
             closePricing();
 
+            // Free VIP Coupon Bypass
             if (ordData.is_free) {
                 showSpinner("VIP कूपन सक्रिय हो रहा है...");
                 const vRes = await apiRequest('/verify-payment', {
@@ -1134,6 +1146,13 @@
                 return;
             }
 
+            // Check Razorpay Key
+            if (!ordData.key_id) {
+                alert("Razorpay Key ID सर्वर पर उपलब्ध नहीं है। Vercel Environment Variables जांचें।");
+                return;
+            }
+
+            // Razorpay Checkout Popup
             const options = {
                 key: ordData.key_id,
                 amount: ordData.amount,
@@ -1163,17 +1182,22 @@
                     }
                 },
                 prefill: {
-                    name: currentUser.user_metadata.full_name,
-                    email: currentUser.email
+                    name: currentUser.user_metadata.full_name || '',
+                    email: currentUser.email || ''
                 },
                 theme: { color: "#008069" }
             };
+
             const rzp = new Razorpay(options);
+            rzp.on('payment.failed', function (resp) {
+                alert("भुगतान विफल रहा: " + (resp.error.description || "त्रुटि"));
+            });
             rzp.open();
+
         } catch(e) {
             hideSpinner();
             console.error("Payment initiation error:", e);
-            alert('भुगतान आरंभ करने में त्रुटि आई। कृपया पुनः प्रयास करें।');
+            alert("भुगतान आरंभ करने में समस्या आई: " + (e.message || e));
         }
     }
 
