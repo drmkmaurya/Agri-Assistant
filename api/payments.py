@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException
 import razorpay
 
+# Razorpay credentials with whitespace auto-trimming
 RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID", "").strip()
 RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "").strip()
 
@@ -83,10 +84,10 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
         }
 
     if not rz_client or not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
-        raise HTTPException(status_code=500, detail="Razorpay credentials Vercel Environment Variables me missing ya galat hain.")
+        raise HTTPException(status_code=500, detail="Razorpay credentials Vercel Environment Variables में अनुपलब्ध या अमान्य हैं।")
 
     try:
-        # Unique receipt ID per attempt to prevent "order is already paid" error
+        # Millisecond-based unique receipt to prevent "order is already paid" error
         unique_receipt = f"rc_{user_id[:6]}_{int(time.time()*1000)}"[:40]
         order = rz_client.order.create({
             "amount": final_amount,
