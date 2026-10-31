@@ -122,7 +122,7 @@
 
         /* Video Clips */
         .sources-wrapper { margin-top: 10px; padding-top: 8px; border-top: 1px dashed #d1d7db; }
-        .sources-title { font-size: 12px; font-weight: 600; color: #008069; margin-bottom: 6px; }
+        .sources-title { font-size: 12px; font-weight: 600; color: #075e54; margin-bottom: 6px; }
         .clip-card {
             display: block; background: #f8fafc; border: 1px solid #e2e8f0;
             border-radius: 8px; padding: 8px 10px; margin-top: 6px; text-decoration: none;
@@ -138,7 +138,7 @@
             margin-top: 6px; padding-top: 4px;
         }
         .icon-btn { background: none; border: none; cursor: pointer; color: #64748b; display: flex; padding: 4px; }
-        .icon-btn:hover { color: #008069; }
+        .icon-btn:hover { color: #075e54; }
 
         .chips-box { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
         .chip {
@@ -212,16 +212,43 @@
         .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .price-box {
             border: 1.5px solid #bbf7d0; background: #f0fdf4; padding: 12px;
-            border-radius: 10px; text-align: center; cursor: pointer;
+            border-radius: 10px; text-align: center; cursor: pointer; transition: all 0.2s;
         }
-        .price-box.popular { border-color: #008069; background: #e6fffa; }
+        .price-box:hover { border-color: #075e54; background: #e6fffa; }
         .price-val { font-size: 18px; font-weight: bold; color: #075e54; }
         .credits-val { font-size: 12px; color: #166534; margin-top: 4px; }
+
+        /* Coupon Field */
+        .coupon-wrapper {
+            margin-top: 14px;
+            padding: 10px;
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 8px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .coupon-input {
+            flex: 1;
+            border: 1px solid #cbd5e1;
+            padding: 7px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            text-transform: uppercase;
+            font-weight: 600;
+            outline: none;
+        }
+        .coupon-hint {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 5px;
+        }
 
         /* Tab Header */
         .tab-headers { display: flex; border-bottom: 1px solid #e2e8f0; background: #f8fafc; overflow-x: auto; }
         .tab-btn { flex: 1; padding: 10px 6px; font-size: 11px; border: none; background: none; cursor: pointer; color: #64748b; white-space: nowrap; }
-        .tab-btn.active { color: #008069; font-weight: bold; border-bottom: 2px solid #008069; background: #fff; }
+        .tab-btn.active { color: #075e54; font-weight: bold; border-bottom: 2px solid #075e54; background: #fff; }
 
         /* Login Screen */
         .auth-screen {
@@ -319,7 +346,7 @@
     </div>
 </div>
 
-<!-- Modal 1: Pricing / Buy Credits -->
+<!-- Modal 1: Pricing / Buy Credits with Coupon Support -->
 <div class="modal-overlay" id="pricingModal">
     <div class="modal-card">
         <div class="modal-header">
@@ -327,7 +354,7 @@
             <button class="modal-close" onclick="closePricing()">✕</button>
         </div>
         <div class="modal-body">
-            <p>अपनी सुविधानुसार पैक चुनें (तत्काल सक्रिय):</p>
+            <p>अपनी सुविधानुसार पैक चुनें:</p>
             <div class="pricing-grid">
                 <div class="price-box" onclick="initiatePayment('p5')">
                     <div class="price-val">₹5</div>
@@ -337,7 +364,7 @@
                     <div class="price-val">₹30</div>
                     <div class="credits-val">50 क्रेडिट्स</div>
                 </div>
-                <div class="price-box popular" onclick="initiatePayment('p50')">
+                <div class="price-box" onclick="initiatePayment('p50')">
                     <div class="price-val">₹50</div>
                     <div class="credits-val">100 क्रेडिट्स</div>
                 </div>
@@ -346,6 +373,11 @@
                     <div class="credits-val">500 क्रेडिट्स</div>
                 </div>
             </div>
+
+            <div class="coupon-wrapper">
+                <input type="text" id="couponCodeInput" class="coupon-input" placeholder="कूपन कोड (उदा. VIP100)">
+            </div>
+            <p class="coupon-hint">💡 कूपन लागू करने के बाद ऊपर दिए गए किसी भी पैक पर क्लिक करें। VIP पास (100% OFF) तुरंत सक्रिय हो जाएगा।</p>
         </div>
     </div>
 </div>
@@ -354,7 +386,7 @@
 <div class="modal-overlay" id="successModal">
     <div class="modal-card" style="text-align:center; padding:25px;">
         <div style="font-size:44px;">🎉</div>
-        <h2 style="color:#008069; margin-top:8px;">भुगतान सफल!</h2>
+        <h2 style="color:#008069; margin-top:8px;">सफल रिचार्ज!</h2>
         <div id="creditRollCount" style="font-size:36px; font-weight:bold; color:#075e54; margin:12px 0;">+0</div>
         <p style="font-size:13px; color:#64748b;">क्रेडिट्स आपके खाते में सफलतापूर्वक जोड़ दिए गए हैं।</p>
         <button onclick="closeSuccessModal()" style="margin-top:16px; background:#00a884; color:#fff; border:none; padding:8px 22px; border-radius:18px; font-weight:600; cursor:pointer;">पूछना शुरू करें</button>
@@ -380,7 +412,6 @@
 </div>
 
 <script>
-    // 1. Supabase Client Setup (Paste your anon public key from screenshot)
     const SUPABASE_URL = "https://wvptpethggrslyeqsjdn.supabase.co";
     const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind2cHRwZXRoZ2dyc2x5ZXFzamRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzODAyNzUsImV4cCI6MjEwODk1NjI3NX0.XdPonPJI0XeRzwcP9hkfYwo1zowcg-SLPNLGt6_s1Qg"; 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
@@ -433,17 +464,25 @@
         m.style.display = m.style.display === 'block' ? 'none' : 'block';
     }
 
-    function openPricing() { document.getElementById('userMenu').style.display='none'; document.getElementById('pricingModal').style.display = 'flex'; }
-    function closePricing() { document.getElementById('pricingModal').style.display = 'none'; }
+    function openPricing() { 
+        document.getElementById('userMenu').style.display='none'; 
+        document.getElementById('pricingModal').style.display = 'flex'; 
+    }
+    function closePricing() { 
+        document.getElementById('pricingModal').style.display = 'none'; 
+    }
     function openPolicyModal(tab = 'terms') { 
         document.getElementById('userMenu').style.display='none'; 
         document.getElementById('policyModal').style.display = 'flex'; 
         switchTab(tab); 
     }
-    function closePolicyModal() { document.getElementById('policyModal').style.display = 'none'; }
-    function closeSuccessModal() { document.getElementById('successModal').style.display = 'none'; }
+    function closePolicyModal() { 
+        document.getElementById('policyModal').style.display = 'none'; 
+    }
+    function closeSuccessModal() { 
+        document.getElementById('successModal').style.display = 'none'; 
+    }
 
-    // External policy loader from policies.js
     function switchTab(t) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         const btn = document.getElementById(`btn-${t}`);
@@ -451,17 +490,53 @@
         document.getElementById('policyContent').innerHTML = (typeof policyDocs !== 'undefined' && policyDocs[t]) ? policyDocs[t] : '<p>विवरण लोड हो रहा है...</p>';
     }
 
+    // Razorpay + Coupon Integrated Checkout Handler
     async function initiatePayment(planId) {
         if (!currentUser) return;
+        const couponVal = (document.getElementById('couponCodeInput').value || '').trim().toUpperCase();
+
         try {
             const ordRes = await fetch('/api/create-order', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ user_id: currentUser.id, plan_id: planId })
+                body: JSON.stringify({ 
+                    user_id: currentUser.id, 
+                    plan_id: planId,
+                    coupon_code: couponVal 
+                })
             });
+
             const ordData = await ordRes.json();
+            if (!ordRes.ok) {
+                alert(ordData.detail || 'ऑर्डर बनाने में त्रुटि आई।');
+                return;
+            }
+
             closePricing();
 
+            // 1. VIP 100% Free Coupon Bypass Flow
+            if (ordData.is_free) {
+                const vRes = await fetch('/api/verify-payment', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        user_id: currentUser.id,
+                        order_id: ordData.order_id,
+                        plan_id: planId,
+                        coupon_code: couponVal
+                    })
+                });
+                const vData = await vRes.json();
+                if (vData.status === 'success') {
+                    triggerCelebration(vData.credits_added);
+                    fetchStats();
+                } else {
+                    alert('फ्री कूपन सत्यापन असफल रहा।');
+                }
+                return;
+            }
+
+            // 2. Standard Razorpay Paid Gateway Flow
             const options = {
                 key: ordData.key_id,
                 amount: ordData.amount,
@@ -478,7 +553,8 @@
                             order_id: response.razorpay_order_id,
                             payment_id: response.razorpay_payment_id,
                             signature: response.razorpay_signature,
-                            plan_id: planId
+                            plan_id: planId,
+                            coupon_code: couponVal
                         })
                     });
                     const vData = await vRes.json();
@@ -500,8 +576,9 @@
         }
     }
 
+    // Confetti Animation with Count-Up
     function triggerCelebration(credits) {
-        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        confetti({ particleCount: 110, spread: 80, origin: { y: 0.6 } });
         document.getElementById('successModal').style.display = 'flex';
         
         let count = 0;
@@ -515,7 +592,7 @@
             } else {
                 elem.textContent = `+${count}`;
             }
-        }, 40);
+        }, 35);
     }
 
     if (window.visualViewport) {
