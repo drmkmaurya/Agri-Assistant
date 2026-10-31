@@ -3,3 +3,5 @@ google-genai
 supabase
 uvicorn
 python-dotenv
+razorpay
+pydantic
