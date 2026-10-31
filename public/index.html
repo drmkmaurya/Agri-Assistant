@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
-    <title>TCBT प्राकृतिक कृषि मित्र</title>
+    <title>Agri Assistant</title>
     
-    <!-- PWA & Mobile Optimization Tags -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#008069">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -15,13 +14,16 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         
-        /* Modern Dynamic Viewport for Keyboard Fix */
+        /* Hide all scrollbars */
+        ::-webkit-scrollbar { display: none; width: 0; height: 0; }
+        * { scrollbar-width: none; -ms-overflow-style: none; }
+
         html, body {
             height: 100%;
             height: 100dvh;
             width: 100%;
             overflow: hidden;
-            background: #0c1317;
+            background: #d8deda;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             justify-content: center;
@@ -29,7 +31,7 @@
 
         .chat-app {
             width: 100%;
-            max-width: 500px;
+            max-width: 480px;
             height: 100%;
             height: 100dvh;
             display: flex;
@@ -37,9 +39,10 @@
             background: #efeae2;
             position: relative;
             overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
         }
 
-        /* Premium WhatsApp Header */
+        /* Clean Modern Header (Acupressure Assistant Style) */
         .chat-header {
             background: #008069;
             color: #ffffff;
@@ -47,7 +50,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
             z-index: 50;
             flex-shrink: 0;
         }
@@ -55,88 +58,97 @@
         .header-left {
             display: flex;
             align-items: center;
-            gap: 12px;
-        }
-
-        .dp-container {
-            position: relative;
-            width: 42px;
-            height: 42px;
+            gap: 10px;
         }
 
         .dp-avatar {
-            width: 100%;
-            height: 100%;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            background: #25d366;
+            background: #10a37f;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 22px;
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
-        }
-
-        .online-dot {
-            width: 11px;
-            height: 11px;
-            background: #00e676;
-            border: 2px solid #008069;
-            border-radius: 50%;
-            position: absolute;
-            bottom: 0;
-            right: 0;
+            font-size: 20px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
 
         .header-titles h1 {
             font-size: 16px;
             font-weight: 600;
-            letter-spacing: 0.2px;
             display: flex;
             align-items: center;
             gap: 5px;
         }
 
-        .badge-verified {
-            font-size: 13px;
-            color: #4cd964;
-        }
-
-        .header-titles p {
-            font-size: 11.5px;
+        .status-badge {
+            font-size: 11px;
             color: #d1fae5;
-            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 1px;
+        }
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            background: #22c55e;
+            border-radius: 50%;
+            display: inline-block;
         }
 
-        /* Chat Canvas & Wallpaper */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tag-pill {
+            background: rgba(255,255,255,0.15);
+            padding: 4px 9px;
+            border-radius: 12px;
+            font-size: 11px;
+            color: #ffffff;
+        }
+
+        /* Chat Canvas */
         .chat-canvas {
             flex: 1;
             overflow-y: auto;
-            padding: 14px 12px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
-            gap: 9px;
+            gap: 10px;
             background-color: #efeae2;
-            background-image: radial-gradient(#d4cbbe 1.2px, transparent 1.2px);
+            background-image: radial-gradient(#d3cbbe 1.2px, transparent 1.2px);
             background-size: 18px 18px;
             scroll-behavior: smooth;
         }
 
-        /* Message Bubbles */
-        .msg-row {
-            display: flex;
-            width: 100%;
+        .date-divider {
+            align-self: center;
+            background: #ffffff;
+            color: #54656f;
+            font-size: 11px;
+            padding: 4px 12px;
+            border-radius: 8px;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.06);
+            margin-bottom: 4px;
         }
+
+        /* Message Rows */
+        .msg-row { display: flex; width: 100%; }
         .msg-row.user { justify-content: flex-end; }
         .msg-row.bot { justify-content: flex-start; }
 
         .bubble {
-            max-width: 84%;
-            padding: 7px 11px 5px 11px;
-            border-radius: 8.5px;
-            font-size: 14.5px;
-            line-height: 1.45;
+            max-width: 86%;
+            padding: 8px 12px 6px 12px;
+            border-radius: 9px;
+            font-size: 14.2px;
+            line-height: 1.5;
             word-wrap: break-word;
-            box-shadow: 0 1px 1px rgba(0,0,0,0.13);
+            box-shadow: 0 1px 1.5px rgba(0,0,0,0.1);
             position: relative;
         }
 
@@ -159,7 +171,7 @@
             gap: 4px;
             font-size: 10px;
             color: #667781;
-            margin-top: 3px;
+            margin-top: 4px;
             float: right;
             margin-left: 10px;
         }
@@ -167,80 +179,121 @@
         .tick { font-size: 13px; color: #8696a0; }
         .tick.blue { color: #53bdeb; }
 
-        /* Media Source Buttons */
-        .sources-box {
-            margin-top: 8px;
-            padding-top: 6px;
+        /* Video Clip Cards with Hindi Summary */
+        .sources-wrapper {
+            margin-top: 10px;
+            padding-top: 8px;
             border-top: 1px dashed #d1d7db;
         }
-        .sources-box b {
-            font-size: 11.5px;
+        .sources-title {
+            font-size: 12px;
+            font-weight: 600;
             color: #008069;
+            margin-bottom: 6px;
         }
-        .video-btn {
+        .clip-card {
+            display: block;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-top: 6px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .clip-card:active { background: #f1f5f9; }
+        .clip-header {
             display: flex;
             align-items: center;
             gap: 6px;
-            background: #fdf2f2;
-            color: #dc2626;
-            text-decoration: none;
-            padding: 6px 10px;
-            border-radius: 6px;
             font-size: 12px;
             font-weight: 600;
-            margin-top: 5px;
-            border: 1px solid #fee2e2;
+            color: #dc2626;
+        }
+        .clip-summary {
+            font-size: 12px;
+            color: #475569;
+            margin-top: 3px;
+            line-height: 1.35;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
+        /* Message Actions: Copy & WhatsApp Share */
+        .msg-action-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 8px;
+            padding-top: 5px;
+            border-top: 1px solid #f1f5f9;
+        }
+        .action-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: #64748b;
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        .action-link:hover { color: #008069; }
+        .action-link.wa { color: #16a34a; font-weight: 500; }
+
         /* Suggestions Chips */
-        .chips-container {
+        .chips-box {
             display: flex;
             flex-wrap: wrap;
             gap: 6px;
             margin-top: 8px;
         }
-        .chip-btn {
+        .chip {
             background: #f0fdf4;
             color: #166534;
             border: 1px solid #bbf7d0;
-            padding: 5px 11px;
-            border-radius: 14px;
-            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11.5px;
             cursor: pointer;
             font-weight: 500;
         }
 
-        /* Plant Sprouting Animation */
+        /* Sprouting Animation Loader */
         .plant-loader-row {
             display: none;
             align-self: flex-start;
             background: #ffffff;
-            padding: 7px 14px;
+            padding: 6px 14px;
             border-radius: 16px;
             align-items: center;
             gap: 7px;
             box-shadow: 0 1px 1px rgba(0,0,0,0.1);
         }
         .plant-anim {
-            font-size: 19px;
+            font-size: 18px;
             display: inline-block;
-            animation: plantGrow 1.3s infinite ease-in-out;
+            animation: sprout 1.3s infinite ease-in-out;
         }
-        .plant-text {
+        .loader-label {
             font-size: 12px;
             color: #54656f;
-            font-weight: 500;
         }
-        @keyframes plantGrow {
+        @keyframes sprout {
             0% { transform: scale(0.85) rotate(-10deg); opacity: 0.6; }
             50% { transform: scale(1.2) rotate(10deg); opacity: 1; }
             100% { transform: scale(0.85) rotate(-10deg); opacity: 0.6; }
         }
 
-        /* Premium Input Bar (Always Keyboard Visible) */
+        /* Keyboard Safe Input Bar */
         .input-bar {
             background: #f0f2f5;
-            padding: 7px 10px;
+            padding: 6px 10px;
             display: flex;
             align-items: flex-end;
             gap: 8px;
@@ -249,7 +302,7 @@
             z-index: 100;
         }
 
-        .input-wrapper {
+        .input-box {
             flex: 1;
             background: #ffffff;
             border-radius: 20px;
@@ -264,7 +317,7 @@
             width: 100%;
             border: none;
             outline: none;
-            font-size: 15px;
+            font-size: 14.5px;
             resize: none;
             max-height: 90px;
             line-height: 20px;
@@ -275,114 +328,119 @@
         .send-btn {
             background: #00a884;
             border: none;
-            width: 42px;
-            height: 42px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            font-size: 17px;
+            font-size: 16px;
             flex-shrink: 0;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
         }
     </style>
 </head>
 <body>
 
-<div class="chat-app" id="appContainer">
+<div class="chat-app" id="appFrame">
     <!-- Header -->
     <header class="chat-header">
         <div class="header-left">
-            <div class="dp-container">
-                <div class="dp-avatar">🌱</div>
-                <div class="online-dot"></div>
-            </div>
+            <div class="dp-avatar">🌱</div>
             <div class="header-titles">
-                <h1>TCBT कृषि मित्र <span class="badge-verified">✔</span></h1>
-                <p>ताराचंद बेलजी प्राकृतिक कृषि सहायक</p>
+                <h1>Agri Assistant</h1>
+                <div class="status-badge">
+                    <span class="status-dot"></span> ऑनलाइन • प्राकृतिक कृषि सहायक
+                </div>
             </div>
+        </div>
+        <div class="header-actions">
+            <span class="tag-pill">निःशुल्क सेवा</span>
         </div>
     </header>
 
-    <!-- Message Canvas -->
+    <!-- Canvas -->
     <main class="chat-canvas" id="chatCanvas">
+        <div class="date-divider">आज</div>
         <div class="msg-row bot">
             <div class="bubble bot-bubble">
-                नमस्ते किसान भाई! 🙏<br>
-                मैं ताराचंद बेलजी जी की प्राकृतिक कृषि पाठशाला का AI सहायक हूँ। आप TCBT, पंच महाभूत, जीवामृत या 3G कटिंग से जुड़ा कोई भी सवाल पूछ सकते हैं।
+                प्रणाम किसान भाई! 🙏<br>
+                मैं आपका डिजिटल कृषि सहायक हूँ। आप प्राकृतिक खेती, पंच महाभूत संतुलन, जीवामृत या 3G कटिंग से जुड़ा कोई भी सवाल यहाँ पूछ सकते हैं।
                 <div class="meta-info"><span id="initClock"></span></div>
             </div>
         </div>
 
-        <!-- Sprouting Loader -->
         <div class="plant-loader-row" id="plantLoader">
             <span class="plant-anim">🌱</span>
-            <span class="plant-text">पौधा अंकुरित हो रहा है (समाधान खोज जारी है)...</span>
+            <span class="loader-label">समाधान खोजा जा रहा है...</span>
         </div>
     </main>
 
-    <!-- Input Footer -->
-    <footer class="input-bar" id="inputBar">
-        <div class="input-wrapper">
-            <textarea id="msgField" class="chat-input" rows="1" placeholder="यहाँ अपना सवाल लिखें..." oninput="expandInput(this)" onkeydown="detectKey(event)"></textarea>
+    <!-- Footer -->
+    <footer class="input-bar">
+        <div class="input-box">
+            <textarea id="msgField" class="chat-input" rows="1" placeholder="लक्षण या समस्या यहाँ लिखें..." oninput="autoExpand(this)" onkeydown="keyMonitor(event)"></textarea>
         </div>
-        <button class="send-btn" onclick="submitQuery()">➤</button>
+        <button class="send-btn" onclick="submitMessage()">➤</button>
     </footer>
 </div>
 
 <script>
-    // 1. PWA Service Worker Registration
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js').catch(() => {});
-        });
+        window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
     }
 
     const chatCanvas = document.getElementById('chatCanvas');
     const msgField = document.getElementById('msgField');
     const plantLoader = document.getElementById('plantLoader');
-    const appContainer = document.getElementById('appContainer');
+    const appFrame = document.getElementById('appFrame');
 
-    // 2. Keyboard Resilience Viewport Fix
+    // Visual Viewport Fix for Mobile Virtual Keyboards
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', () => {
-            appContainer.style.height = `${window.visualViewport.height}px`;
-            scrollBottom();
+            appFrame.style.height = `${window.visualViewport.height}px`;
+            toBottom();
         });
     }
 
-    function fetchClock() {
+    function nowTime() {
         return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
-    document.getElementById('initClock').textContent = fetchClock();
+    document.getElementById('initClock').textContent = nowTime();
 
-    function expandInput(el) {
+    function autoExpand(el) {
         el.style.height = 'auto';
         el.style.height = Math.min(el.scrollHeight, 90) + 'px';
     }
 
-    function detectKey(e) {
+    function keyMonitor(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            submitQuery();
+            submitMessage();
         }
     }
 
-    function scrollBottom() {
+    function toBottom() {
         chatCanvas.scrollTop = chatCanvas.scrollHeight;
     }
 
-    async function submitQuery(presetMsg = null) {
-        const text = (presetMsg || msgField.value).trim();
+    function copyAnswer(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            alert('उत्तर कॉपी हो गया है!');
+        }).catch(() => {});
+    }
+
+    async function submitMessage(customTxt = null) {
+        const text = (customTxt || msgField.value).trim();
         if (!text) return;
 
-        const time = fetchClock();
+        const time = nowTime();
         const rowId = 'usr-' + Date.now();
 
-        // User bubble
-        const userHtml = `
+        // User Message Display
+        const uHtml = `
             <div class="msg-row user" id="${rowId}">
                 <div class="bubble user-bubble">
                     ${text.replace(/\n/g, '<br>')}
@@ -392,17 +450,15 @@
                     </div>
                 </div>
             </div>`;
-        
-        plantLoader.insertAdjacentHTML('beforebegin', userHtml);
+        plantLoader.insertAdjacentHTML('beforebegin', uHtml);
         msgField.value = '';
         msgField.style.height = 'auto';
         plantLoader.style.display = 'flex';
-        scrollBottom();
+        toBottom();
 
-        // Double grey tick
         setTimeout(() => {
-            const row = document.getElementById(rowId);
-            if (row) row.querySelector('.status-tick').textContent = '✓✓';
+            const r = document.getElementById(rowId);
+            if (r) r.querySelector('.status-tick').textContent = '✓✓';
         }, 400);
 
         try {
@@ -423,58 +479,73 @@
             const data = await res.json();
             plantLoader.style.display = 'none';
 
-            // Double blue tick
-            const row = document.getElementById(rowId);
-            if (row) {
-                const tick = row.querySelector('.status-tick');
-                tick.textContent = '✓✓';
-                tick.classList.add('blue');
+            // Double Blue Tick
+            const r = document.getElementById(rowId);
+            if (r) {
+                const tk = r.querySelector('.status-tick');
+                tk.textContent = '✓✓';
+                tk.classList.add('blue');
             }
 
             if (!res.ok) {
-                renderBotBubble(data.detail || 'तकनीकी समस्या आई, कृपया पुनः प्रयास करें।');
+                renderBot(data.detail || 'तकनीकी समस्या आई, कृपया पुनः प्रयास करें।');
                 return;
             }
 
-            let parsedText = data.answer.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
-            let finalHtml = `<div>${parsedText}</div>`;
+            const rawText = data.answer.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+            let finalContent = `<div>${rawText}</div>`;
 
+            // Clip Cards with 2-line Short Summary
             if (data.sources && data.sources.length > 0) {
-                finalHtml += `<div class="sources-box"><b>📺 सटीक वीडियो क्लिप देखें:</b>`;
+                finalContent += `<div class="sources-wrapper"><div class="sources-title">📺 संदर्भ वीडियो क्लिप:</div>`;
                 data.sources.forEach(s => {
-                    finalHtml += `<a href="${s.video_url}" target="_blank" class="video-btn">▶️ [${s.duration}] ${s.title.substring(0, 32)}...</a>`;
+                    finalContent += `
+                        <a href="${s.video_url}" target="_blank" class="clip-card">
+                            <div class="clip-header">▶️ [${s.duration}] ${s.title}</div>
+                            <div class="clip-summary">${s.summary}</div>
+                        </a>`;
                 });
-                finalHtml += `</div>`;
+                finalContent += `</div>`;
             }
 
+            // Copy & WhatsApp Share Buttons
+            const shareText = encodeURIComponent(`${data.answer}\n\nस्रोतः Agri Assistant`);
+            const escapedRawForCopy = data.answer.replace(/'/g, "\\'").replace(/\n/g, " ");
+
+            finalContent += `
+                <div class="msg-action-bar">
+                    <button class="action-link" onclick="copyAnswer('${escapedRawForCopy}')">📋 कॉपी करें</button>
+                    <a href="https://api.whatsapp.com/send?text=${shareText}" target="_blank" class="action-link wa">📲 WhatsApp पर भेजें</a>
+                </div>`;
+
+            // Chips
             if (data.suggestions && data.suggestions.length > 0) {
-                finalHtml += `<div class="chips-container">`;
+                finalContent += `<div class="chips-box">`;
                 data.suggestions.forEach(sug => {
-                    finalHtml += `<button class="chip-btn" onclick="submitQuery('${sug}')">${sug}</button>`;
+                    finalContent += `<button class="chip" onclick="submitMessage('${sug}')">${sug}</button>`;
                 });
-                finalHtml += `</div>`;
+                finalContent += `</div>`;
             }
 
-            renderBotBubble(finalHtml);
+            renderBot(finalContent);
 
-        } } catch (err) {
+        } catch (err) {
             plantLoader.style.display = 'none';
-            console.error("Fetch Error:", err);
-            renderBotBubble('सर्वर से उत्तर आने में अधिक समय लग रहा है। कृपया पुनः प्रयास करें।');
+            renderBot('सर्वर से उत्तर आने में अधिक समय लग रहा है। कृपया इंटरनेट जांचकर पुनः प्रयास करें।');
         }
-        scrollBottom();
+        toBottom();
     }
 
-    function renderBotBubble(innerHtml) {
-        const botHtml = `
+    function renderBot(html) {
+        const bHtml = `
             <div class="msg-row bot">
                 <div class="bubble bot-bubble">
-                    ${innerHtml}
-                    <div class="meta-info"><span>${fetchClock()}</span></div>
+                    ${html}
+                    <div class="meta-info"><span>${nowTime()}</span></div>
                 </div>
             </div>`;
-        plantLoader.insertAdjacentHTML('beforebegin', botHtml);
-        scrollBottom();
+        plantLoader.insertAdjacentHTML('beforebegin', bHtml);
+        toBottom();
     }
 </script>
 
