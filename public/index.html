@@ -457,9 +457,10 @@
 
             renderBotBubble(finalHtml);
 
-        } catch (err) {
+        } } catch (err) {
             plantLoader.style.display = 'none';
-            renderBotBubble('नेटवर्क त्रुटि। कृपया इंटरनेट जांचकर पुनः प्रयास करें।');
+            console.error("Fetch Error:", err);
+            renderBotBubble('सर्वर से उत्तर आने में अधिक समय लग रहा है। कृपया पुनः प्रयास करें।');
         }
         scrollBottom();
     }
