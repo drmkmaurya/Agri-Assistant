@@ -38,72 +38,76 @@
 
         /* WhatsApp Header */
         .chat-header {
-            background: #008069; color: #ffffff; padding: 9px 12px;
+            background: #008069; color: #ffffff; padding: 8px 12px;
             display: flex; align-items: center; justify-content: space-between;
             box-shadow: 0 1px 3px rgba(0,0,0,0.2); z-index: 50; flex-shrink: 0;
         }
         .header-left { display: flex; align-items: center; gap: 8px; }
         .dp-avatar {
-            width: 38px; height: 38px; border-radius: 50%;
+            width: 36px; height: 36px; border-radius: 50%;
             background: #00a884; display: flex; align-items: center;
-            justify-content: center; font-size: 20px;
+            justify-content: center; font-size: 19px;
             box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25);
         }
-        .header-titles h1 { font-size: 15.5px; font-weight: 600; letter-spacing: 0.2px; }
-        .status-badge { font-size: 11px; color: #d1fae5; display: flex; align-items: center; gap: 4px; }
+        .header-titles h1 { font-size: 15px; font-weight: 600; letter-spacing: 0.2px; }
+        .status-badge { font-size: 10.5px; color: #d1fae5; display: flex; align-items: center; gap: 4px; }
         .status-dot { width: 7px; height: 7px; background: #25d366; border-radius: 50%; }
 
-        .header-right { display: flex; align-items: center; gap: 10px; }
+        .header-right { display: flex; align-items: center; gap: 8px; }
+
+        /* Language Selector Pill */
+        .lang-select-box {
+            background: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #ffffff; border-radius: 14px; padding: 3px 6px; font-size: 11px;
+            font-weight: 600; outline: none; cursor: pointer;
+        }
+        .lang-select-box option { color: #0f172a; background: #fff; }
 
         .header-quick-buy {
             background: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.3);
-            color: #ffffff; border-radius: 18px; padding: 5px 10px; font-size: 11.5px;
-            font-weight: 600; display: flex; align-items: center; gap: 5px; cursor: pointer;
+            color: #ffffff; border-radius: 18px; padding: 4px 8px; font-size: 11px;
+            font-weight: 600; display: flex; align-items: center; gap: 4px; cursor: pointer;
             transition: all 0.2s ease;
         }
         .header-quick-buy:active { transform: scale(0.95); background: rgba(255, 255, 255, 0.25); }
-        .buy-svg { width: 14px; height: 14px; fill: currentColor; }
+        .buy-svg { width: 13px; height: 13px; fill: currentColor; }
 
         .profile-ring-container {
-            position: relative; width: 42px; height: 42px;
+            position: relative; width: 40px; height: 40px;
             cursor: pointer; display: flex; align-items: center; justify-content: center;
         }
         .progress-ring { transform: rotate(-90deg); position: absolute; top: 0; left: 0; }
         .progress-ring__circle {
-            stroke: #25d366; stroke-dasharray: 125.6; stroke-dashoffset: 0;
+            stroke: #25d366; stroke-dasharray: 119.38; stroke-dashoffset: 0;
             transition: stroke-dashoffset 0.4s ease, stroke 0.4s ease;
         }
-        .user-dp { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: #fff; }
+        .user-dp { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; background: #fff; }
         
         .ring-credit-badge {
             position: absolute; bottom: -2px; right: -2px;
-            background: #008069; color: #ffffff; font-size: 8.5px; font-weight: bold;
-            padding: 1px 4px; border-radius: 8px; border: 1.5px solid #fff;
+            background: #008069; color: #ffffff; font-size: 8px; font-weight: bold;
+            padding: 1px 3.5px; border-radius: 8px; border: 1.5px solid #fff;
             box-shadow: 0 1px 2px rgba(0,0,0,0.25);
         }
 
-        .claim-trial-banner {
-            display: none; background: linear-gradient(90deg, #fef3c7, #ecfdf5);
-            border-bottom: 1.5px solid #6ee7b7; padding: 7px 12px;
-            align-items: center; justify-content: space-between; font-size: 11.5px;
-            color: #065f46; font-weight: 600;
-        }
-        .claim-btn-small {
-            background: #059669; color: #fff; border: none; padding: 4px 10px;
-            border-radius: 12px; font-size: 11px; cursor: pointer; font-weight: 600;
+        /* Super Control Announcement / Promotion Banner */
+        .promotion-banner {
+            display: none; background: linear-gradient(90deg, #fef3c7, #fef9c3);
+            border-bottom: 1.5px solid #facc15; padding: 6px 12px;
+            font-size: 11.5px; color: #854d0e; font-weight: 600; text-align: center;
         }
 
         .low-credit-banner {
             display: none; background: #fee2e2; color: #991b1b;
-            font-size: 11.5px; padding: 6px 12px; font-weight: 500;
+            font-size: 11px; padding: 6px 12px; font-weight: 500;
             justify-content: space-between; align-items: center; border-bottom: 1px solid #fecaca;
         }
         .banner-buy-btn {
             background: #dc2626; color: #fff; border: none;
-            padding: 3px 8px; border-radius: 10px; font-size: 11px; cursor: pointer;
+            padding: 2px 7px; border-radius: 10px; font-size: 10.5px; cursor: pointer;
         }
 
-        /* Light Canvas with Ultra-Dim Agri Pattern */
+        /* Canvas with Ultra-Dim Agri Pattern */
         .chat-canvas {
             flex: 1; overflow-y: auto; padding: 12px;
             display: flex; flex-direction: column; gap: 10px;
@@ -130,7 +134,6 @@
         .user-bubble { background: #d9fdd3; border-top-right-radius: 2px; color: #111b21; }
         .bot-bubble { background: #ffffff; border-top-left-radius: 2px; color: #111b21; }
 
-        /* Authentic WhatsApp Style Inline Metadata */
         .bubble-meta {
             display: inline-flex; align-items: center; gap: 3px;
             font-size: 10px; color: #667781; float: right; margin-left: 8px;
@@ -152,22 +155,17 @@
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
 
-        .msg-action-bar {
+        /* Transient WhatsApp Meta AI Style Action Icons (Visible ONLY under the latest response) */
+        .transient-action-bar {
             display: flex; align-items: center; justify-content: flex-end; gap: 12px;
-            margin-top: 6px; padding-top: 4px;
+            margin-top: 5px; padding-top: 3px;
         }
-        .icon-btn {
+        .icon-action-btn {
             background: none; border: none; cursor: pointer; color: #64748b;
-            display: flex; align-items: center; gap: 4px; padding: 3px 6px;
-            border-radius: 4px; font-size: 11px;
+            display: flex; align-items: center; justify-content: center;
+            padding: 3px; border-radius: 4px; transition: color 0.15s;
         }
-        .icon-btn:hover { background: #f1f5f9; color: #008069; }
-
-        .chips-box { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-        .chip {
-            background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;
-            padding: 4px 10px; border-radius: 12px; font-size: 11.5px; cursor: pointer; font-weight: 500;
-        }
+        .icon-action-btn:hover { color: #008069; }
 
         /* Plant Loader */
         .plant-loader-row {
@@ -232,7 +230,7 @@
 
         /* Dropdown & Modals */
         .dropdown-menu {
-            display: none; position: absolute; top: 56px; right: 12px;
+            display: none; position: absolute; top: 54px; right: 12px;
             background: #ffffff; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.18);
             width: 260px; z-index: 200; overflow: hidden; border: 1px solid #e2e8f0;
         }
@@ -313,7 +311,7 @@
         .history-badge { font-size: 10.5px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
         .badge-success { background: #dcfce7; color: #15803d; }
 
-        /* Non-Dismissible Pending Approval Screen */
+        /* Non-Dismissible Pending Screen */
         .pending-screen {
             display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: #edf5ef; z-index: 400;
@@ -345,7 +343,6 @@
             display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
-        /* Toast Notification */
         .toast-popup {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px);
             background: #008069; color: #ffffff; padding: 9px 18px; border-radius: 20px;
@@ -355,7 +352,6 @@
         }
         .toast-popup.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
-        /* Full Screen Spinner */
         .loading-overlay {
             display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(255, 255, 255, 0.7); z-index: 1500;
@@ -383,7 +379,13 @@
         </div>
         
         <div class="header-right">
-            <!-- Plan Button (No "Recharge" word) -->
+            <!-- Language Selector Dropdown -->
+            <select class="lang-select-box" id="langSelector" onchange="handleLanguageChange(this.value)" title="भाषा चुनें (Select Language)">
+                <option value="hi" selected>हिन्दी</option>
+                <option value="en">English</option>
+            </select>
+
+            <!-- Plan Button -->
             <button class="header-quick-buy" id="btnQuickBuy" onclick="openPricing()" title="प्लान विवरण एवं अपग्रेड">
                 <svg class="buy-svg" viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
                 <span>प्लान</span>
@@ -391,8 +393,8 @@
 
             <!-- Profile & Dynamic Circular Ring -->
             <div class="profile-ring-container" id="btnProfileRing" onclick="toggleMenu(event)" title="खाता व कोटा विवरण">
-                <svg class="progress-ring" width="44" height="44">
-                    <circle class="progress-ring__circle" stroke-width="3" fill="transparent" r="20" cx="22" cy="22" id="creditRing"/>
+                <svg class="progress-ring" width="40" height="40">
+                    <circle class="progress-ring__circle" stroke-width="3" fill="transparent" r="19" cx="20" cy="20" id="creditRing"/>
                 </svg>
                 <img src="https://lh3.googleusercontent.com/a/default-user=s96-c" id="userAvatar" class="user-dp" alt="Avatar">
                 <div class="ring-credit-badge" id="ringBadge">--</div>
@@ -400,25 +402,24 @@
         </div>
     </header>
 
-    <!-- Claim 7 Days Free Trial Banner -->
-    <div class="claim-trial-banner" id="claimTrialBanner">
-        <span>🎁 7 दिन का Basic Plan (15 सवाल/दिन) फ्री क्लेम करें!</span>
-        <button class="claim-btn-small" onclick="openTrialOnboardingModal()">क्लेम करें</button>
+    <!-- Super Control Announcement / Promotion Banner -->
+    <div class="promotion-banner" id="promoBanner">
+        <span id="promoBannerText">📢 विशेष कृषि सलाह एवं नए ऑफर्स!</span>
     </div>
 
     <!-- Low Credit Warning -->
     <div class="low-credit-banner" id="lowCreditBanner">
-        <span>⚠️ आज का क्रेडिट कोटा समाप्त होने वाला है!</span>
+        <span>⚠️ आपका क्रेडिट बैलेंस समाप्त होने वाला है!</span>
         <button class="banner-buy-btn" onclick="openPricing()">प्लान अपग्रेड</button>
     </div>
 
-    <!-- Dropdown Menu (With Outside Click Dismiss) -->
+    <!-- Dropdown Menu -->
     <div class="dropdown-menu" id="userMenu">
         <div class="menu-header">
             <b id="userName">किसान साथी</b><br>
-            <span style="font-size:11.5px; color:#008069; font-weight:600;" id="userPlanName">प्लान: Basic</span><br>
-            <span style="font-size:11px; color:#64748b;" id="quotaSummary">आज का उपयोग: 0 / 15</span><br>
-            <span style="font-size:10.5px; color:#059669; font-weight:500;" id="planExpiryText">वैधता: सक्रिय</span>
+            <span style="font-size:11.5px; color:#008069; font-weight:600;" id="userPlanName">प्लान: Free</span><br>
+            <span style="font-size:11px; color:#64748b;" id="quotaSummary">उपलब्ध क्रेडिट: 3</span><br>
+            <span style="font-size:10.5px; color:#059669; font-weight:500;" id="planExpiryText">वैधता: दैनिक रीसेट</span>
         </div>
         <div class="menu-item" onclick="openPricing()">💳 प्लान अपग्रेड / विवरण</div>
         <div class="menu-item" onclick="openPaymentHistoryModal()">🧾 बिल एवं भुगतान इतिहास</div>
@@ -457,7 +458,7 @@
         <!-- File Input Limited to Max 2 Files, Images & PDF only -->
         <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,application/pdf" multiple style="display:none;" onchange="handleFileSelected(event)">
 
-        <button class="attach-btn" onclick="document.getElementById('fileInput').click()" title="फोटो या PDF जोड़ें (अधिकतम 2 फाइलें, 10MB)">
+        <button class="attach-btn" onclick="triggerAttachmentPicker()" title="फोटो या PDF जोड़ें (अधिकतम 2 फाइलें, 10MB)">
             <svg class="attach-icon" viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H9v9.5a3 3 0 0 0 6 0V5a4 4 0 0 0-8 0v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
         </button>
 
@@ -484,7 +485,6 @@
                 ⚡ शीघ्र स्वीकृति हेतु संपर्क करें (Fast Approval)
             </button>
             
-            <!-- Refresh Button with 2-Click 2-Minute Cooldown Timer -->
             <div style="margin-top:14px;">
                 <button class="refresh-status-btn" id="btnRefreshStatus" onclick="handleRefreshApproval()">
                     🔄 स्थिति जांचें (Refresh Status)
@@ -517,7 +517,7 @@
     </div>
 </div>
 
-<!-- Modal 1: 2-Plan Pricing Modal with Direct Payment Support -->
+<!-- Modal 1: 2-Plan Pricing Modal (100 & 300 Credits) -->
 <div class="modal-overlay" id="pricingModal">
     <div class="modal-card">
         <div class="modal-header">
@@ -525,19 +525,19 @@
             <button class="modal-close" onclick="closePricing()">✕</button>
         </div>
         <div class="modal-body">
-            <p style="font-size:12.5px; color:#475569;">अपनी आवश्यकतानुसार प्लान चुनें (दैनिक कोटा स्वतः रीसेट होगा):</p>
+            <p style="font-size:12.5px; color:#475569;">अपनी आवश्यकतानुसार प्लान चुनें (फोटो जांच व प्राथमिकता सहायता उपलब्ध):</p>
             <div class="pricing-grid">
                 <div class="price-box" onclick="initiatePayment('basic')">
                     <span class="plan-badge badge-basic">Basic Plan</span>
                     <div class="price-val">₹49</div>
-                    <div class="credits-val">15 सवाल / दिन</div>
-                    <div class="duration-val">वैधता: 30 दिन</div>
+                    <div class="credits-val">100 क्रेडिट्स</div>
+                    <div class="duration-val">वैधता: ठीक 30 दिन</div>
                 </div>
                 <div class="price-box pro" onclick="initiatePayment('pro')">
                     <span class="plan-badge badge-pro">⭐ Pro Plan</span>
                     <div class="price-val">₹99</div>
-                    <div class="credits-val">50 सवाल / दिन</div>
-                    <div class="duration-val">वैधता: 30 दिन</div>
+                    <div class="credits-val">300 क्रेडिट्स</div>
+                    <div class="duration-val">वैधता: ठीक 30 दिन</div>
                 </div>
             </div>
 
@@ -554,19 +554,19 @@
     </div>
 </div>
 
-<!-- Modal 2: Welcome Onboarding & Claim 7 Days Free Trial -->
-<div class="modal-overlay" id="trialOnboardingModal">
+<!-- Modal 2: Feature Lock Modal for Free Users -->
+<div class="modal-overlay" id="featureLockModal">
     <div class="modal-card" style="text-align:center; padding:24px 20px;">
-        <div style="font-size:46px;">🎁</div>
-        <h2 style="color:#008069; font-size:18px; margin-top:8px;">स्वागत है किसान भाई!</h2>
-        <p style="font-size:13px; color:#475569; margin:10px 0 16px 0; line-height:1.5;">
-            आपका खाता स्वीकृत हो चुका है। शुरुआत के लिए <b>7 दिन का Basic Plan (प्रतिदिन 15 सवाल)</b> निःशुल्क सक्रिय करें!
+        <div style="font-size:44px;">🔒</div>
+        <h3 style="color:#075e54; margin-top:6px;">फोटो / दस्तावेज़ जांच लॉक है</h3>
+        <p style="font-size:12.5px; color:#64748b; line-height:1.5; margin:10px 0 16px 0;">
+            फसलों की तस्वीरें भेजकर बीमारी या कीट डायग्नोसिस की सुविधा केवल <b>Basic और Pro प्लान्स</b> में उपलब्ध है।
         </p>
-        <button onclick="claimSevenDaysTrial()" style="background:#00a884; color:#fff; border:none; padding:11px 24px; border-radius:24px; font-weight:700; font-size:14px; cursor:pointer; width:100%; box-shadow:0 2px 8px rgba(0,168,132,0.3);">
-            ✨ 7 Days Free Trial क्लेम करें
+        <button onclick="closeFeatureLock(); openPricing();" style="background:#008069; color:#fff; border:none; padding:10px 22px; border-radius:20px; font-weight:600; font-size:13px; cursor:pointer; width:100%;">
+            ⚡ प्लान अपग्रेड करें (मात्र ₹49 से)
         </button>
-        <button onclick="closeTrialModal()" style="background:none; border:none; color:#64748b; font-size:12px; margin-top:12px; cursor:pointer;">
-            बाद में क्लेम करें (Skip for now)
+        <button onclick="closeFeatureLock()" style="background:none; border:none; color:#64748b; font-size:12px; margin-top:10px; cursor:pointer;">
+            रद्द करें
         </button>
     </div>
 </div>
@@ -628,14 +628,14 @@
     </div>
 </div>
 
-<!-- Modal 5: Welcome Offer Activated Celebration Modal -->
+<!-- Modal 5: Purchase Celebration Modal -->
 <div class="modal-overlay" id="successModal">
     <div class="modal-card" style="text-align:center; padding:25px;">
         <div style="font-size:44px;">🎉</div>
-        <h2 style="color:#008069; margin-top:8px;" id="successModalTitle">स्वागत उपहार सक्रिय!</h2>
-        <div id="creditRollCount" style="font-size:32px; font-weight:bold; color:#008069; margin:10px 0;">15 सवाल / दिन</div>
+        <h2 style="color:#008069; margin-top:8px;" id="successModalTitle">प्लान सक्रिय!</h2>
+        <div id="creditRollCount" style="font-size:32px; font-weight:bold; color:#008069; margin:10px 0;">+100 क्रेडिट्स</div>
         <p style="font-size:13px; color:#475569; line-height:1.5;" id="successMsg">
-            आपको 7-दिवसीय निःशुल्क ट्रायल के रूप में Basic Plan दिया गया है।
+            आपके खाते में नए क्रेडिट्स सफलतापूर्वक जोड़ दिए गए हैं।
         </p>
         <div id="trialDatesLabel" style="font-size:11.5px; color:#059669; font-weight:600; margin-top:6px;"></div>
         <button onclick="closeSuccessModal()" style="margin-top:16px; background:#00a884; color:#fff; border:none; padding:8px 22px; border-radius:18px; font-weight:600; cursor:pointer;">पूछना शुरू करें</button>
@@ -675,15 +675,15 @@
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
     let currentUser = null;
-    let currentUserPlan = 'none';
+    let currentUserPlan = 'free';
+    let isUserPaidActive = false;
+    let currentLanguage = 'hi';
     let selectedAttachments = [];
 
-    // Pending Refresh Rate Limiting (2 clicks -> 2 minutes countdown lock)
     let refreshClickCount = 0;
     let refreshLockTimer = null;
 
-    // 24-Hour Sliding Window Storage Key
-    const CHAT_STORAGE_KEY = 'agri_chat_history_v1';
+    const CHAT_STORAGE_KEY = 'agri_chat_history_v2';
 
     function showToast(msg, duration = 2500) {
         const t = document.getElementById('toastNotice');
@@ -701,7 +701,11 @@
         document.getElementById('loadingOverlay').style.display = 'none';
     }
 
-    // Dismiss Dropdown Menu on Outside Click
+    function handleLanguageChange(lang) {
+        currentLanguage = lang;
+        showToast(lang === 'hi' ? 'भाषा: हिन्दी सक्रिय' : 'Language: English Active');
+    }
+
     document.addEventListener('click', (e) => {
         const menu = document.getElementById('userMenu');
         const profileRing = document.getElementById('btnProfileRing');
@@ -720,6 +724,19 @@
             el.style.height = Math.max(24, newHeight) + 'px';
             el.style.overflowY = 'hidden';
         }
+    }
+
+    // Attachment trigger: Lock for Free Tier
+    function triggerAttachmentPicker() {
+        if (!isUserPaidActive) {
+            document.getElementById('featureLockModal').style.display = 'flex';
+            return;
+        }
+        document.getElementById('fileInput').click();
+    }
+
+    function closeFeatureLock() {
+        document.getElementById('featureLockModal').style.display = 'none';
     }
 
     // Attachment: Max 2 Files, Images & PDF only, Max 10MB each
@@ -763,47 +780,42 @@
         document.getElementById('attachmentChip').style.display = 'none';
     }
 
-    // 24-Hour Rolling Local Storage Management
+    // 24-Hour Rolling Local Storage
     function cleanAndLoadLocalHistory() {
         try {
             const raw = localStorage.getItem(CHAT_STORAGE_KEY);
             if (!raw) return;
             const messages = JSON.parse(raw);
             const now = Date.now();
-            const dayAgo = now - (24 * 60 * 60 * 1000); // 24-hour window
+            const dayAgo = now - (24 * 60 * 60 * 1000);
 
-            // Keep only items within last 24 hours
             const valid = messages.filter(m => m.timestamp > dayAgo);
             localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(valid));
 
-            // Render existing messages
-            valid.forEach(m => {
+            valid.forEach((m, idx) => {
+                const isLast = (idx === valid.length - 1 && m.type === 'bot');
                 if (m.type === 'user') {
                     renderUserBubbleDirect(m.html, m.time, true);
                 } else {
-                    renderBotBubbleDirect(m.html, m.time);
+                    renderBotBubbleDirect(m.html, m.time, isLast, m.rawText);
                 }
             });
-        } catch(e) {
-            console.error("Local history error:", e);
-        }
+        } catch(e) {}
     }
 
-    function saveLocalMessage(type, html, time) {
+    function saveLocalMessage(type, html, time, rawText = '') {
         try {
             const raw = localStorage.getItem(CHAT_STORAGE_KEY);
             const messages = raw ? JSON.parse(raw) : [];
-            messages.push({ type, html, time, timestamp: Date.now() });
+            messages.push({ type, html, time, rawText, timestamp: Date.now() });
             localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
         } catch(e) {}
     }
 
-    // Date Divider Formatting
     function updateDateDivider() {
         const d = new Date();
         const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-        const dateStr = d.toLocaleDateString('hi-IN', options);
-        document.getElementById('todayDateDivider').textContent = `आज • ${dateStr}`;
+        document.getElementById('todayDateDivider').textContent = `आज • ${d.toLocaleDateString('hi-IN', options)}`;
     }
 
     supabaseClient.auth.onAuthStateChange((event, session) => {
@@ -849,13 +861,13 @@
         return res;
     }
 
-    function formatDate(isoStr) {
-        if (!isoStr) return 'सक्रिय';
+    function formatPreciseDate(isoStr) {
+        if (!isoStr) return 'दैनिक रीसेट';
         const d = new Date(isoStr);
-        return d.toLocaleDateString('hi-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        return d.toLocaleDateString('hi-IN', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' +
+               d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
-    // Refresh Approval Status Handler with 2-minute cooldown after 2 clicks
     async function handleRefreshApproval() {
         const btn = document.getElementById('btnRefreshStatus');
         const timerLabel = document.getElementById('refreshTimerLabel');
@@ -865,7 +877,6 @@
             btn.disabled = true;
             let secondsLeft = 120;
             timerLabel.style.display = 'block';
-            timerLabel.textContent = `सीमा पूर्ण: कृपया ${secondsLeft} सेकंड प्रतीक्षा करें।`;
 
             refreshLockTimer = setInterval(() => {
                 secondsLeft--;
@@ -894,7 +905,6 @@
             const res = await apiRequest('/user-stats?user_id=' + currentUser.id);
             const data = await res.json();
             
-            // Non-Dismissible Pending Screen
             if (data.status === 'pending') {
                 document.getElementById('pendingScreen').style.display = 'flex';
                 document.getElementById('inputFooterBar').style.display = 'none';
@@ -904,44 +914,44 @@
                 document.getElementById('inputFooterBar').style.display = 'flex';
             }
 
-            const limit = data.daily_limit || 0;
-            const used = data.daily_used || 0;
-            const remaining = Math.max(0, limit - used);
-            const plan = data.plan_type || 'none';
+            // Super Control Promotion Banner
+            const sc = data.super_control;
+            if (sc && sc.banner_enabled && sc.banner_text) {
+                document.getElementById('promoBanner').style.display = 'block';
+                document.getElementById('promoBannerText').textContent = sc.banner_text;
+            } else {
+                document.getElementById('promoBanner').style.display = 'none';
+            }
+
+            const total = data.total_credits || 0;
+            const maxPack = data.max_pack_credits || (total > 0 ? total : 3);
+            const plan = data.plan_type || 'free';
             currentUserPlan = plan;
+            isUserPaidActive = data.is_paid_active || false;
 
-            if (data.eligible_for_trial && !data.is_trial_claimed) {
-                document.getElementById('claimTrialBanner').style.display = 'flex';
-                if (!sessionStorage.getItem('onboarding_shown')) {
-                    openTrialOnboardingModal();
-                    sessionStorage.setItem('onboarding_shown', '1');
-                }
-            } else {
-                document.getElementById('claimTrialBanner').style.display = 'none';
-            }
-
-            document.getElementById('ringBadge').textContent = remaining;
-            document.getElementById('userPlanName').textContent = 'प्लान: ' + (plan !== 'none' ? plan.toUpperCase() : 'कोई सक्रिय प्लान नहीं');
-            document.getElementById('quotaSummary').textContent = 'आज का उपयोग: ' + used + ' / ' + limit + ' (शेष: ' + remaining + ')';
+            document.getElementById('ringBadge').textContent = total;
+            document.getElementById('userPlanName').textContent = 'प्लान: ' + (isUserPaidActive ? plan.toUpperCase() : 'Free (3 दैनिक सवाल)');
+            document.getElementById('quotaSummary').textContent = `उपलब्ध क्रेडिट: ${total} / ${maxPack}`;
             
-            if (data.plan_expires_at) {
-                document.getElementById('planExpiryText').textContent = 'वैधता: ' + formatDate(data.plan_expires_at) + ' (11:59 PM IST)';
+            if (isUserPaidActive && data.plan_expires_at) {
+                document.getElementById('planExpiryText').textContent = 'वैधता: ' + formatPreciseDate(data.plan_expires_at);
             } else {
-                document.getElementById('planExpiryText').textContent = plan === 'none' ? 'कृपया प्लान सक्रिय करें' : 'वैधता: सक्रिय';
+                document.getElementById('planExpiryText').textContent = 'वैधता: 12:00 AM IST रीसेट';
             }
 
-            document.getElementById('lowCreditBanner').style.display = (remaining <= 2 && plan !== 'none') ? 'flex' : 'none';
+            document.getElementById('lowCreditBanner').style.display = (total <= 1) ? 'flex' : 'none';
 
+            // Circular progress ring: (r=19, circumference=119.38)
             const circle = document.getElementById('creditRing');
-            const ratio = limit > 0 ? Math.max(0, Math.min(1, remaining / limit)) : 0;
-            circle.style.strokeDashoffset = 125.6 * (1 - ratio);
+            const ratio = maxPack > 0 ? Math.max(0, Math.min(1, total / maxPack)) : 0;
+            circle.style.strokeDashoffset = 119.38 * (1 - ratio);
 
-            if (plan === 'pro') {
+            if (plan === 'pro' && isUserPaidActive) {
                 circle.style.stroke = '#eab308';
-            } else if (plan === 'basic') {
+            } else if (plan === 'basic' && isUserPaidActive) {
                 circle.style.stroke = '#25d366';
             } else {
-                circle.style.stroke = '#94a3b8';
+                circle.style.stroke = '#008069';
             }
 
         } catch(e) {
@@ -961,9 +971,6 @@
     }
     function closePricing() { document.getElementById('pricingModal').style.display = 'none'; }
     
-    function openTrialOnboardingModal() { document.getElementById('trialOnboardingModal').style.display = 'flex'; }
-    function closeTrialModal() { document.getElementById('trialOnboardingModal').style.display = 'none'; }
-
     function openContactModal(category = 'general') { 
         document.getElementById('userMenu').style.display = 'none'; 
         document.getElementById('contactCategory').value = category;
@@ -997,12 +1004,12 @@
 
             let html = '';
             data.forEach(t => {
-                const dateStr = formatDate(t.created_at);
+                const dateStr = formatPreciseDate(t.created_at);
                 const amt = t.amount_paid == 0 ? 'मुफ़्त (कूपन)' : '₹' + t.amount_paid;
                 html += `
                     <div class="history-item">
                         <div>
-                            <b style="font-size:13px; color:#1e293b;">${t.credits_added} सवाल / दिन प्लान</b><br>
+                            <b style="font-size:13px; color:#1e293b;">${t.credits_added} क्रेडिट्स पैक</b><br>
                             <span class="history-date">${dateStr} • ID: ${t.payment_id ? t.payment_id.substring(0, 16) : 'N/A'}...</span>
                         </div>
                         <div style="text-align:right;">
@@ -1069,7 +1076,7 @@
             hideSpinner();
 
             if (res.ok) {
-                showToast('अनुरोध प्राप्त हुआ! प्राथमिकता स्तर: ' + priority.toUpperCase());
+                showToast('अनुरोध प्राप्त हुआ! प्राथमिकता: ' + priority.toUpperCase());
                 closeContactModal();
             } else {
                 alert('अनुरोध भेजने में समस्या आई।');
@@ -1077,31 +1084,6 @@
         } catch(e) {
             hideSpinner();
             alert('सर्वर त्रुटि। पुनः प्रयास करें।');
-        }
-    }
-
-    async function claimSevenDaysTrial() {
-        if (!currentUser) return;
-        showSpinner("7-दिवसीय ट्रायल सक्रिय हो रहा है...");
-        try {
-            const res = await apiRequest('/claim-trial', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ user_id: currentUser.id })
-            });
-            const data = await res.json();
-            hideSpinner();
-            closeTrialModal();
-
-            if (res.ok) {
-                triggerWelcomeOfferActivated(data.daily_limit || 15, data.plan_expires_at);
-                fetchStats();
-            } else {
-                alert(data.detail || 'ट्रायल क्लेम करने में त्रुटि आई।');
-            }
-        } catch(e) {
-            hideSpinner();
-            alert('नेटवर्क त्रुटि आई।');
         }
     }
 
@@ -1146,7 +1128,7 @@
                 hideSpinner();
                 const vData = await vRes.json();
                 if (vData.status === 'success') {
-                    triggerWelcomeOfferActivated(vData.daily_limit);
+                    triggerPaymentSuccess(vData.credits_added, vData.plan_expires_at);
                     fetchStats();
                 }
                 return;
@@ -1157,7 +1139,7 @@
                 amount: ordData.amount,
                 currency: "INR",
                 name: "Agri Assistant",
-                description: planId.toUpperCase() + " Plan Subscription",
+                description: planId.toUpperCase() + " Credit Pack",
                 order_id: ordData.order_id,
                 handler: async function (response) {
                     showSpinner("भुगतान सत्यापित हो रहा है...");
@@ -1176,7 +1158,7 @@
                     hideSpinner();
                     const vData = await vRes.json();
                     if (vData.status === 'success') {
-                        triggerWelcomeOfferActivated(vData.daily_limit);
+                        triggerPaymentSuccess(vData.credits_added, vData.plan_expires_at);
                         fetchStats();
                     }
                 },
@@ -1195,29 +1177,14 @@
         }
     }
 
-    // Polished "Welcome Offer Activated" Modal Trigger
-    function triggerWelcomeOfferActivated(dailyLimit, expiryIso) {
+    function triggerPaymentSuccess(creditsAdded, expiryIso) {
         confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
         document.getElementById('successModal').style.display = 'flex';
-        document.getElementById('successModalTitle').textContent = '🎉 Welcome Offer Activated!';
-        
-        let count = 0;
-        const target = dailyLimit;
-        const elem = document.getElementById('creditRollCount');
-        const interval = setInterval(() => {
-            count += 1;
-            elem.textContent = `${count} सवाल / दिन`;
-            if (count >= target) {
-                clearInterval(interval);
-            }
-        }, 50);
-
-        document.getElementById('successMsg').textContent = `बधाई किसान भाई! आपको 7-दिवसीय निःशुल्क ट्रायल के रूप में Basic Plan दिया गया है। आप प्रतिदिन ${dailyLimit} सवाल पूछ सकते हैं।`;
-        
+        document.getElementById('successModalTitle').textContent = '🎉 भुगतान सफल!';
+        document.getElementById('creditRollCount').textContent = `+${creditsAdded} क्रेडिट्स`;
+        document.getElementById('successMsg').textContent = `बधाई किसान भाई! आपके खाते में ${creditsAdded} क्रेडिट्स जोड़ दिए गए हैं।`;
         if (expiryIso) {
-            document.getElementById('trialDatesLabel').textContent = `वैधता: ${formatDate(expiryIso)} रात 11:59 PM IST तक (कोई रोलओवर नहीं)`;
-        } else {
-            document.getElementById('trialDatesLabel').textContent = '';
+            document.getElementById('trialDatesLabel').textContent = `वैधता: ${formatPreciseDate(expiryIso)} तक`;
         }
     }
 
@@ -1249,7 +1216,6 @@
         window.open(url, '_blank');
     }
 
-    // Render User Bubble with Authentic WhatsApp Tick Layout
     function renderUserBubbleDirect(textHtml, time, isHistory = false) {
         const rowId = 'usr-' + Date.now();
         const uHtml = `
@@ -1269,8 +1235,25 @@
         return rowId;
     }
 
-    // Render Bot Bubble with Compact Suggested Video Clips
-    function renderBotBubbleDirect(innerHtml, time) {
+    // Render Bot Bubble (Only the latest message holds the transient action bar)
+    function renderBotBubbleDirect(innerHtml, time, isLatest = false, rawForCopy = '') {
+        // Remove previous transient bars if any
+        document.querySelectorAll('.transient-action-bar').forEach(el => el.remove());
+
+        let actionsHtml = '';
+        if (isLatest && rawForCopy) {
+            const escaped = rawForCopy.replace(/'/g, "\\'").replace(/\n/g, ' ');
+            actionsHtml = `
+                <div class="transient-action-bar">
+                    <button class="icon-action-btn" onclick="copyAnswer('${escaped}')" title="कॉपी करें">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                    </button>
+                    <button class="icon-action-btn" onclick="shareOnWhatsApp('${escaped}')" title="WhatsApp पर साझा करें" style="color:#008069;">
+                        <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.587 1.961.954 3.031.954 3.179 0 5.765-2.587 5.767-5.766.001-3.187-2.575-5.77-5.767-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.072-2.18-.544-1.636-.677-2.735-2.343-2.825-2.459-.09-.115-.657-.872-.657-1.66 0-.788.414-1.174.559-1.332.144-.158.315-.198.42-.198.106 0 .211.002.304.007.098.005.23-.037.36.275.144.344.488 1.192.531 1.28.043.088.072.19.014.305-.058.115-.087.188-.173.289l-.26.309c-.087.09-.178.188-.077.362.102.175.452.745.97 1.206.669.596 1.232.781 1.406.868.174.088.276.077.378-.04.103-.116.438-.51.555-.685.118-.175.235-.146.395-.088.16.058 1.016.479 1.191.566.175.088.291.132.334.204.043.073.043.424-.101.829z"/></svg>
+                    </button>
+                </div>`;
+        }
+
         const bHtml = `
             <div class="msg-row bot">
                 <div class="bubble bot-bubble">
@@ -1278,6 +1261,7 @@
                     <div class="bubble-meta">
                         <span>${time}</span>
                     </div>
+                    ${actionsHtml}
                 </div>
             </div>`;
         document.getElementById('plantLoader').insertAdjacentHTML('beforebegin', bHtml);
@@ -1288,6 +1272,9 @@
         const text = (customTxt || document.getElementById('msgField').value).trim();
         if (!text && !selectedAttachments.length) return;
         if (!currentUser) { alert('कृपया पहले Google से लॉगिन करें।'); return; }
+
+        // Remove old transient bars on new message submission
+        document.querySelectorAll('.transient-action-bar').forEach(el => el.remove());
 
         // Carrier Bird take-off animation
         const sendBtn = document.getElementById('sendBtnEl');
@@ -1306,6 +1293,7 @@
         const rowId = renderUserBubbleDirect(safeUserText, time, false);
         saveLocalMessage('user', safeUserText, time);
         
+        const attachCount = selectedAttachments.length;
         const field = document.getElementById('msgField');
         field.value = '';
         field.style.height = '24px';
@@ -1319,12 +1307,16 @@
             const res = await apiRequest('/ask', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: text, user_id: currentUser.id })
+                body: JSON.stringify({ 
+                    query: text, 
+                    user_id: currentUser.id,
+                    attachment_count: attachCount,
+                    language: currentLanguage
+                })
             });
             const data = await res.json();
             document.getElementById('plantLoader').style.display = 'none';
 
-            // Mark Double Blue Tick on successful response
             const r = document.getElementById(rowId);
             if (r) {
                 const tick = r.querySelector('.tick-svg');
@@ -1332,7 +1324,7 @@
             }
 
             if (!res.ok) {
-                renderBotBubbleDirect(data.detail || 'तकनीकी समस्या आई। आपका क्रेडिट नहीं काटा गया है।', nowTime());
+                renderBotBubbleDirect(data.detail || 'तकनीकी समस्या आई। आपका क्रेडिट नहीं काटा गया है।', nowTime(), false);
                 return;
             }
 
@@ -1342,7 +1334,6 @@
             rawText = rawText.split('\n').join('<br>');
             let finalContent = '<div>' + rawText + '</div>';
 
-            // Compact Hindi Video Clips
             if (data.sources && data.sources.length > 0) {
                 finalContent += '<div class="sources-wrapper"><div class="sources-title">📺 संदर्भ वीडियो क्लिप (सटीक भाग):</div>';
                 data.sources.forEach(s => {
@@ -1355,32 +1346,16 @@
                 finalContent += '</div>';
             }
 
-            const escapedRawForCopy = data.answer.replace(/'/g, "\\'").replace(/\n/g, ' ');
-
-            // Clean Copy & WhatsApp Share Icons
-            finalContent += `
-                <div class="msg-action-bar">
-                    <button class="icon-btn" onclick="copyAnswer('${escapedRawForCopy}')" title="कॉपी करें">
-                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                        <span>कॉपी</span>
-                    </button>
-                    <button class="icon-btn" onclick="shareOnWhatsApp('${escapedRawForCopy}')" title="WhatsApp पर साझा करें" style="color:#008069; font-weight:600;">
-                        <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.587 1.961.954 3.031.954 3.179 0 5.765-2.587 5.767-5.766.001-3.187-2.575-5.77-5.767-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.072-2.18-.544-1.636-.677-2.735-2.343-2.825-2.459-.09-.115-.657-.872-.657-1.66 0-.788.414-1.174.559-1.332.144-.158.315-.198.42-.198.106 0 .211.002.304.007.098.005.23-.037.36.275.144.344.488 1.192.531 1.28.043.088.072.19.014.305-.058.115-.087.188-.173.289l-.26.309c-.087.09-.178.188-.077.362.102.175.452.745.97 1.206.669.596 1.232.781 1.406.868.174.088.276.077.378-.04.103-.116.438-.51.555-.685.118-.175.235-.146.395-.088.16.058 1.016.479 1.191.566.175.088.291.132.334.204.043.073.043.424-.101.829z"/></svg>
-                        <span>WhatsApp</span>
-                    </button>
-                </div>`;
-
-            renderBotBubbleDirect(finalContent, nowTime());
-            saveLocalMessage('bot', finalContent, nowTime());
+            renderBotBubbleDirect(finalContent, nowTime(), true, data.answer);
+            saveLocalMessage('bot', finalContent, nowTime(), data.answer);
 
         } catch(e) {
             document.getElementById('plantLoader').style.display = 'none';
-            renderBotBubbleDirect('सर्वर से संपर्क नहीं हो सका। आपका कोई क्रेडिट नहीं काटा गया है।', nowTime());
+            renderBotBubbleDirect('सर्वर से संपर्क नहीं हो सका। आपका कोई क्रेडिट नहीं काटा गया है।', nowTime(), false);
         }
         toBottom();
     }
 
-    // Page Load Init
     window.addEventListener('DOMContentLoaded', () => {
         updateDateDivider();
         cleanAndLoadLocalHistory();
