@@ -7,14 +7,10 @@
     
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#008069">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/606/606553.png">
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        
-        /* Hide all scrollbars */
         ::-webkit-scrollbar { display: none; width: 0; height: 0; }
         * { scrollbar-width: none; -ms-overflow-style: none; }
 
@@ -42,7 +38,7 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.12);
         }
 
-        /* Clean Modern Header (Acupressure Assistant Style) */
+        /* Clean Header */
         .chat-header {
             background: #008069;
             color: #ffffff;
@@ -76,9 +72,6 @@
         .header-titles h1 {
             font-size: 16px;
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 5px;
         }
 
         .status-badge {
@@ -97,21 +90,23 @@
             display: inline-block;
         }
 
-        .header-actions {
+        /* Info Header Button */
+        .info-btn {
+            background: rgba(255,255,255,0.18);
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 5px 11px;
+            border-radius: 14px;
+            font-size: 12px;
+            color: #ffffff;
+            cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 4px;
+            font-weight: 500;
         }
+        .info-btn:active { background: rgba(255,255,255,0.3); }
 
-        .tag-pill {
-            background: rgba(255,255,255,0.15);
-            padding: 4px 9px;
-            border-radius: 12px;
-            font-size: 11px;
-            color: #ffffff;
-        }
-
-        /* Chat Canvas */
+        /* Canvas */
         .chat-canvas {
             flex: 1;
             overflow-y: auto;
@@ -136,7 +131,6 @@
             margin-bottom: 4px;
         }
 
-        /* Message Rows */
         .msg-row { display: flex; width: 100%; }
         .msg-row.user { justify-content: flex-end; }
         .msg-row.bot { justify-content: flex-start; }
@@ -152,17 +146,8 @@
             position: relative;
         }
 
-        .user-bubble {
-            background: #e7fedc;
-            border-top-right-radius: 2px;
-            color: #111b21;
-        }
-
-        .bot-bubble {
-            background: #ffffff;
-            border-top-left-radius: 2px;
-            color: #111b21;
-        }
+        .user-bubble { background: #e7fedc; border-top-right-radius: 2px; color: #111b21; }
+        .bot-bubble { background: #ffffff; border-top-left-radius: 2px; color: #111b21; }
 
         .meta-info {
             display: flex;
@@ -175,22 +160,16 @@
             float: right;
             margin-left: 10px;
         }
-
         .tick { font-size: 13px; color: #8696a0; }
         .tick.blue { color: #53bdeb; }
 
-        /* Video Clip Cards with Hindi Summary */
+        /* Clip Cards */
         .sources-wrapper {
             margin-top: 10px;
             padding-top: 8px;
             border-top: 1px dashed #d1d7db;
         }
-        .sources-title {
-            font-size: 12px;
-            font-weight: 600;
-            color: #008069;
-            margin-bottom: 6px;
-        }
+        .sources-title { font-size: 12px; font-weight: 600; color: #008069; margin-bottom: 6px; }
         .clip-card {
             display: block;
             background: #f8fafc;
@@ -199,17 +178,8 @@
             padding: 8px 10px;
             margin-top: 6px;
             text-decoration: none;
-            transition: background 0.2s;
         }
-        .clip-card:active { background: #f1f5f9; }
-        .clip-header {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12px;
-            font-weight: 600;
-            color: #dc2626;
-        }
+        .clip-header { font-size: 12px; font-weight: 600; color: #dc2626; }
         .clip-summary {
             font-size: 12px;
             color: #475569;
@@ -221,7 +191,6 @@
             overflow: hidden;
         }
 
-        /* Message Actions: Copy & WhatsApp Share */
         .msg-action-bar {
             display: flex;
             align-items: center;
@@ -231,28 +200,16 @@
             border-top: 1px solid #f1f5f9;
         }
         .action-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
             font-size: 11px;
             color: #64748b;
             background: none;
             border: none;
             cursor: pointer;
             text-decoration: none;
-            padding: 2px 4px;
-            border-radius: 4px;
         }
-        .action-link:hover { color: #008069; }
         .action-link.wa { color: #16a34a; font-weight: 500; }
 
-        /* Suggestions Chips */
-        .chips-box {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 8px;
-        }
+        .chips-box { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
         .chip {
             background: #f0fdf4;
             color: #166534;
@@ -264,7 +221,7 @@
             font-weight: 500;
         }
 
-        /* Sprouting Animation Loader */
+        /* Plant Sprout Animation */
         .plant-loader-row {
             display: none;
             align-self: flex-start;
@@ -280,17 +237,14 @@
             display: inline-block;
             animation: sprout 1.3s infinite ease-in-out;
         }
-        .loader-label {
-            font-size: 12px;
-            color: #54656f;
-        }
+        .loader-label { font-size: 12px; color: #54656f; }
         @keyframes sprout {
             0% { transform: scale(0.85) rotate(-10deg); opacity: 0.6; }
             50% { transform: scale(1.2) rotate(10deg); opacity: 1; }
             100% { transform: scale(0.85) rotate(-10deg); opacity: 0.6; }
         }
 
-        /* Keyboard Safe Input Bar */
+        /* Input Bar */
         .input-bar {
             background: #f0f2f5;
             padding: 6px 10px;
@@ -301,7 +255,6 @@
             border-top: 1px solid #e9edef;
             z-index: 100;
         }
-
         .input-box {
             flex: 1;
             background: #ffffff;
@@ -312,7 +265,6 @@
             box-shadow: 0 1px 1px rgba(0,0,0,0.06);
             min-height: 40px;
         }
-
         .chat-input {
             width: 100%;
             border: none;
@@ -324,7 +276,6 @@
             background: transparent;
             font-family: inherit;
         }
-
         .send-btn {
             background: #00a884;
             border: none;
@@ -338,7 +289,69 @@
             cursor: pointer;
             font-size: 16px;
             flex-shrink: 0;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+        }
+
+        /* Information Popup Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+        .modal-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 420px;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+            display: flex;
+            flex-direction: column;
+            max-height: 85vh;
+        }
+        .modal-header {
+            background: #008069;
+            color: white;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h3 { font-size: 15px; font-weight: 600; }
+        .modal-close {
+            background: none; border: none; color: white; font-size: 20px; cursor: pointer;
+        }
+        .modal-body {
+            padding: 16px;
+            overflow-y: auto;
+            font-size: 13.5px;
+            color: #334155;
+            line-height: 1.55;
+        }
+        .info-fact-box {
+            background: #f0fdf4;
+            border-left: 4px solid #16a34a;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .yt-channel-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #ff0000;
+            color: white;
+            text-decoration: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-top: 12px;
+            font-size: 13px;
         }
     </style>
 </head>
@@ -356,9 +369,7 @@
                 </div>
             </div>
         </div>
-        <div class="header-actions">
-            <span class="tag-pill">निःशुल्क सेवा</span>
-        </div>
+        <button class="info-btn" onclick="openModal()">ℹ️ परिचय</button>
     </header>
 
     <!-- Canvas -->
@@ -387,6 +398,32 @@
     </footer>
 </div>
 
+<!-- Modal Popup -->
+<div class="modal-overlay" id="infoModal" onclick="closeModalDirect(event)">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>🌾 प्राकृतिक कृषि एवं TCBT परिचय</h3>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <p><b>ताराचंद बेलजी (TCBT):</b> प्राकृतिक कृषि वैज्ञानिक एवं शोधकर्ता, जिन्होंने रसायनों के बिना प्रकृति के 5 तत्वों (भूमि, गगन, वायु, अग्नि, नीर) के समन्वय से खेती की पद्धति विकसित की।</p>
+            
+            <div class="info-fact-box">
+                <b>📊 मुख्य लाभ एवं आर्थिक तथ्य (Profitability):</b><br>
+                • <b>शून्य बाज़ार लागत:</b> खाद एवं कीटनाशक बाज़ार से खरीदने के बजाय देशी गाय के गोमूत्र, छाछ, गुड़ और वनस्पति रस से तैयार होते हैं।<br>
+                • <b>प्रति एकड़ ₹15,000–₹25,000 की बचत:</b> रासायनिक खादों (DAP/Urea) का खर्च समाप्त।<br>
+                • <b>गुणवत्ता एवं बेहतर दाम:</b> मिट्टी की उर्वरा शक्ति बढ़ने से जहरमुक्त फसल को बाज़ार में 1.5x से 2x तक के प्रीमियम भाव मिलते हैं।
+            </div>
+
+            <p>इस ऐप का उद्देश्य किसानों तक उनके द्वारा सिखाई गई विधियों को बिना किसी भ्रम के सटीक वीडियो क्लिप संदर्भ के साथ पहुँचाना है।</p>
+
+            <a href="https://www.youtube.com/@tcbtnaturalfarming" target="_blank" class="yt-channel-btn">
+                ▶️ आधिकारिक YouTube चैनल देखें
+            </a>
+        </div>
+    </div>
+</div>
+
 <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
@@ -396,8 +433,12 @@
     const msgField = document.getElementById('msgField');
     const plantLoader = document.getElementById('plantLoader');
     const appFrame = document.getElementById('appFrame');
+    const infoModal = document.getElementById('infoModal');
 
-    // Visual Viewport Fix for Mobile Virtual Keyboards
+    function openModal() { infoModal.style.display = 'flex'; }
+    function closeModal() { infoModal.style.display = 'none'; }
+    function closeModalDirect(e) { if(e.target === infoModal) closeModal(); }
+
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', () => {
             appFrame.style.height = `${window.visualViewport.height}px`;
@@ -439,7 +480,6 @@
         const time = nowTime();
         const rowId = 'usr-' + Date.now();
 
-        // User Message Display
         const uHtml = `
             <div class="msg-row user" id="${rowId}">
                 <div class="bubble user-bubble">
@@ -479,7 +519,6 @@
             const data = await res.json();
             plantLoader.style.display = 'none';
 
-            // Double Blue Tick
             const r = document.getElementById(rowId);
             if (r) {
                 const tk = r.querySelector('.status-tick');
@@ -495,7 +534,6 @@
             const rawText = data.answer.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
             let finalContent = `<div>${rawText}</div>`;
 
-            // Clip Cards with 2-line Short Summary
             if (data.sources && data.sources.length > 0) {
                 finalContent += `<div class="sources-wrapper"><div class="sources-title">📺 संदर्भ वीडियो क्लिप:</div>`;
                 data.sources.forEach(s => {
@@ -508,7 +546,6 @@
                 finalContent += `</div>`;
             }
 
-            // Copy & WhatsApp Share Buttons
             const shareText = encodeURIComponent(`${data.answer}\n\nस्रोतः Agri Assistant`);
             const escapedRawForCopy = data.answer.replace(/'/g, "\\'").replace(/\n/g, " ");
 
@@ -518,7 +555,6 @@
                     <a href="https://api.whatsapp.com/send?text=${shareText}" target="_blank" class="action-link wa">📲 WhatsApp पर भेजें</a>
                 </div>`;
 
-            // Chips
             if (data.suggestions && data.suggestions.length > 0) {
                 finalContent += `<div class="chips-box">`;
                 data.suggestions.forEach(sug => {
@@ -531,7 +567,7 @@
 
         } catch (err) {
             plantLoader.style.display = 'none';
-            renderBot('सर्वर से उत्तर आने में अधिक समय लग रहा है। कृपया इंटरनेट जांचकर पुनः प्रयास करें।');
+            renderBot('सर्वर से उत्तर आने में अधिक समय लग रहा है। कृपया पुनः प्रयास करें।');
         }
         toBottom();
     }
