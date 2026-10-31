@@ -82,7 +82,14 @@ def get_super_control_settings():
             return res.data[0]
     except Exception:
         pass
-    return {"maintenance_mode": False, "banner_enabled": False, "banner_text": ""}
+    return {
+        "maintenance_mode": False,
+        "banner_enabled": False,
+        "banner_text": "",
+        "welcome_credits": 10,
+        "welcome_days": 30,
+        "welcome_enabled": True
+    }
 
 @app.post("/api/ask")
 @app.post("/ask")
@@ -121,7 +128,7 @@ async def ask_endpoint(req: QueryReq, request: Request):
             plan_type = "free"
             supabase.table("user_profiles").update({"plan_type": "free"}).eq("id", req.user_id).execute()
 
-    # Free plan users: photo/attachment upload is strictly locked
+    # Free plan lock for attachments
     if not is_paid_active and req.attachment_count > 0:
         raise HTTPException(status_code=403, detail="फोटो / दस्तावेज़ जांच केवल Basic और Pro प्लान में उपलब्ध है। कृपया प्लान अपग्रेड करें।")
 
@@ -131,14 +138,15 @@ async def ask_endpoint(req: QueryReq, request: Request):
         if is_paid_active:
             raise HTTPException(status_code=402, detail=f"इस सवाल के लिए {credits_needed} क्रेडिट चाहिए, जबकि आपके पास केवल {total_credits} क्रेडिट शेष हैं। कृपया नया पैक खरीदें।")
         else:
-            raise HTTPException(status_code=402, detail="आपके पास कोई क्रेडिट शेष नहीं है। कृपया Basic या Pro प्लान रिचार्ज करें।")
+            raise HTTPException(status_code=402, detail="आपके पास पर्याप्त क्रेडिट शेष नहीं हैं। कृपया Basic या Pro प्लान रिचार्ज करें।")
 
     user_query = req.query.strip()
     clean_q = user_query.lower()
 
+    # Greeting Intent
     greetings = ["hello", "hi", "namaste", "pranam", "hey", "नमस्ते", "प्रणाम", "राम राम"]
     if clean_q in greetings:
-        greeting_text = "नमस्ते किसान भाई! 🙏 बताइए, आज फसल या प्राकृतिक खेती से संबंधित क्या सहायता चाहिए?" if req.language == "hi" else "Hello Farmer Friend! 🙏 How can I assist you with your farming or crops today?"
+        greeting_text = "नमस्ते किसान भाई! 🙏 बताइए, आज फसल या प्राकृतिक कृषि से संबंधित क्या सहायता चाहिए?" if req.language == "hi" else "Hello Farmer Friend! 🙏 How can I assist you with your farming, soil, or organic agriculture today?"
         return {
             "answer": greeting_text,
             "sources": [],
@@ -173,17 +181,20 @@ async def ask_endpoint(req: QueryReq, request: Request):
                 "video_url": f"https://www.youtube.com/watch?v={m['video_id']}&t={m['start_seconds']}s"
             })
 
-        lang_instruction = "Give response strictly in clean, authentic Devnagari Hindi." if req.language == "hi" else "Give response in clear, concise English."
+        # Strict Language Instruction
+        if req.language == "en":
+            lang_instruction = "CRITICAL: The user has selected English. You MUST respond 100% in pure English only. Do NOT use any Hindi or Hinglish words."
+        else:
+            lang_instruction = "CRITICAL: The user has selected Hindi. You MUST respond 100% in pure, authentic Devnagari Hindi only. Do NOT use Roman English (Hinglish)."
 
-        system_prompt = f"""Aap ek vishwasniya Krishi Sahayak (Agri Assistant) hain.
+        system_prompt = f"""You are Agri Mitra (कृषि मित्र), an authentic and expert agricultural advisor.
 {lang_instruction}
-Kisan ke sawal ka vyavharik, seedha aur sankshipt 3-4 points me uttar dein.
-Bina puche atirikt bhashan na dein.
+Deliver practical, grounded, point-by-point advice in 3 to 4 clear bullet points matching the user's intent. Do not pad with unnecessary introductions.
 
-Sandarbh:
+Context from video transcript library:
 {context_text}
 
-Sawal:
+User Query:
 {user_query}
 """
 
@@ -209,6 +220,7 @@ Sawal:
         "plan_type": plan_type
     }
 
+# 2. Claim Welcome Offer (Controlled from app_settings)
 @app.post("/api/claim-welcome")
 @app.post("/claim-welcome")
 async def claim_welcome_endpoint(req: ClaimWelcomeReq):
@@ -217,22 +229,40 @@ async def claim_welcome_endpoint(req: ClaimWelcomeReq):
         raise HTTPException(status_code=404, detail="खाता नहीं मिला।")
     
     user = user_res.data
-    if user.get("is_trial_claimed"):
+    if user.get("is_trial_claimed") or user.get("plan_type") in ["basic", "pro"]:
         raise HTTPException(status_code=400, detail="आप पहले ही स्वागत क्रेडिट्स क्लेम कर चुके हैं।")
 
+    settings = get_super_control_settings()
+    credits_amt = settings.get("welcome_credits", 10)
+    days_amt = settings.get("welcome_days", 30)
+
     now_utc = datetime.now(timezone.utc)
-    expiry = (now_utc + timedelta(days=30)).isoformat()
+    expiry = (now_utc + timedelta(days=days_amt)).isoformat()
 
     supabase.table("user_profiles").update({
         "is_trial_claimed": True,
         "plan_type": "free",
-        "total_credits": 10,
-        "max_pack_credits": 10,
+        "total_credits": credits_amt,
+        "max_pack_credits": credits_amt,
         "plan_expires_at": expiry
     }).eq("id", req.user_id).execute()
 
-    return {"status": "success", "credits": 10, "plan_expires_at": expiry}
+    return {"status": "success", "credits": credits_amt, "plan_expires_at": expiry}
 
+# 3. Last 3 Months Payment History API
+@app.get("/api/payment-history")
+@app.get("/payment-history")
+async def payment_history_endpoint(user_id: str):
+    three_months_ago = (datetime.now(timezone.utc) - timedelta(days=90)).isoformat()
+    res = supabase.table("credit_transactions")\
+        .select("*")\
+        .eq("user_id", user_id)\
+        .gte("created_at", three_months_ago)\
+        .order("created_at", desc=True)\
+        .execute()
+    return {"transactions": res.data or []}
+
+# 4. Universal Support API -> user_queries
 @app.post("/api/request-approval")
 @app.post("/request-approval")
 async def support_endpoint(req: SupportReq):
@@ -255,6 +285,7 @@ async def support_endpoint(req: SupportReq):
     
     return {"status": "success", "priority": assigned_priority}
 
+# 5. User Stats API
 @app.get("/api/user-stats")
 @app.get("/user-stats")
 async def user_stats(user_id: str):
@@ -289,10 +320,14 @@ async def user_stats(user_id: str):
         "super_control": {
             "maintenance_mode": settings.get("maintenance_mode", False),
             "banner_enabled": settings.get("banner_enabled", False),
-            "banner_text": settings.get("banner_text", "")
+            "banner_text": settings.get("banner_text", ""),
+            "welcome_credits": settings.get("welcome_credits", 10),
+            "welcome_days": settings.get("welcome_days", 30),
+            "welcome_enabled": settings.get("welcome_enabled", True)
         }
     }
 
+# 6. Payment Order & Verify
 @app.post("/api/create-order")
 @app.post("/create-order")
 async def create_order_endpoint(req: OrderReq):
