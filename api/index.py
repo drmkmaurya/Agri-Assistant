@@ -1,7 +1,5 @@
 import os
 import time
-import hmac
-import hashlib
 from datetime import date, datetime, timedelta
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,7 +7,12 @@ from pydantic import BaseModel
 from supabase import create_client, Client
 from google import genai
 from google.genai import types
-import razorpay
+
+# Robust Import for Vercel Serverless
+try:
+    from api.payments import process_order, verify_and_credit
+except ImportError:
+    from payments import process_order, verify_and_credit
 
 app = FastAPI()
 
@@ -24,18 +27,11 @@ app.add_middleware(
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://wvptpethggrslyeqsjdn.supabase.co")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID", "")
-RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if (SUPABASE_URL and SUPABASE_KEY) else None
 client: genai.Client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
-rz_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)) if (RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET) else None
 
-PLANS = {
-    "basic": {"amount": 4900, "daily_limit": 15, "name": "Basic Plan (15 Sawal/Din)"},
-    "pro": {"amount": 9900, "daily_limit": 50, "name": "Pro Plan (50 Sawal/Din)"}
-}
-
+# Rate limiter
 rate_limit_records = {}
 
 def apply_rate_limit(client_ip: str):
@@ -49,16 +45,27 @@ def apply_rate_limit(client_ip: str):
         raise HTTPException(status_code=429, detail="आपने 1 मिनट में सीमा (7 सवाल) पार कर दी है। कृपया 1 मिनट प्रतीक्षा करें।")
     rate_limit_records[client_ip].append(now)
 
+def get_system_prompt():
+    p = os.path.join(os.path.dirname(__file__), "system_prompt.txt")
+    if os.path.exists(p):
+        with open(p, "r", encoding="utf-8") as f:
+            return f.read().strip()
+    return "Aap ek Krishi Sahayak hain. Devnagari Hindi me sankshipt, satik aur vyavharik uttar dein."
+
+# Models
 class QueryReq(BaseModel):
     query: str
     user_id: str
 
-class ApprovalReq(BaseModel):
+class SupportReq(BaseModel):
     user_id: str
     name: str
     email: str
     phone: str
     concern: str = ""
+    category: str = "general"
+    priority: str = "normal"
+    user_plan: str = "none"
 
 class ClaimTrialReq(BaseModel):
     user_id: str
@@ -96,9 +103,18 @@ async def ask_endpoint(req: QueryReq, request: Request):
     if profile.get("status") == "banned":
         raise HTTPException(status_code=403, detail="आपका खाता ब्लॉक कर दिया गया है।")
 
+    # Check Plan Expiration
+    if profile.get("plan_expires_at"):
+        exp = datetime.fromisoformat(profile["plan_expires_at"].replace("Z", "+00:00"))
+        if datetime.now(exp.tzinfo) > exp:
+            raise HTTPException(status_code=402, detail="आपका प्लान समाप्त हो चुका है। कृपया प्लान अपग्रेड करें।")
+
+    daily_limit = profile.get("daily_credits_limit") or 0
+    if daily_limit <= 0:
+        raise HTTPException(status_code=402, detail="आपके पास कोई सक्रिय प्लान नहीं है। कृपया 7-दिवसीय फ्री ट्रायल क्लेम करें या प्लान चुनें।")
+
     today = date.today().isoformat()
     daily_used = profile.get("daily_credits_used", 0)
-    daily_limit = profile.get("daily_credits_limit", 15)
 
     if profile.get("last_reset_date") != today:
         daily_used = 0
@@ -134,21 +150,21 @@ async def ask_endpoint(req: QueryReq, request: Request):
                 "video_url": f"https://www.youtube.com/watch?v={m['video_id']}&t={m['start_seconds']}s"
             })
 
-        system_prompt = f"""
-        Aap ek Krishi Sahayak hain. Kisan ke sawal ka saral, vyavharik aur bullet points me Devnagari Hindi me uttar dein.
-        Sandarbh:\n{context_text}\nSawal:\n{user_query}
-        """
+        base_prompt = get_system_prompt()
+        full_prompt = f"{base_prompt}\n\nSandarbh:\n{context_text}\n\nSawal: {user_query}\n\nUttar:"
 
         response = client.models.generate_content(
             model="gemini-3.1-flash-lite",
-            contents=system_prompt,
+            contents=full_prompt,
             config=types.GenerateContentConfig(temperature=0.2)
         )
         answer_text = response.text
 
     except Exception as e:
+        print(f"Chat error: {e}")
         raise HTTPException(status_code=500, detail="उत्तर तैयार करने में समस्या आई। कोई क्रेडिट नहीं काटा गया।")
 
+    # Safe deduct only on success
     supabase.table("user_profiles").update({"daily_credits_used": daily_used + 1}).eq("id", req.user_id).execute()
 
     return {
@@ -158,93 +174,55 @@ async def ask_endpoint(req: QueryReq, request: Request):
         "daily_used": daily_used + 1
     }
 
-# 2. Payment APIs (Dual Routing)
-@app.post("/api/create-order")
-@app.post("/create-order")
-async def create_order_endpoint(req: OrderReq):
-    if req.plan_id not in PLANS:
-        raise HTTPException(status_code=400, detail="Invalid plan selected.")
-        
-    base_amount = PLANS[req.plan_id]["amount"]
-    discount_pct = 0
-    valid_code = None
+# 2. Universal Support API with Priority Auto-tagging
+@app.post("/api/request-approval")
+@app.post("/request-approval")
+async def support_endpoint(req: SupportReq):
+    assigned_priority = req.priority
+    if req.category == "payment" or req.user_plan == "pro":
+        assigned_priority = "high"
+    elif req.user_plan == "basic":
+        assigned_priority = "medium"
 
-    if req.coupon_code:
-        code = req.coupon_code.strip().upper()
-        c_res = supabase.table("coupons").select("*").eq("code", code).eq("is_active", True).execute()
-        if c_res.data:
-            c = c_res.data[0]
-            if c["used_count"] < c["max_uses"] and req.plan_id in c.get("allowed_plans", []):
-                discount_pct = c["discount_percent"]
-                valid_code = code
+    supabase.table("support_requests").insert({
+        "user_id": req.user_id,
+        "name": req.name,
+        "email": req.email,
+        "phone": req.phone,
+        "concern": req.concern,
+        "category": req.category,
+        "priority": assigned_priority,
+        "user_plan": req.user_plan
+    }).execute()
+    
+    return {"status": "success", "priority": assigned_priority}
 
-    final_amount = int(base_amount * (1 - (discount_pct / 100)))
+# 3. Claim 7 Days Free Trial API
+@app.post("/api/claim-trial")
+@app.post("/claim-trial")
+async def claim_trial(req: ClaimTrialReq):
+    user_res = supabase.table("user_profiles").select("*").eq("id", req.user_id).single().execute()
+    if not user_res.data:
+        raise HTTPException(status_code=404, detail="खाता नहीं मिला।")
+    
+    user = user_res.data
+    if user.get("is_trial_claimed"):
+        raise HTTPException(status_code=400, detail="आप पहले ही 7 दिन का फ्री ट्रायल ले चुके हैं।")
 
-    if final_amount == 0:
-        return {
-            "order_id": f"free_{req.user_id[:8]}_{int(time.time())}",
-            "amount": 0,
-            "is_free": True,
-            "key_id": RAZORPAY_KEY_ID,
-            "applied_coupon": valid_code
-        }
+    now = datetime.utcnow()
+    trial_expiry = (now + timedelta(days=7)).isoformat()
 
-    if not rz_client:
-        raise HTTPException(status_code=500, detail="Razorpay credentials Vercel me missing hain.")
-
-    order = rz_client.order.create({
-        "amount": final_amount,
-        "currency": "INR",
-        "receipt": f"rcpt_{req.user_id[:8]}",
-        "notes": {"user_id": req.user_id, "plan_id": req.plan_id, "coupon": valid_code or ""}
-    })
-
-    return {
-        "order_id": order["id"],
-        "amount": final_amount,
-        "is_free": False,
-        "key_id": RAZORPAY_KEY_ID,
-        "applied_coupon": valid_code
-    }
-
-@app.post("/api/verify-payment")
-@app.post("/verify-payment")
-async def verify_payment_endpoint(req: VerifyPaymentReq):
-    plan = PLANS.get(req.plan_id)
-    if not plan:
-        raise HTTPException(status_code=400, detail="Invalid plan.")
-
-    new_daily_limit = plan["daily_limit"]
-
-    if not req.order_id.startswith("free_"):
-        msg = f"{req.order_id}|{req.payment_id}"
-        expected_sig = hmac.new(
-            RAZORPAY_KEY_SECRET.encode(),
-            msg.encode(),
-            hashlib.sha256
-        ).hexdigest()
-        if expected_sig != req.signature:
-            raise HTTPException(status_code=400, detail="भुगतान सत्यापन विफल रहा।")
-
-    new_expiry = (datetime.utcnow() + timedelta(days=30)).isoformat()
     supabase.table("user_profiles").update({
-        "plan_type": req.plan_id,
-        "daily_credits_limit": new_daily_limit,
-        "plan_expires_at": new_expiry
+        "is_trial_claimed": True,
+        "trial_claimed_at": now.isoformat(),
+        "plan_type": "basic",
+        "daily_credits_limit": 15,
+        "plan_expires_at": trial_expiry
     }).eq("id", req.user_id).execute()
 
-    supabase.table("credit_transactions").insert({
-        "user_id": req.user_id,
-        "order_id": req.order_id,
-        "payment_id": req.payment_id or "VIP_COUPON",
-        "amount_paid": 0 if req.order_id.startswith("free_") else plan["amount"] / 100,
-        "credits_added": new_daily_limit,
-        "status": "success"
-    }).execute()
+    return {"status": "success", "daily_limit": 15, "plan_expires_at": trial_expiry}
 
-    return {"status": "success", "daily_limit": new_daily_limit}
-
-# 3. User Stats & Approval
+# 4. User Stats API
 @app.get("/api/user-stats")
 @app.get("/user-stats")
 async def user_stats(user_id: str):
@@ -262,35 +240,23 @@ async def user_stats(user_id: str):
 
     return {
         "status": data.get("status", "pending"),
-        "plan_type": data.get("plan_type", "basic"),
-        "daily_limit": data.get("daily_credits_limit", 15),
+        "plan_type": data.get("plan_type") or "none",
+        "daily_limit": data.get("daily_credits_limit", 0),
         "daily_used": data.get("daily_credits_used", 0),
+        "plan_expires_at": data.get("plan_expires_at"),
         "is_trial_claimed": data.get("is_trial_claimed", False),
         "eligible_for_trial": eligible_for_trial
     }
 
-@app.post("/api/request-approval")
-@app.post("/request-approval")
-async def request_approval(req: ApprovalReq):
-    supabase.table("approval_requests").insert({
-        "user_id": req.user_id,
-        "name": req.name,
-        "email": req.email,
-        "phone": req.phone,
-        "concern": req.concern
-    }).execute()
-    return {"status": "success"}
+# 5. Payment Order & Verify Endpoints
+@app.post("/api/create-order")
+@app.post("/create-order")
+async def create_order_endpoint(req: OrderReq):
+    return process_order(req.user_id, req.plan_id, req.coupon_code, supabase)
 
-@app.post("/api/claim-trial")
-@app.post("/claim-trial")
-async def claim_trial(req: ClaimTrialReq):
-    now = datetime.utcnow()
-    trial_expiry = (now + timedelta(days=7)).isoformat()
-    supabase.table("user_profiles").update({
-        "is_trial_claimed": True,
-        "trial_claimed_at": now.isoformat(),
-        "plan_type": "basic",
-        "daily_credits_limit": 15,
-        "plan_expires_at": trial_expiry
-    }).eq("id", req.user_id).execute()
-    return {"status": "success", "daily_limit": 15}
+@app.post("/api/verify-payment")
+@app.post("/verify-payment")
+async def verify_payment_endpoint(req: VerifyPaymentReq):
+    return verify_and_credit(
+        req.user_id, req.order_id, req.payment_id, req.signature, req.plan_id, req.coupon_code, supabase
+    )
