@@ -97,7 +97,7 @@
             font-size: 11.5px; color: #854d0e; font-weight: 600; text-align: center;
         }
 
-        /* Welcome Offer Banner */
+        /* Welcome Offer Banner (Only for eligible unclaimed users) */
         .claim-welcome-banner {
             display: none; background: linear-gradient(90deg, #ecfdf5, #dcfce7);
             border-bottom: 1.5px solid #86efac; padding: 7px 12px;
@@ -119,7 +119,7 @@
             padding: 2px 7px; border-radius: 10px; font-size: 10.5px; cursor: pointer;
         }
 
-        /* Canvas with Ultra-Dim Agri Wallpaper */
+        /* Canvas with Ultra-Dim Agri Pattern */
         .chat-canvas {
             flex: 1; overflow-y: auto; padding: 12px;
             display: flex; flex-direction: column; gap: 10px;
@@ -167,7 +167,7 @@
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
 
-        /* Transient WhatsApp Style Icons (Visible ONLY under latest bot response) */
+        /* Transient WhatsApp Meta AI Style Action Icons */
         .transient-action-bar {
             display: flex; align-items: center; justify-content: flex-end; gap: 12px;
             margin-top: 5px; padding-top: 3px;
@@ -285,7 +285,7 @@
         .credits-val { font-size: 12px; color: #166534; margin-top: 4px; font-weight: 500; }
         .duration-val { font-size: 10.5px; color: #64748b; margin-top: 2px; }
 
-        /* Clear, Dedicated Coupon Section */
+        /* Dedicated Coupon Section */
         .coupon-section {
             background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
             padding: 10px 12px; margin-top: 12px;
@@ -428,9 +428,9 @@
         <span id="promoBannerText">📢 विशेष कृषि सलाह एवं नए ऑफर्स!</span>
     </div>
 
-    <!-- Welcome 10 Credits Offer Banner -->
+    <!-- Welcome 10 Credits Offer Banner (Only for eligible unclaimed users) -->
     <div class="claim-welcome-banner" id="welcomeBanner">
-        <span>🎁 10 निःशुल्क क्रेडिट्स (वैधता: 30 दिन) क्लेम करें!</span>
+        <span id="welcomeBannerText">🎁 10 निःशुल्क स्वागत क्रेडिट्स (वैधता: 30 दिन) क्लेम करें!</span>
         <button class="claim-welcome-btn" onclick="openWelcomeModal()">क्लेम करें</button>
     </div>
 
@@ -482,7 +482,6 @@
             <span class="chip-remove" onclick="removeAttachment()">✕</span>
         </div>
 
-        <!-- File Input Limited to Max 2 Files, Images & PDF only -->
         <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,application/pdf" multiple style="display:none;" onchange="handleFileSelected(event)">
 
         <button class="attach-btn" onclick="triggerAttachmentPicker()" title="फोटो या PDF जोड़ें (अधिकतम 2 फाइलें, 10MB)">
@@ -608,16 +607,16 @@
     </div>
 </div>
 
-<!-- Modal 3: Welcome 10 Credits Claim Modal -->
+<!-- Modal 3: Welcome Credits Claim Modal -->
 <div class="modal-overlay" id="welcomeClaimModal">
     <div class="modal-card" style="text-align:center; padding:24px 20px;">
         <div style="font-size:46px;">🎁</div>
         <h2 style="color:#008069; font-size:18px; margin-top:8px;">स्वागत है किसान भाई!</h2>
-        <p style="font-size:13px; color:#475569; margin:10px 0 16px 0; line-height:1.5;">
+        <p style="font-size:13px; color:#475569; margin:10px 0 16px 0; line-height:1.5;" id="welcomeModalDesc">
             आपका खाता स्वीकृत हो चुका है। शुरुआत के लिए <b>10 निःशुल्क क्रेडिट्स (वैधता: 30 दिन)</b> तुरंत क्लेम करें!
         </p>
         <button onclick="claimWelcomeCredits()" style="background:#00a884; color:#fff; border:none; padding:11px 24px; border-radius:24px; font-weight:700; font-size:14px; cursor:pointer; width:100%; box-shadow:0 2px 8px rgba(0,168,132,0.3);">
-            ✨ 10 Free Credits क्लेम करें
+            ✨ Free Credits क्लेम करें
         </button>
         <button onclick="closeWelcomeModal()" style="background:none; border:none; color:#64748b; font-size:12px; margin-top:12px; cursor:pointer;">
             बाद में (Skip)
@@ -780,7 +779,6 @@
         }
     }
 
-    // Attachment: Lock for Free Tier
     function triggerAttachmentPicker() {
         if (!isUserPaidActive) {
             document.getElementById('featureLockModal').style.display = 'flex';
@@ -793,7 +791,6 @@
         document.getElementById('featureLockModal').style.display = 'none';
     }
 
-    // Attachment Selection: Max 2 files, 10MB each
     function handleFileSelected(event) {
         const files = Array.from(event.target.files);
         if (!files.length) return;
@@ -834,7 +831,6 @@
         document.getElementById('attachmentChip').style.display = 'none';
     }
 
-    // 24-Hour Rolling Local Storage
     function cleanAndLoadLocalHistory() {
         try {
             const raw = localStorage.getItem(CHAT_STORAGE_KEY);
@@ -978,22 +974,30 @@
                 document.getElementById('promoBanner').style.display = 'none';
             }
 
-            // Welcome Offer Trigger for Approved Users
-            if (!data.is_trial_claimed) {
+            const total = data.total_credits || 0;
+            const maxPack = data.max_pack_credits || (total > 0 ? total : 10);
+            const plan = data.plan_type || 'free';
+            currentUserPlan = plan;
+            isUserPaidActive = data.is_paid_active || false;
+
+            // Welcome Offer Eligibility Rule:
+            // Only show welcome modal & banner if user has NOT claimed yet AND does NOT have an active paid plan!
+            const isWelcomeEligible = (!data.is_trial_claimed) && (!isUserPaidActive) && (plan === 'free');
+            if (isWelcomeEligible) {
+                const wCredits = (sc && sc.welcome_credits) || 10;
+                const wDays = (sc && sc.welcome_days) || 30;
                 document.getElementById('welcomeBanner').style.display = 'flex';
+                document.getElementById('welcomeBannerText').textContent = `🎁 ${wCredits} निःशुल्क स्वागत क्रेडिट्स (वैधता: ${wDays} दिन) क्लेम करें!`;
+                document.getElementById('welcomeModalDesc').innerHTML = `आपका खाता स्वीकृत हो चुका है। शुरुआत के लिए <b>${wCredits} निःशुल्क क्रेडिट्स (वैधता: ${wDays} दिन)</b> तुरंत क्लेम करें!`;
+                
                 if (!sessionStorage.getItem('welcome_modal_shown')) {
                     openWelcomeModal();
                     sessionStorage.setItem('welcome_modal_shown', '1');
                 }
             } else {
                 document.getElementById('welcomeBanner').style.display = 'none';
+                closeWelcomeModal();
             }
-
-            const total = data.total_credits || 0;
-            const maxPack = data.max_pack_credits || (total > 0 ? total : 10);
-            const plan = data.plan_type || 'free';
-            currentUserPlan = plan;
-            isUserPaidActive = data.is_paid_active || false;
 
             document.getElementById('ringBadge').textContent = total;
             document.getElementById('userPlanName').textContent = 'प्लान: ' + (isUserPaidActive ? plan.toUpperCase() : 'Free');
@@ -1129,7 +1133,7 @@
         document.getElementById('policyContent').innerHTML = (typeof policyDocs !== 'undefined' && policyDocs[t]) ? policyDocs[t] : '<p>विवरण लोड हो रहा है...</p>';
     }
 
-    // Claim Welcome 10 Free Credits
+    // Claim Welcome Free Credits
     async function claimWelcomeCredits() {
         if (!currentUser) return;
         showSpinner("स्वागत क्रेडिट्स सक्रिय हो रहे हैं...");
@@ -1358,9 +1362,7 @@
         return rowId;
     }
 
-    // Render Bot Bubble (Only the latest message holds the transient action bar)
     function renderBotBubbleDirect(innerHtml, time, isLatest = false, rawForCopy = '') {
-        // Remove previous transient bars if any
         document.querySelectorAll('.transient-action-bar').forEach(el => el.remove());
 
         let actionsHtml = '';
@@ -1396,10 +1398,8 @@
         if (!text && !selectedAttachments.length) return;
         if (!currentUser) { alert('कृपया पहले Google से लॉगिन करें।'); return; }
 
-        // Remove old transient bars on new message submission
         document.querySelectorAll('.transient-action-bar').forEach(el => el.remove());
 
-        // Carrier Bird take-off animation
         const sendBtn = document.getElementById('sendBtnEl');
         sendBtn.classList.add('flying-anim');
         setTimeout(() => { sendBtn.classList.remove('flying-anim'); }, 700);
