@@ -34,10 +34,10 @@
             width: 100%; max-width: 480px; height: 100%; height: 100dvh;
             display: flex; flex-direction: column; background: #edf5ef;
             position: relative; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            transition: height 0.1s ease-out;
+            transition: height 0.08s ease-out;
         }
 
-        /* Header */
+        /* WhatsApp Header */
         .chat-header {
             background: #008069; color: #ffffff; padding: 8px 12px;
             display: flex; align-items: center; justify-content: space-between;
@@ -66,7 +66,7 @@
 
         .header-quick-buy {
             background: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.3);
-            color: #ffffff; border-radius: 18px; padding: 4px 8px; font-size: 11px;
+            color: #ffffff; border-radius: 18px; padding: 4px 9px; font-size: 11px;
             font-weight: 600; display: flex; align-items: center; gap: 4px; cursor: pointer;
             transition: all 0.2s ease;
         }
@@ -147,14 +147,12 @@
         .user-bubble { background: #d9fdd3; border-top-right-radius: 2px; color: #111b21; }
         .bot-bubble { background: #ffffff; border-top-left-radius: 2px; color: #111b21; }
 
-        /* Meta AI Style Header inside Bubble */
         .bubble-meta-header {
             display: flex; align-items: center; gap: 5px; margin-bottom: 4px; padding-bottom: 3px;
             border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 11px; font-weight: 600; color: #008069;
         }
         .meta-sparkle { font-size: 12px; }
 
-        /* WhatsApp Double Tick Inline */
         .bubble-meta {
             display: inline-flex; align-items: center; gap: 3px;
             font-size: 10px; color: #667781; float: right; margin-left: 8px;
@@ -176,7 +174,7 @@
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
 
-        /* WhatsApp Meta AI Style Bottom Action Bar (Copy & Share Pills) */
+        /* WhatsApp Meta AI Style Bottom Action Bar (Universal Share Icon) */
         .meta-action-bar {
             display: flex; align-items: center; justify-content: space-between;
             margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(0,0,0,0.06);
@@ -207,17 +205,17 @@
             100% { transform: scale(0.85) rotate(-10deg); opacity: 0.6; }
         }
 
-        /* Footer Input Area (Smooth Virtual Keyboard Push) */
+        /* Sleek WhatsApp Web Composer Bar (matching image_60bad8.png) */
         .input-bar {
-            background: #f0f2f5; padding: 6px 8px; display: flex; align-items: flex-end;
-            gap: 6px; flex-shrink: 0; border-top: 1px solid #e9edef; z-index: 100; position: relative;
+            background: #f0f2f5; padding: 6px 10px; display: flex; align-items: center;
+            gap: 8px; flex-shrink: 0; border-top: 1px solid #e9edef; z-index: 100; position: relative;
         }
         .attach-btn {
-            background: none; border: none; width: 36px; height: 38px;
+            background: none; border: none; width: 36px; height: 36px;
             border-radius: 50%; color: #54656f; display: flex; align-items: center;
-            justify-content: center; cursor: pointer; flex-shrink: 0;
+            justify-content: center; cursor: pointer; flex-shrink: 0; transition: background 0.15s;
         }
-        .attach-btn:hover { background: #e2e8f0; }
+        .attach-btn:hover { background: #e2e8f0; color: #008069; }
         .attach-icon { width: 20px; height: 20px; fill: currentColor; }
 
         .attachment-preview-chip {
@@ -229,8 +227,8 @@
         .chip-remove { cursor: pointer; color: #ef4444; font-weight: bold; }
 
         .input-box {
-            flex: 1; background: #ffffff; border-radius: 20px; padding: 6px 12px;
-            display: flex; align-items: center; min-height: 38px; box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+            flex: 1; background: #ffffff; border-radius: 20px; padding: 6px 14px;
+            display: flex; align-items: center; min-height: 40px; box-shadow: 0 1px 1px rgba(0,0,0,0.06);
         }
         .chat-textarea {
             width: 100%; border: none; outline: none; font-size: 14.5px;
@@ -239,6 +237,7 @@
         }
         .chat-textarea::placeholder { color: #8696a0; }
 
+        /* Crisp Circular Send Button */
         .send-btn {
             background: #00a884; border: none; width: 40px; height: 40px; border-radius: 50%;
             color: white; display: flex; align-items: center; justify-content: center; cursor: pointer;
@@ -246,19 +245,19 @@
             transition: transform 0.15s ease, background 0.2s;
         }
         .send-btn:active { transform: scale(0.92); background: #008069; }
-        .bird-icon { width: 20px; height: 20px; fill: white; transition: transform 0.3s ease; }
-        .flying-anim .bird-icon { animation: birdFlight 0.65s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-        @keyframes birdFlight {
-            0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
-            40% { transform: translate(12px, -14px) rotate(-15deg) scale(1.15); opacity: 0.9; }
-            100% { transform: translate(32px, -36px) rotate(-25deg) scale(0.5); opacity: 0; }
+        .plane-icon { width: 18px; height: 18px; fill: white; transition: transform 0.2s ease; }
+        .flying-anim .plane-icon { animation: planeFly 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        @keyframes planeFly {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            40% { transform: translate(8px, -10px) scale(1.1); opacity: 0.9; }
+            100% { transform: translate(25px, -28px) scale(0.6); opacity: 0; }
         }
 
-        /* Dropdown & Modals */
+        /* Streamlined Dropdown Menu (4 Essential Items Only) */
         .dropdown-menu {
             display: none; position: absolute; top: 54px; right: 12px;
             background: #ffffff; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.18);
-            width: 260px; z-index: 200; overflow: hidden; border: 1px solid #e2e8f0;
+            width: 250px; z-index: 200; overflow: hidden; border: 1px solid #e2e8f0;
         }
         .menu-header { padding: 12px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #1e293b; }
         .menu-item {
@@ -336,15 +335,20 @@
         .tab-btn { flex: 1; padding: 10px 6px; font-size: 11px; border: none; background: none; cursor: pointer; color: #64748b; white-space: nowrap; }
         .tab-btn.active { color: #008069; font-weight: bold; border-bottom: 2px solid #008069; background: #ffffff; }
 
-        /* Last 3 Months Payment History List */
-        .history-item {
-            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
-            padding: 10px 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
+        /* Ultra-Compact 3-Month Payment History Card */
+        .history-card-item {
+            background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;
+            padding: 9px 11px; margin-bottom: 7px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
         }
-        .history-date { font-size: 11px; color: #64748b; line-height: 1.4; }
-        .history-amount { font-weight: bold; color: #075e54; font-size: 14px; }
-        .history-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
-        .badge-success { background: #dcfce7; color: #15803d; }
+        .history-top-row {
+            display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;
+        }
+        .history-title { font-size: 12.5px; font-weight: 700; color: #0f172a; }
+        .history-amount { font-size: 13px; font-weight: 700; color: #008069; }
+        .history-details-grid {
+            font-size: 11px; color: #64748b; line-height: 1.45;
+            display: flex; flex-direction: column; gap: 1px;
+        }
 
         /* Non-Dismissible Pending Screen */
         .pending-screen {
@@ -366,16 +370,22 @@
         }
         .refresh-status-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        /* Login Screen */
+        /* Login Screen with Clear Pre-Login Legal Links */
         .auth-screen {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: #edf5ef; z-index: 500; display: flex; flex-direction: column;
-            justify-content: space-between; align-items: center; padding: 30px 20px 15px 20px;
+            justify-content: space-between; align-items: center; padding: 35px 20px 20px 20px;
         }
         .google-btn {
             background: #fff; color: #3c4043; border: 1px solid #dadce0; padding: 12px 24px;
             border-radius: 24px; font-size: 14px; font-weight: 500; cursor: pointer;
             display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .prelogin-legal-box {
+            font-size: 11px; color: #64748b; text-align: center; line-height: 1.6; max-width: 320px;
+        }
+        .prelogin-link {
+            color: #008069; font-weight: 600; text-decoration: underline; cursor: pointer;
         }
 
         .toast-popup {
@@ -454,7 +464,7 @@
         <button class="banner-buy-btn" onclick="openPricing()">प्लान अपग्रेड</button>
     </div>
 
-    <!-- Dropdown Menu -->
+    <!-- Streamlined Dropdown Menu (4 Essential Items Only) -->
     <div class="dropdown-menu" id="userMenu">
         <div class="menu-header">
             <b id="userName">किसान साथी</b><br>
@@ -463,10 +473,8 @@
             <span style="font-size:10.5px; color:#059669; font-weight:500;" id="planExpiryText">वैधता: सक्रिय</span>
         </div>
         <div class="menu-item" onclick="openPricing()">💳 प्लान अपग्रेड / विवरण</div>
-        <div class="menu-item" onclick="openPaymentHistoryModal()">🧾 बिल एवं भुगतान इतिहास (3 माह)</div>
-        <div class="menu-item" onclick="openContactModal('general')">📝 संपर्क व सहायता (Support)</div>
-        <div class="menu-item" onclick="openPolicyModal('terms')">📜 नियम व नीतियां (Policies)</div>
-        <div class="menu-item" onclick="openPolicyModal('pricing')">🏷️ मूल्य निर्धारण (Pricing)</div>
+        <div class="menu-item" onclick="openPaymentHistoryModal()">🧾 बिलिंग व इतिहास (3 माह)</div>
+        <div class="menu-item" onclick="openPolicyModal('terms')">📜 नियम व नीतियां (Compliance)</div>
         <div class="menu-item" onclick="signOutUser()" style="color:#dc2626;">🚪 लॉगआउट</div>
     </div>
 
@@ -493,7 +501,7 @@
         </div>
     </main>
 
-    <!-- Footer Input Bar with Attachment, 4-Line Expandable Textarea & Carrier Pigeon -->
+    <!-- Sleek WhatsApp Style Composer Bar (matching image_60bad8.png) -->
     <footer class="input-bar" id="inputFooterBar">
         <div class="attachment-preview-chip" id="attachmentChip">
             <span id="attachedFileName">📎 1 फाइल संलग्न</span>
@@ -502,16 +510,18 @@
 
         <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,application/pdf" multiple style="display:none;" onchange="handleFileSelected(event)">
 
+        <!-- Clean '+' Attachment Button -->
         <button class="attach-btn" onclick="triggerAttachmentPicker()" title="फोटो या PDF जोड़ें (अधिकतम 2 फाइलें, 10MB)">
-            <svg class="attach-icon" viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H9v9.5a3 3 0 0 0 6 0V5a4 4 0 0 0-8 0v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
+            <svg class="attach-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
         </button>
 
         <div class="input-box">
-            <textarea id="msgField" class="chat-textarea" rows="1" placeholder="लक्षण या समस्या यहाँ लिखें..." oninput="autoGrowTextarea(this)" onkeydown="keyMonitor(event)"></textarea>
+            <textarea id="msgField" class="chat-textarea" rows="1" placeholder="एक संदेश टाइप करें..." oninput="autoGrowTextarea(this)" onkeydown="keyMonitor(event)"></textarea>
         </div>
         
+        <!-- Crisp Circular Send Button with Paper Plane -->
         <button class="send-btn" id="sendBtnEl" onclick="submitMessage()" title="संदेश भेजें">
-            <svg class="bird-icon" id="birdIcon" viewBox="0 0 24 24">
+            <svg class="plane-icon" id="planeIcon" viewBox="0 0 24 24">
                 <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
             </svg>
         </button>
@@ -542,12 +552,12 @@
         </div>
     </div>
 
-    <!-- Auth Login Overlay -->
+    <!-- Auth Login Overlay with Clear Pre-Login Legal Agreement -->
     <div class="auth-screen" id="authScreen" style="display:none;">
-        <div style="text-align:center; margin-top:50px;">
+        <div style="text-align:center; margin-top:40px;">
             <div style="font-size:48px;">🌾</div>
             <h2 style="color:#008069; margin-top:10px;">Agri Mitra (कृषि मित्र)</h2>
-            <p style="color:#64748b; font-size:13px; margin-top:6px;">प्राकृतिक कृषि समाधान मंच</p>
+            <p style="color:#64748b; font-size:13px; margin-top:6px;">डिजिटल प्राकृतिक कृषि समाधान मंच</p>
         </div>
 
         <button class="google-btn" onclick="loginWithGoogle()">
@@ -555,8 +565,13 @@
             Google से साइन इन करें
         </button>
 
-        <div style="font-size:11px; color:#64748b; text-align:center;">
-            लॉगिन करके आप हमारे <a href="javascript:void(0)" onclick="openPolicyModal('terms')" style="color:#008069;">नियम</a>, <a href="javascript:void(0)" onclick="openPolicyModal('privacy')" style="color:#008069;">गोपनीयता नीति</a> एवं <a href="javascript:void(0)" onclick="openPolicyModal('refund')" style="color:#008069;">वापसी नीति</a> स्वीकार करते हैं।
+        <div class="prelogin-legal-box">
+            साइन इन करके आप हमारे 
+            <span class="prelogin-link" onclick="openPolicyModal('terms')">नियम एवं शर्तें</span>, 
+            <span class="prelogin-link" onclick="openPolicyModal('privacy')">गोपनीयता नीति</span> एवं 
+            <span class="prelogin-link" onclick="openPolicyModal('refund')">वापसी नीति</span> 
+            स्वीकार करते हैं।<br>
+            <span style="font-size:10px; color:#94a3b8;">सर्वाधिकार सुरक्षित © 2026 Agri Mitra</span>
         </div>
     </div>
 </div>
@@ -599,7 +614,7 @@
             </div>
 
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:8px; border-top:1px dashed #cbd5e1;">
-                <span style="font-size:11px; color:#64748b;">बिना कूपन के सीधे प्लान चुनें। (अधिकतम सीमा: 1,000 क्रेडिट)</span>
+                <span style="font-size:11px; color:#64748b;">बिना कूपन सीधे प्लान चुनें (अधिकतम: 1,000 क्रेडिट)।</span>
                 <button onclick="closePricing(); openContactModal('payment');" style="background:none; border:none; color:#008069; font-size:11px; font-weight:600; cursor:pointer;">
                     ❓ भुगतान सहायता
                 </button>
@@ -680,14 +695,14 @@
     </div>
 </div>
 
-<!-- Modal 5: Last 3 Months Payment History & Invoices -->
+<!-- Modal 5: Ultra-Compact 3-Month Payment History List -->
 <div class="modal-overlay" id="historyModal">
     <div class="modal-card">
         <div class="modal-header">
-            <h3>🧾 भुगतान एवं बिलिंग इतिहास (विगत 3 माह)</h3>
+            <h3>🧾 बिलिंग व इतिहास (विगत 3 माह)</h3>
             <button class="modal-close" onclick="closeHistoryModal()">✕</button>
         </div>
-        <div class="modal-body" id="historyListContainer">
+        <div class="modal-body" id="historyListContainer" style="padding:12px;">
             <p style="color:#64748b; font-size:12px;">लेनदेन लोड हो रहे हैं...</p>
         </div>
         <div style="padding:10px 16px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
@@ -754,7 +769,7 @@
     let refreshClickCount = 0;
     let refreshLockTimer = null;
 
-    const CHAT_STORAGE_KEY = 'agri_mitra_chat_history_v1';
+    const CHAT_STORAGE_KEY = 'agri_mitra_chat_history_v2';
 
     function showToast(msg, duration = 2500) {
         const t = document.getElementById('toastNotice');
@@ -933,11 +948,12 @@
         return res;
     }
 
-    function formatPreciseDate(isoStr) {
-        if (!isoStr) return 'सक्रिय';
+    // Precise IST Date-Time Formatter with AM/PM
+    function formatPreciseIST(isoStr) {
+        if (!isoStr) return 'उपलब्ध नहीं';
         const d = new Date(isoStr);
         return d.toLocaleDateString('hi-IN', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' +
-               d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+               d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) + ' IST';
     }
 
     async function handleRefreshApproval() {
@@ -1025,7 +1041,7 @@
             document.getElementById('quotaSummary').textContent = `उपलब्ध क्रेडिट: ${total} / ${maxPack}`;
             
             if (data.plan_expires_at) {
-                document.getElementById('planExpiryText').textContent = 'वैधता: ' + formatPreciseDate(data.plan_expires_at);
+                document.getElementById('planExpiryText').textContent = 'वैधता: ' + formatPreciseIST(data.plan_expires_at);
             } else {
                 document.getElementById('planExpiryText').textContent = 'वैधता: सक्रिय';
             }
@@ -1099,7 +1115,7 @@
         }
     }
 
-    // Load Last 3 Months Payment History with Buy Date & Expiry Date
+    // Load Last 3 Months Payment History (Ultra-Compact Card Layout with AM/PM IST Expiry)
     async function loadPaymentHistory() {
         if (!currentUser) return;
         const container = document.getElementById('historyListContainer');
@@ -1117,22 +1133,21 @@
 
             let html = '';
             txs.forEach(t => {
-                const buyDate = formatPreciseDate(t.created_at);
-                const expDate = formatPreciseDate(t.expires_at);
-                const amt = t.amount_paid == 0 ? 'मुफ़्त (VIP कूपन)' : '₹' + t.amount_paid;
+                const buyDate = formatPreciseIST(t.created_at);
+                const expDate = formatPreciseIST(t.expires_at);
+                const amt = t.amount_paid == 0 ? 'मुफ़्त (VIP)' : '₹' + t.amount_paid;
+                const planTitle = t.plan_name ? t.plan_name.split('(')[0].trim() : `${t.credits_added} क्रेडिट्स`;
+                
                 html += `
-                    <div class="history-item">
-                        <div>
-                            <b style="font-size:13px; color:#1e293b;">${t.plan_name || (t.credits_added + ' क्रेडिट्स')}</b><br>
-                            <span class="history-date">
-                                📅 <b>खरीद:</b> ${buyDate}<br>
-                                ⏳ <b>वैधता:</b> ${expDate}<br>
-                                🆔 ID: ${t.payment_id ? t.payment_id.substring(0, 18) : 'FREE'}
-                            </span>
+                    <div class="history-card-item">
+                        <div class="history-top-row">
+                            <span class="history-title">${planTitle} (+${t.credits_added} क्रेडिट्स)</span>
+                            <span class="history-amount">${amt}</span>
                         </div>
-                        <div style="text-align:right;">
-                            <div class="history-amount">${amt}</div>
-                            <span class="history-badge badge-success">सफल</span>
+                        <div class="history-details-grid">
+                            <span>📅 <b>खरीद:</b> ${buyDate}</span>
+                            <span>⏳ <b>वैधता:</b> ${expDate}</span>
+                            <span style="font-size:10px; color:#94a3b8;">🆔 ${t.payment_id ? t.payment_id.substring(0, 20) : 'FREE'}</span>
                         </div>
                     </div>`;
             });
@@ -1230,7 +1245,7 @@
         }
     }
 
-    // Direct Payment Flow with Unique Fresh Order Creation
+    // Direct Payment Flow with Unique Fresh Order Creation & 1,000 Cap Safeguard
     async function initiatePayment(planId) {
         if (!currentUser) return;
         const couponVal = (document.getElementById('couponInput').value || '').trim();
@@ -1337,7 +1352,7 @@
         document.getElementById('creditRollCount').textContent = `+${creditsAdded} क्रेडिट्स`;
         document.getElementById('successMsg').textContent = `आपके खाते में ${creditsAdded} क्रेडिट्स सफलतापूर्वक जोड़ दिए गए हैं।`;
         if (expiryIso) {
-            document.getElementById('trialDatesLabel').textContent = `वैधता: ${formatPreciseDate(expiryIso)} तक`;
+            document.getElementById('trialDatesLabel').textContent = `वैधता: ${formatPreciseIST(expiryIso)} तक`;
         }
     }
 
@@ -1353,7 +1368,7 @@
         });
     }
 
-    function nowTime() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+    function nowTime() { return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }); }
     document.getElementById('initClock').textContent = nowTime();
 
     function keyMonitor(e) { 
@@ -1369,9 +1384,19 @@
         navigator.clipboard.writeText(text).then(() => showToast('उत्तर कॉपी हो गया!')).catch(() => {});
     }
 
-    function shareOnWhatsApp(text) {
-        const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text + '\n\n— Agri Mitra (कृषि मित्र)')}`;
-        window.open(url, '_blank');
+    // Universal Share Function (Web Share API with Fallback)
+    function shareUniversal(text) {
+        const shareData = {
+            title: 'Agri Mitra (कृषि मित्र) सलाह',
+            text: text + '\n\n— Agri Mitra (कृषि मित्र)'
+        };
+        if (navigator.share) {
+            navigator.share(shareData).catch(() => {});
+        } else {
+            // Direct WhatsApp fallback if Web Share is unavailable
+            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareData.text)}`;
+            window.open(url, '_blank');
+        }
     }
 
     function renderUserBubbleDirect(textHtml, time, isHistory = false) {
@@ -1393,7 +1418,7 @@
         return rowId;
     }
 
-    // WhatsApp Meta AI style Bot Bubble (Header Badge + Compact Action Pills)
+    // WhatsApp Meta AI Style Bot Bubble with Universal Share Icon
     function renderBotBubbleDirect(innerHtml, time, isLatest = false, rawForCopy = '') {
         document.querySelectorAll('.meta-action-bar').forEach(el => el.remove());
 
@@ -1411,8 +1436,9 @@
                             <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                             <span>Copy</span>
                         </button>
-                        <button class="action-pill-btn" onclick="shareOnWhatsApp('${escaped}')" title="WhatsApp पर साझा करें">
-                            <svg width="12" height="12" fill="#008069" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.587 1.961.954 3.031.954 3.179 0 5.765-2.587 5.767-5.766.001-3.187-2.575-5.77-5.767-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.072-2.18-.544-1.636-.677-2.735-2.343-2.825-2.459-.09-.115-.657-.872-.657-1.66 0-.788.414-1.174.559-1.332.144-.158.315-.198.42-.198.106 0 .211.002.304.007.098.005.23-.037.36.275.144.344.488 1.192.531 1.28.043.088.072.19.014.305-.058.115-.087.188-.173.289l-.26.309c-.087.09-.178.188-.077.362.102.175.452.745.97 1.206.669.596 1.232.781 1.406.868.174.088.276.077.378-.04.103-.116.438-.51.555-.685.118-.175.235-.146.395-.088.16.058 1.016.479 1.191.566.175.088.291.132.334.204.043.073.043.424-.101.829z"/></svg>
+                        <button class="action-pill-btn" onclick="shareUniversal('${escaped}')" title="साझा करें (Share)">
+                            <!-- Universal 3-Node Connected Share Icon -->
+                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z"/></svg>
                             <span>Share</span>
                         </button>
                     </div>
@@ -1446,7 +1472,7 @@
 
         const sendBtn = document.getElementById('sendBtnEl');
         sendBtn.classList.add('flying-anim');
-        setTimeout(() => { sendBtn.classList.remove('flying-anim'); }, 700);
+        setTimeout(() => { sendBtn.classList.remove('flying-anim'); }, 600);
 
         const time = nowTime();
         
