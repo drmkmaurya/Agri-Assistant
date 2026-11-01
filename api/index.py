@@ -1,8 +1,6 @@
 import os
 import time
 import asyncio
-import hashlib
-import json
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 from fastapi import FastAPI, HTTPException, Request
@@ -34,13 +32,9 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if (SUPABASE_URL and SUPABASE_KEY) else None
 client: genai.Client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
-# IST Timezone for Daily Midnight Reset
 IST = ZoneInfo("Asia/Kolkata")
-
-# In-Memory Concurrency Semaphore for Priority Queue
 concurrency_counter = 0
 concurrency_lock = asyncio.Lock()
-
 rate_limit_records = {}
 
 def apply_rate_limit(client_ip: str):
@@ -50,7 +44,7 @@ def apply_rate_limit(client_ip: str):
     minute_window = now - 60
     recent = [t for t in rate_limit_records[client_ip] if t > minute_window]
     rate_limit_records[client_ip] = recent
-    if len(recent) >= 10:
+    if len(recent) >= 12:
         raise HTTPException(status_code=429, detail="आपने 1 मिनट में अधिक अनुरोध किए हैं। कृपया 1 मिनट प्रतीक्षा करें।")
     rate_limit_records[client_ip].append(now)
 
@@ -103,29 +97,65 @@ def get_super_control_settings():
         "welcome_enabled": True
     }
 
+def get_or_create_user_profile(user_id: str, email: str = "", name: str = "", avatar: str = "") -> dict:
+    """
+    Self-healing: If user is authenticated in Supabase Auth but trigger didn't create
+    row in public.user_profiles, backend automatically creates it without failing!
+    """
+    try:
+        res = supabase.table("user_profiles").select("*").eq("id", user_id).limit(1).execute()
+        if res.data:
+            return res.data[0]
+        
+        today_ist_str = datetime.now(IST).strftime("%Y-%m-%d")
+        new_row = {
+            "id": user_id,
+            "email": email or "",
+            "full_name": name or "किसान साथी",
+            "avatar_url": avatar or "https://lh3.googleusercontent.com/a/default-user=s96-c",
+            "plan_type": "free",
+            "total_credits": 1,
+            "max_pack_credits": 1,
+            "status": "approved",
+            "is_trial_claimed": False,
+            "last_free_credit_date": today_ist_str
+        }
+        ins = supabase.table("user_profiles").insert(new_row).execute()
+        if ins.data:
+            return ins.data[0]
+    except Exception as e:
+        print(f"get_or_create_user_profile fallback: {e}")
+    
+    # Return basic fallback dictionary if DB write failed
+    return {
+        "id": user_id,
+        "email": email,
+        "full_name": name or "किसान साथी",
+        "plan_type": "free",
+        "total_credits": 1,
+        "max_pack_credits": 1,
+        "status": "approved",
+        "is_trial_claimed": False
+    }
+
 def sync_daily_free_credit(profile: dict, user_id: str) -> dict:
-    """
-    Checks if a user on 'free' plan needs today's 1 free credit.
-    Resets at midnight IST without accumulating.
-    """
     today_ist_str = datetime.now(IST).strftime("%Y-%m-%d")
     plan_type = profile.get("plan_type") or "free"
     last_free_date = profile.get("last_free_credit_date")
-    total_credits = profile.get("total_credits", 0)
 
-    # Only applies if user is on Free plan
-    if plan_type == "free":
-        if last_free_date != today_ist_str:
-            # New day: grant exactly 1 free credit for today (non-accumulating)
-            new_credits = 1
+    if plan_type == "free" and last_free_date != today_ist_str:
+        new_credits = 1
+        try:
             supabase.table("user_profiles").update({
                 "total_credits": new_credits,
                 "max_pack_credits": 1,
                 "last_free_credit_date": today_ist_str
             }).eq("id", user_id).execute()
-            profile["total_credits"] = new_credits
-            profile["max_pack_credits"] = 1
-            profile["last_free_credit_date"] = today_ist_str
+        except Exception:
+            pass
+        profile["total_credits"] = new_credits
+        profile["max_pack_credits"] = 1
+        profile["last_free_credit_date"] = today_ist_str
 
     return profile
 
@@ -143,13 +173,7 @@ async def ask_endpoint(req: QueryReq, request: Request):
     if settings.get("maintenance_mode"):
         raise HTTPException(status_code=503, detail="सिस्टम अभी रखरखाव (Maintenance) मोड में है। कृपया कुछ समय बाद प्रयास करें।")
 
-    user_res = supabase.table("user_profiles").select("*").eq("id", req.user_id).limit(1).execute()
-    if not user_res.data:
-        raise HTTPException(status_code=404, detail="खाता नहीं मिला।")
-    
-    profile = user_res.data[0]
-    if profile.get("status") == "pending":
-        raise HTTPException(status_code=403, detail="आपका खाता अभी समीक्षा (Pending) में है।")
+    profile = get_or_create_user_profile(req.user_id)
     if profile.get("status") == "banned":
         raise HTTPException(status_code=403, detail="आपका खाता ब्लॉक कर दिया गया है।")
 
@@ -157,7 +181,6 @@ async def ask_endpoint(req: QueryReq, request: Request):
     plan_expires_at = profile.get("plan_expires_at")
     total_credits = profile.get("total_credits", 0)
 
-    # Validate Plan Expiration & Auto-Downgrade to Free
     is_paid_active = False
     now_utc = datetime.now(timezone.utc)
     if plan_type in ["basic", "pro"]:
@@ -167,7 +190,6 @@ async def ask_endpoint(req: QueryReq, request: Request):
                 if now_utc <= exp_time and total_credits > 0:
                     is_paid_active = True
                 else:
-                    # Downgrade to Free plan immediately
                     plan_type = "free"
                     supabase.table("user_profiles").update({"plan_type": "free"}).eq("id", req.user_id).execute()
                     profile["plan_type"] = "free"
@@ -176,15 +198,12 @@ async def ask_endpoint(req: QueryReq, request: Request):
         else:
             plan_type = "free"
 
-    # Sync daily free credit if user is now on free plan
     profile = sync_daily_free_credit(profile, req.user_id)
     total_credits = profile.get("total_credits", 0)
 
-    # Free plan lock for attachments
     if not is_paid_active and req.attachment_count > 0:
         raise HTTPException(status_code=403, detail="फोटो / दस्तावेज़ जांच केवल Basic और Pro प्लान में उपलब्ध है। कृपया प्लान अपग्रेड करें।")
 
-    # Credits needed calculation
     credits_needed = 1 + min(2, req.attachment_count)
 
     if total_credits < credits_needed:
@@ -193,17 +212,14 @@ async def ask_endpoint(req: QueryReq, request: Request):
         else:
             raise HTTPException(status_code=402, detail="आपके पास आज का फ्री क्रेडिट समाप्त हो गया है। कल मध्यरात्रि 12 बजे 1 नया क्रेडिट स्वतः मिलेगा, या तुरंत पूछने के लिए Basic/Pro प्लान लें।")
 
-    # Priority Queue Management: Pro > Basic > Free
     async with concurrency_lock:
         concurrency_counter += 1
     
     try:
         if plan_type == "free" and concurrency_counter > 5:
-            # Yield momentarily to prioritize Pro & Basic users under heavy load
             await asyncio.sleep(1.2)
         elif plan_type == "basic" and concurrency_counter > 15:
             await asyncio.sleep(0.4)
-        # Pro users bypass all sleep and execute immediately
     finally:
         async with concurrency_lock:
             concurrency_counter = max(0, concurrency_counter - 1)
@@ -211,7 +227,6 @@ async def ask_endpoint(req: QueryReq, request: Request):
     user_query = req.query.strip()
     clean_q = user_query.lower()
 
-    # Fast Greeting Intent (Zero LLM / Zero Credit Loss)
     greetings = ["hello", "hi", "namaste", "pranam", "hey", "नमस्ते", "प्रणाम", "राम राम"]
     if clean_q in greetings:
         greeting_text = "नमस्ते किसान भाई! 🙏 बताइए, आज फसल या प्राकृतिक कृषि से संबंधित क्या सहायता चाहिए?" if req.language == "hi" else "Hello Farmer Friend! 🙏 How can I assist you with your farming, soil, or organic agriculture today?"
@@ -223,7 +238,6 @@ async def ask_endpoint(req: QueryReq, request: Request):
             "plan_type": plan_type
         }
 
-    # Generate Embeddings & Retrieve Context from Supabase
     try:
         emb_res = client.models.embed_content(
             model="models/gemini-embedding-001",
@@ -242,11 +256,7 @@ async def ask_endpoint(req: QueryReq, request: Request):
         context_text = ""
         sources = []
         for m in matches:
-            context_text += f"- Title: {m.get('title')}
-  Vishay: {m.get('topic')}
-  Summary: {m.get('summary')}
-
-"
+            context_text += f"- Title: {m.get('title')}\n  Vishay: {m.get('topic')}\n  Summary: {m.get('summary')}\n\n"
             sources.append({
                 "title": m.get("topic") or m.get("title"),
                 "duration": m.get("duration_label"),
@@ -254,7 +264,6 @@ async def ask_endpoint(req: QueryReq, request: Request):
                 "video_url": f"https://www.youtube.com/watch?v={m['video_id']}&t={m['start_seconds']}s"
             })
 
-        # Strict Language Instruction
         if req.language == "en":
             lang_instruction = "CRITICAL: The user has selected English. You MUST respond 100% in pure English only. Do NOT use any Hindi or Hinglish words."
         else:
@@ -271,12 +280,9 @@ User Query:
 {user_query}
 """
 
-        # Pro Internet Grounding Verification
         allow_web_search = (req.web_search_enabled and is_paid_active and plan_type == "pro")
-        
         gen_config = types.GenerateContentConfig(temperature=0.2)
         if allow_web_search:
-            # Enable Google Search grounding tool for Pro users
             gen_config.tools = [{"google_search": {}}]
 
         response = client.models.generate_content(
@@ -288,21 +294,21 @@ User Query:
 
     except Exception as e:
         print(f"Chat execution error: {e}")
-        # Zero credit loss on failure
         raise HTTPException(status_code=500, detail="उत्तर तैयार करने में तकनीकी समस्या आई। आपका कोई क्रेडिट नहीं काटा गया है।")
 
-    # POST-SUCCESS CREDIT DEDUCTION ONLY
+    # POST-SUCCESS DEDUCTION ONLY
     new_balance = max(0, total_credits - credits_needed)
-    
-    # If user used up their last paid credit, auto-downgrade to free for next time
     updated_plan_type = plan_type
     if is_paid_active and new_balance == 0:
         updated_plan_type = "free"
 
-    supabase.table("user_profiles").update({
-        "total_credits": new_balance,
-        "plan_type": updated_plan_type
-    }).eq("id", req.user_id).execute()
+    try:
+        supabase.table("user_profiles").update({
+            "total_credits": new_balance,
+            "plan_type": updated_plan_type
+        }).eq("id", req.user_id).execute()
+    except Exception:
+        pass
 
     return {
         "answer": answer_text,
@@ -312,16 +318,12 @@ User Query:
         "plan_type": updated_plan_type
     }
 
-# 2. Claim Welcome Offer (10 Credits / 10 Days)
+# 2. Claim Welcome Offer (Gives 10 Credits, 10 Days, Unlocks Basic Plan)
 @app.post("/api/claim-welcome")
 @app.post("/claim-welcome")
 async def claim_welcome_endpoint(req: ClaimWelcomeReq):
-    user_res = supabase.table("user_profiles").select("*").eq("id", req.user_id).single().execute()
-    if not user_res.data:
-        raise HTTPException(status_code=404, detail="खाता नहीं मिला।")
-    
-    user = user_res.data
-    if user.get("is_trial_claimed") or user.get("plan_type") in ["basic", "pro"]:
+    profile = get_or_create_user_profile(req.user_id)
+    if profile.get("is_trial_claimed"):
         raise HTTPException(status_code=400, detail="आप पहले ही स्वागत क्रेडिट्स क्लेम कर चुके हैं।")
 
     settings = get_super_control_settings()
@@ -331,17 +333,85 @@ async def claim_welcome_endpoint(req: ClaimWelcomeReq):
     now_utc = datetime.now(timezone.utc)
     expiry = (now_utc + timedelta(days=days_amt)).isoformat()
 
+    # Upgrades user to Basic Plan with 10 Credits for 10 Days
     supabase.table("user_profiles").update({
         "is_trial_claimed": True,
-        "plan_type": "free",
+        "plan_type": "basic",
         "total_credits": credits_amt,
         "max_pack_credits": credits_amt,
         "plan_expires_at": expiry
     }).eq("id", req.user_id).execute()
 
-    return {"status": "success", "credits": credits_amt, "plan_expires_at": expiry}
+    return {
+        "status": "success",
+        "credits": credits_amt,
+        "plan_type": "basic",
+        "plan_expires_at": expiry
+    }
 
-# 3. Last 3 Months Payment History API
+# 3. User Stats API
+@app.get("/api/user-stats")
+@app.get("/user-stats")
+async def user_stats(user_id: str, email: str = "", name: str = "", avatar: str = ""):
+    data = get_or_create_user_profile(user_id, email, name, avatar)
+    data = sync_daily_free_credit(data, user_id)
+
+    settings = get_super_control_settings()
+
+    plan_type = data.get("plan_type") or "free"
+    plan_expires_at = data.get("plan_expires_at")
+    total_credits = data.get("total_credits", 0)
+    max_pack = data.get("max_pack_credits", 1)
+    is_claimed = data.get("is_trial_claimed", False)
+    created_at = data.get("created_at")
+
+    is_paid_active = False
+    now_utc = datetime.now(timezone.utc)
+    if plan_type in ["basic", "pro"]:
+        if plan_expires_at:
+            try:
+                exp_time = datetime.fromisoformat(plan_expires_at.replace("Z", "+00:00"))
+                if now_utc <= exp_time and total_credits > 0:
+                    is_paid_active = True
+                else:
+                    plan_type = "free"
+                    supabase.table("user_profiles").update({"plan_type": "free"}).eq("id", user_id).execute()
+            except Exception:
+                plan_type = "free"
+        else:
+            plan_type = "free"
+
+    # Check 7-day Welcome Offer eligibility window
+    is_within_7_days = True
+    if created_at:
+        try:
+            created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+            if (now_utc - created_dt).days > 7:
+                is_within_7_days = False
+        except Exception:
+            pass
+
+    return {
+        "status": data.get("status", "approved"),
+        "plan_type": plan_type,
+        "total_credits": total_credits,
+        "max_pack_credits": max_pack,
+        "plan_expires_at": plan_expires_at,
+        "is_paid_active": is_paid_active,
+        "is_trial_claimed": is_claimed,
+        "created_at": created_at,
+        "is_welcome_eligible": (not is_claimed) and is_within_7_days and (not is_paid_active),
+        "super_control": {
+            "maintenance_mode": settings.get("maintenance_mode", False),
+            "banner_enabled": settings.get("banner_enabled", False),
+            "banner_text": settings.get("banner_text", ""),
+            "welcome_credits": settings.get("welcome_credits", 10),
+            "welcome_days": settings.get("welcome_days", 10),
+            "welcome_enabled": settings.get("welcome_enabled", True)
+        }
+    }
+
+# 4. Payment APIs
 @app.get("/api/payment-history")
 @app.get("/payment-history")
 async def payment_history_endpoint(user_id: str):
@@ -354,7 +424,6 @@ async def payment_history_endpoint(user_id: str):
         .execute()
     return {"transactions": res.data or []}
 
-# 4. Universal Support API -> user_queries
 @app.post("/api/request-approval")
 @app.post("/request-approval")
 async def support_endpoint(req: SupportReq):
@@ -377,62 +446,6 @@ async def support_endpoint(req: SupportReq):
     
     return {"status": "success", "priority": assigned_priority}
 
-# 5. User Stats API with Auto-Sync for Daily 1 Free Credit
-@app.get("/api/user-stats")
-@app.get("/user-stats")
-async def user_stats(user_id: str):
-    res = supabase.table("user_profiles").select("*").eq("id", user_id).single().execute()
-    if not res.data:
-        raise HTTPException(status_code=404, detail="User not found")
-    data = res.data
-
-    # Daily 1 Free credit check & sync
-    data = sync_daily_free_credit(data, user_id)
-
-    settings = get_super_control_settings()
-
-    plan_type = data.get("plan_type") or "free"
-    plan_expires_at = data.get("plan_expires_at")
-    total_credits = data.get("total_credits", 0)
-    max_pack = data.get("max_pack_credits", 1)
-    is_claimed = data.get("is_trial_claimed", False)
-
-    is_paid_active = False
-    now_utc = datetime.now(timezone.utc)
-    if plan_type in ["basic", "pro"]:
-        if plan_expires_at:
-            try:
-                exp_time = datetime.fromisoformat(plan_expires_at.replace("Z", "+00:00"))
-                if now_utc <= exp_time and total_credits > 0:
-                    is_paid_active = True
-                else:
-                    # Auto downgrade if expired
-                    plan_type = "free"
-                    supabase.table("user_profiles").update({"plan_type": "free"}).eq("id", user_id).execute()
-            except Exception:
-                plan_type = "free"
-        else:
-            plan_type = "free"
-
-    return {
-        "status": data.get("status", "pending"),
-        "plan_type": plan_type,
-        "total_credits": total_credits,
-        "max_pack_credits": max_pack,
-        "plan_expires_at": plan_expires_at,
-        "is_paid_active": is_paid_active,
-        "is_trial_claimed": is_claimed,
-        "super_control": {
-            "maintenance_mode": settings.get("maintenance_mode", False),
-            "banner_enabled": settings.get("banner_enabled", False),
-            "banner_text": settings.get("banner_text", ""),
-            "welcome_credits": settings.get("welcome_credits", 10),
-            "welcome_days": settings.get("welcome_days", 10),
-            "welcome_enabled": settings.get("welcome_enabled", True)
-        }
-    }
-
-# 6. Payment Order & Verify
 @app.post("/api/create-order")
 @app.post("/create-order")
 async def create_order_endpoint(req: OrderReq):
