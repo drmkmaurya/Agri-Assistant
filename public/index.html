@@ -838,9 +838,7 @@
 
 <script>
     // Safe URL Cleaner: Runs only AFTER Supabase has successfully read the auth tokens
-    function safeCleanUrl() {
-        if (window.location.hash || window.location.search) {
-            window.history.replaceState({}, document.title, window.location.pathname);
+    , document.title, window.location.pathname);
         }
     }
 
@@ -1059,7 +1057,7 @@
     supabaseClient.auth.onAuthStateChange((event, session) => {
         if (session && session.user) {
             currentUser = session.user;
-            safeCleanUrl();
+            
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('userAvatar').src = currentUser.user_metadata.avatar_url || document.getElementById('userAvatar').src;
             document.getElementById('userName').textContent = currentUser.user_metadata.full_name || 'किसान साथी';
@@ -1076,10 +1074,24 @@
 
     async function loginWithGoogle() {
         showSpinner("Google से कनेक्ट हो रहे हैं...");
-        await supabaseClient.auth.signInWithOAuth({
-            provider: 'google',
-            options: { redirectTo: window.location.origin }
-        });
+        try {
+            const { data, error } = await supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin,
+                    queryParams: {
+                        prompt: 'select_account'
+                    }
+                }
+            });
+            if (error) {
+                hideSpinner();
+                alert("लॉगिन त्रुटि: " + error.message);
+            }
+        } catch(err) {
+            hideSpinner();
+            alert("नेटवर्क त्रुटि: " + err.message);
+        }
     }
 
     async function signOutUser() {
