@@ -56,7 +56,7 @@ const policyDocs = {
             <p style="margin-bottom:8px;"><b>1. डिजिटल कमोडिटी नियम (Strictly Non-Refundable):</b> चूंकि डिजिटल क्रेडिट्स भुगतान सत्यापन के उपरांत खाते में तुरंत जुड़ जाते हैं और उपभोग योग्य हो जाते हैं, अतः सफल सक्रियण के बाद कोई भी रिफंड देय नहीं होगा।</p>
             <p style="margin-bottom:8px;"><b>2. तकनीकी विफलता अपवाद (2-Hour Reflection Window):</b> यदि आपके बैंक या यूपीआई से राशि कट जाने के उपरांत <b>2 घंटे के भीतर</b> क्रेडिट्स खाते में परिलक्षित नहीं होते हैं, तो लेनदेन आईडी के साथ हमें सूचित करें।</p>
             <p style="margin-bottom:8px;"><b>3. रिफंड प्रक्रिया:</b> सत्यापन के पश्चात 100% धनराशि <b>5 से 7 कार्यदिवसों (Working Days)</b> में आपके मूल बैंक खाते में स्वतः वापस भेज दी जाएगी।</p>
-            <p style="font-size:11.5px; color:#64748b;">सपोर्ट ईमेल: mauryarohit21052017@gmail.com</p>
+            <p style="font-size:11.5px; color:#64748b;">सपोर्ट ईमेल: support@agrimitra.in</p>
         </div>
     `,
     contact: `
@@ -64,7 +64,7 @@ const policyDocs = {
             <h4 style="color:#008069; margin-bottom:8px; font-weight:700; font-size:15px;">सहायता एवं संपर्क (Help & Support)</h4>
             <p style="margin-bottom:8px;">किसी भी बिलिंग, तकनीकी सहायता अथवा सुझाव के लिए सीधे संपर्क करें:</p>
             <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:8px; line-height:1.7;">
-                📧 <b>ईमेल:</b> <a href="mailto:mauryarohit21052017@gmail.com" style="color:#008069; font-weight:600; text-decoration:none;">mauryarohit21052017@gmail.com</a><br>
+                📧 <b>ईमेल:</b> <a href="mailto:support@agrimitra.in" style="color:#008069; font-weight:600; text-decoration:none;">support@agrimitra.in</a><br>
                 📍 <b>स्थान:</b> उत्तर प्रदेश, भारत<br>
                 ⏰ <b>कार्य समय:</b> सोमवार से शनिवार (सुबह 10:00 से शाम 06:00 बजे IST)
             </div>

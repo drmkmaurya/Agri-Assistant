@@ -837,13 +837,12 @@
 <div class="toast-popup" id="toastNotice">सूचना</div>
 
 <script>
-    // AUTO-CLEAN URL: Removes ?error= or #access_token instantly
-    (function cleanUrlParameters() {
-        if (window.location.search || window.location.hash) {
-            const cleanUrl = window.location.origin + window.location.pathname;
-            window.history.replaceState({}, document.title, cleanUrl);
+    // Safe URL Cleaner: Runs only AFTER Supabase has successfully read the auth tokens
+    function safeCleanUrl() {
+        if (window.location.hash || window.location.search) {
+            window.history.replaceState({}, document.title, window.location.pathname);
         }
-    })();
+    }
 
     const SUPABASE_URL = "https://wvptpethggrslyeqsjdn.supabase.co";
     const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind2cHRwZXRoZ2dyc2x5ZXFzamRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzODAyNzUsImV4cCI6MjEwODk1NjI3NX0.XdPonPJI0XeRzwcP9hkfYwo1zowcg-SLPNLGt6_s1Qg"; 
@@ -1060,6 +1059,7 @@
     supabaseClient.auth.onAuthStateChange((event, session) => {
         if (session && session.user) {
             currentUser = session.user;
+            safeCleanUrl();
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('userAvatar').src = currentUser.user_metadata.avatar_url || document.getElementById('userAvatar').src;
             document.getElementById('userName').textContent = currentUser.user_metadata.full_name || 'किसान साथी';
