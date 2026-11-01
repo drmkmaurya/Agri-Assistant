@@ -837,11 +837,6 @@
 <div class="toast-popup" id="toastNotice">सूचना</div>
 
 <script>
-    // Safe URL Cleaner: Runs only AFTER Supabase has successfully read the auth tokens
-    , document.title, window.location.pathname);
-        }
-    }
-
     const SUPABASE_URL = "https://wvptpethggrslyeqsjdn.supabase.co";
     const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind2cHRwZXRoZ2dyc2x5ZXFzamRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzODAyNzUsImV4cCI6MjEwODk1NjI3NX0.XdPonPJI0XeRzwcP9hkfYwo1zowcg-SLPNLGt6_s1Qg"; 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
@@ -1057,7 +1052,6 @@
     supabaseClient.auth.onAuthStateChange((event, session) => {
         if (session && session.user) {
             currentUser = session.user;
-            
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('userAvatar').src = currentUser.user_metadata.avatar_url || document.getElementById('userAvatar').src;
             document.getElementById('userName').textContent = currentUser.user_metadata.full_name || 'किसान साथी';
@@ -1574,11 +1568,20 @@
 
         let formatted = rawText
             .replace(/\*\*(.*?)\*\*/g, '*$1*')
-            .replace(/###\s*(.*?)\n/g, '*$1*\n')
-            .replace(/##\s*(.*?)\n/g, '*$1*\n')
+            .replace(/###\s*(.*?)
+/g, '*$1*
+')
+            .replace(/##\s*(.*?)
+/g, '*$1*
+')
             .trim();
 
-        const shareMessage = `🌾 *Agri Mitra (कृषि मित्र) सलाह*\n\n${formatted}\n\n━━━━━━━━━━━━━━━━━━━━\n📲 *कृषि मित्र AI से अपनी फसल के सवाल पूछें:* https://agri-assistant-two.vercel.app`;
+        const shareMessage = `🌾 *Agri Mitra (कृषि मित्र) सलाह*
+
+${formatted}
+
+━━━━━━━━━━━━━━━━━━━━
+📲 *कृषि मित्र AI से अपनी फसल के सवाल पूछें:* https://agri-assistant-two.vercel.app`;
         const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareMessage)}`;
         window.open(waUrl, '_blank');
     }
@@ -1666,7 +1669,8 @@
             displayMsg = (text ? text + '<br>' : '') + `<small style="color:#065f46; font-weight:600;">📎 ${selectedAttachments.length} संलग्न फाइलें: ${fileList}</small>`;
         }
 
-        const safeUserText = displayMsg.split('\n').join('<br>');
+        const safeUserText = displayMsg.split('
+').join('<br>');
         const rowId = renderUserBubbleDirect(safeUserText, time, false);
         saveLocalMessage('user', safeUserText, time);
         
@@ -1709,7 +1713,8 @@
             fetchStats();
 
             let rawText = data.answer.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-            rawText = rawText.split('\n').join('<br>');
+            rawText = rawText.split('
+').join('<br>');
             let finalContent = '<div>' + rawText + '</div>';
 
             if (data.sources && data.sources.length > 0) {
