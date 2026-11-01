@@ -6,9 +6,10 @@
     <title>Agri Mitra - कृषि मित्र</title>
     
     <link rel="manifest" href="/manifest.json">
-    <!-- Status bar darker than header (#005c4b) for clear OS separation -->
     <meta name="theme-color" content="#005c4b">
-    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/606/606553.png">
+    
+    <!-- Authentic Agriculture Golden Wheat Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%23F59E0B' d='M32 4c-1.5 4-4 8-8 10 4 1 8 4 10 8 2-4 6-7 10-8-4-2-6.5-6-8-10z'/%3E%3Cpath fill='%23D97706' d='M32 18c-2 5-6 9-11 11 5 1 9 5 11 10 2-5 6-9 11-10-5-2-9-6-11-11z'/%3E%3Cpath fill='%23B45309' d='M32 34c-2.5 5-7 10-13 12 6 1 11 6 13 12 2-6 7-11 13-12-6-2-10.5-7-13-12z'/%3E%3Cpath fill='none' stroke='%2315803D' stroke-width='3' stroke-linecap='round' d='M32 30v32M24 50c4-1 8-6 8-12M40 50c-4-1-8-6-8-12'/%3E%3C/svg%3E">
 
     <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -43,7 +44,7 @@
             transition: height 0.08s ease-out;
         }
 
-        /* Enhanced Header Height & Typography */
+        /* Header */
         .chat-header {
             background: #008069; color: #ffffff; padding: 11px 14px;
             display: flex; align-items: center; justify-content: space-between;
@@ -52,9 +53,10 @@
         .header-left { display: flex; align-items: center; gap: 10px; }
         .dp-avatar {
             width: 42px; height: 42px; border-radius: 50%;
-            background: #00a884; display: flex; align-items: center;
+            background: #ffffff; display: flex; align-items: center;
             justify-content: center; font-size: 22px;
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.28);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            overflow: hidden;
         }
         .header-titles h1 { font-size: 16.5px; font-weight: 700; letter-spacing: 0.25px; }
         .status-badge { font-size: 11px; color: #d1fae5; display: flex; align-items: center; gap: 4.5px; margin-top: 1px; }
@@ -62,7 +64,6 @@
 
         .header-right { display: flex; align-items: center; gap: 8px; }
 
-        /* Language Selector Pill */
         .lang-select-box {
             background: rgba(255, 255, 255, 0.18); border: 1px solid rgba(255, 255, 255, 0.35);
             color: #ffffff; border-radius: 14px; padding: 4px 7px; font-size: 11.5px;
@@ -97,14 +98,12 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.25);
         }
 
-        /* Super Control Announcement Banner */
         .promotion-banner {
             display: none; background: linear-gradient(90deg, #fef3c7, #fef9c3);
             border-bottom: 1.5px solid #facc15; padding: 7px 12px;
             font-size: 12px; color: #854d0e; font-weight: 600; text-align: center;
         }
 
-        /* Welcome Offer Banner */
         .claim-welcome-banner {
             display: none; background: linear-gradient(90deg, #ecfdf5, #dcfce7);
             border-bottom: 1.5px solid #86efac; padding: 7px 12px;
@@ -126,7 +125,6 @@
             padding: 2px 7px; border-radius: 10px; font-size: 11px; cursor: pointer;
         }
 
-        /* Canvas with High Contrast */
         .chat-canvas {
             flex: 1; overflow-y: auto; padding: 14px 12px;
             display: flex; flex-direction: column; gap: 11px;
@@ -141,7 +139,7 @@
             font-weight: 500;
         }
 
-        /* Scrollable Quick Trending Question Chips (Zero LLM / High Cache Hits) */
+        /* Trending Questions Scrollable Row */
         .trending-chips-container {
             display: flex; gap: 7px; overflow-x: auto; padding: 2px 2px 6px 2px;
             margin-bottom: 2px; flex-shrink: 0;
@@ -180,7 +178,6 @@
         .tick-svg { width: 15px; height: 11px; fill: #8696a0; }
         .tick-svg.blue { fill: #53bdeb; }
 
-        /* Video Clips */
         .sources-wrapper { margin-top: 8px; padding-top: 6px; border-top: 1px dashed #cbd5e1; }
         .sources-title { font-size: 12px; font-weight: 700; color: #008069; margin-bottom: 5px; }
         .clip-card {
@@ -193,7 +190,6 @@
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
 
-        /* Action Bar */
         .meta-action-bar {
             display: flex; align-items: center; justify-content: space-between;
             margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(0,0,0,0.06);
@@ -214,7 +210,6 @@
         }
         .action-pill-btn.whatsapp-share-btn:hover { background: #dcfce7; color: #008069; }
 
-        /* Plant Loader */
         .plant-loader-row {
             display: none; align-self: flex-start; background: #ffffff;
             padding: 6px 14px; border-radius: 16px; align-items: center; gap: 7px;
@@ -228,7 +223,6 @@
             100% { transform: scale(0.85) rotate(-10deg); opacity: 0.6; }
         }
 
-        /* Footer Container with Web Search Toggle */
         .input-bar {
             background: #e2e9e3; padding: 7px 10px; display: flex; align-items: center;
             gap: 6px; flex-shrink: 0; border-top: 1px solid #d1dbd2; z-index: 100; position: relative;
@@ -241,7 +235,6 @@
         .attach-btn:hover { background: #d4ded5; color: #008069; }
         .attach-icon { width: 21px; height: 21px; fill: currentColor; }
 
-        /* Pro Internet Grounding Toggle Button */
         .web-search-toggle {
             background: rgba(255, 255, 255, 0.7); border: 1px solid #cbd5e1; width: 36px; height: 36px;
             border-radius: 50%; color: #64748b; display: flex; align-items: center;
@@ -267,7 +260,6 @@
         }
         .chip-remove { cursor: pointer; color: #ef4444; font-weight: bold; }
 
-        /* Focus Highlight Border for Input Box Container */
         .input-box {
             flex: 1; background: #ffffff; border-radius: 22px; padding: 6px 14px;
             display: flex; align-items: center; min-height: 42px; box-shadow: 0 1px 1.5px rgba(0,0,0,0.08);
@@ -284,7 +276,6 @@
         }
         .chat-textarea::placeholder { color: #8696a0; }
 
-        /* Send Button */
         .send-btn {
             background: #00a884; border: none; width: 42px; height: 42px; border-radius: 50%;
             color: white; display: flex; align-items: center; justify-content: center; cursor: pointer;
@@ -300,7 +291,6 @@
             100% { transform: translate(25px, -28px) scale(0.6); opacity: 0; }
         }
 
-        /* Streamlined Dropdown Menu */
         .dropdown-menu {
             display: none; position: absolute; top: 56px; right: 12px;
             background: #ffffff; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.18);
@@ -330,7 +320,6 @@
         .modal-close { background: none; border: none; color: white; font-size: 18px; cursor: pointer; }
         .modal-body { padding: 16px; overflow-y: auto; font-size: 13.5px; color: #334155; line-height: 1.55; }
 
-        /* Settings Modal Specific Controls */
         .settings-option-card {
             background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
             padding: 12px; margin-bottom: 12px;
@@ -345,7 +334,6 @@
             border-color: #008069; background: #e6f4f1; color: #008069;
         }
 
-        /* Pricing Card Grid: Basic (49) & Pro (99) with No-Downgrade Safeguard */
         .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .price-box {
             border: 1.5px solid #bbf7d0; background: #f0fdf4; padding: 14px 10px;
@@ -364,7 +352,6 @@
         .credits-val { font-size: 12.5px; color: #166534; margin-top: 4px; font-weight: 500; }
         .duration-val { font-size: 11px; color: #64748b; margin-top: 2px; }
 
-        /* Dedicated Coupon Section */
         .coupon-section {
             background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
             padding: 10px 12px; margin-top: 12px;
@@ -399,7 +386,6 @@
         .tab-btn { flex: 1; padding: 10px 6px; font-size: 11px; border: none; background: none; cursor: pointer; color: #64748b; white-space: nowrap; }
         .tab-btn.active { color: #008069; font-weight: bold; border-bottom: 2px solid #008069; background: #ffffff; }
 
-        /* Payment History Card */
         .history-card-item {
             background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;
             padding: 9px 11px; margin-bottom: 7px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
@@ -414,7 +400,6 @@
             display: flex; flex-direction: column; gap: 1px;
         }
 
-        /* Non-Dismissible Pending Screen */
         .pending-screen {
             display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: #edf5ef; z-index: 400;
@@ -434,7 +419,6 @@
         }
         .refresh-status-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        /* Login Screen */
         .auth-screen {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: #edf5ef; z-index: 500; display: flex; flex-direction: column;
@@ -480,7 +464,15 @@
     <!-- Header -->
     <header class="chat-header">
         <div class="header-left">
-            <div class="dp-avatar">🌾</div>
+            <div class="dp-avatar">
+                <!-- Golden Wheat SVG -->
+                <svg width="28" height="28" viewBox="0 0 64 64">
+                    <path fill="#F59E0B" d="M32 4c-1.5 4-4 8-8 10 4 1 8 4 10 8 2-4 6-7 10-8-4-2-6.5-6-8-10z"/>
+                    <path fill="#D97706" d="M32 18c-2 5-6 9-11 11 5 1 9 5 11 10 2-5 6-9 11-10-5-2-9-6-11-11z"/>
+                    <path fill="#B45309" d="M32 34c-2.5 5-7 10-13 12 6 1 11 6 13 12 2-6 7-11 13-12-6-2-10.5-7-13-12z"/>
+                    <path fill="none" stroke="#15803D" stroke-width="3" stroke-linecap="round" d="M32 30v32M24 50c4-1 8-6 8-12M40 50c-4-1-8-6-8-12"/>
+                </svg>
+            </div>
             <div class="header-titles">
                 <h1>Agri Mitra</h1>
                 <div class="status-badge"><span class="status-dot"></span> ऑनलाइन • कृषि मित्र</div>
@@ -500,11 +492,10 @@
                 <span>प्लान</span>
             </button>
 
-            <!-- Profile & Dynamic Circular Ring (Rainbow / Green / Grey) -->
+            <!-- Profile & Dynamic Circular Ring -->
             <div class="profile-ring-container" id="btnProfileRing" onclick="toggleMenu(event)" title="खाता व कोटा विवरण">
                 <svg class="progress-ring" width="42" height="42">
                     <defs>
-                        <!-- Vibrant Rainbow Gradient for Pro Plan -->
                         <linearGradient id="rainbowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                             <stop offset="0%" stop-color="#ff007f" />
                             <stop offset="25%" stop-color="#7928ca" />
@@ -557,7 +548,7 @@
     <main class="chat-canvas" id="chatCanvas">
         <div class="date-divider" id="todayDateDivider">आज</div>
 
-        <!-- Scrollable Quick Trending Question Chips (Zero Gemini Call / Instant Redis Hits) -->
+        <!-- Scrollable Quick Trending Question Chips -->
         <div class="trending-chips-container" id="trendingChips">
             <button class="trending-chip" onclick="askQuickChip('जीवामृत बनाने की विधि क्या है?')">🌱 जीवामृत विधि</button>
             <button class="trending-chip" onclick="askQuickChip('फसल में इल्ली नियंत्रण के देसी उपाय क्या हैं?')">🐛 इल्ली नियंत्रण</button>
@@ -596,7 +587,6 @@
 
         <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,application/pdf" multiple style="display:none;" onchange="handleFileSelected(event)">
 
-        <!-- Attachment Picker Button -->
         <button class="attach-btn" onclick="triggerAttachmentPicker()" title="फोटो या PDF जोड़ें (अधिकतम 2 फाइलें, 10MB)">
             <svg class="attach-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
         </button>
@@ -609,12 +599,10 @@
             <span class="web-search-badge" id="webBadge">PRO</span>
         </button>
 
-        <!-- Input Box with Focus Border Highlight -->
         <div class="input-box">
             <textarea id="msgField" class="chat-textarea" rows="1" placeholder="एक संदेश टाइप करें..." oninput="autoGrowTextarea(this)" onkeydown="keyMonitor(event)"></textarea>
         </div>
         
-        <!-- Crisp Circular Send Button with Paper Plane -->
         <button class="send-btn" id="sendBtnEl" onclick="submitMessage()" title="संदेश भेजें">
             <svg class="plane-icon" id="planeIcon" viewBox="0 0 24 24">
                 <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
@@ -650,8 +638,15 @@
     <!-- Auth Login Overlay -->
     <div class="auth-screen" id="authScreen" style="display:none;">
         <div style="text-align:center; margin-top:40px;">
-            <div style="font-size:50px;">🌾</div>
-            <h2 style="color:#008069; margin-top:10px; font-size:22px;">Agri Mitra (कृषि मित्र)</h2>
+            <div style="width:70px; height:70px; margin:0 auto; background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+                <svg width="45" height="45" viewBox="0 0 64 64">
+                    <path fill="#F59E0B" d="M32 4c-1.5 4-4 8-8 10 4 1 8 4 10 8 2-4 6-7 10-8-4-2-6.5-6-8-10z"/>
+                    <path fill="#D97706" d="M32 18c-2 5-6 9-11 11 5 1 9 5 11 10 2-5 6-9 11-10-5-2-9-6-11-11z"/>
+                    <path fill="#B45309" d="M32 34c-2.5 5-7 10-13 12 6 1 11 6 13 12 2-6 7-11 13-12-6-2-10.5-7-13-12z"/>
+                    <path fill="none" stroke="#15803D" stroke-width="3" stroke-linecap="round" d="M32 30v32M24 50c4-1 8-6 8-12M40 50c-4-1-8-6-8-12"/>
+                </svg>
+            </div>
+            <h2 style="color:#008069; margin-top:12px; font-size:22px;">Agri Mitra (कृषि मित्र)</h2>
             <p style="color:#64748b; font-size:13.5px; margin-top:6px;">डिजिटल प्राकृतिक कृषि समाधान मंच</p>
         </div>
 
@@ -671,7 +666,7 @@
     </div>
 </div>
 
-<!-- Modal 1: Settings Modal (Font Size Increase/Decrease) -->
+<!-- Modal 1: Settings Modal -->
 <div class="modal-overlay" id="settingsModal">
     <div class="modal-card">
         <div class="modal-header">
@@ -700,7 +695,7 @@
     </div>
 </div>
 
-<!-- Modal 2: 2-Plan Pricing Modal with No-Downgrade Safeguard -->
+<!-- Modal 2: Pricing Modal -->
 <div class="modal-overlay" id="pricingModal">
     <div class="modal-card">
         <div class="modal-header">
@@ -722,14 +717,12 @@
 
             <p style="font-size:12px; color:#475569; margin-top:14px; font-weight:600;">अपनी आवश्यकतानुसार प्लान चुनें:</p>
             <div class="pricing-grid">
-                <!-- Basic Plan Card (Locked if active Pro plan) -->
                 <div class="price-box" id="cardBasicPlan" onclick="handleSelectPlan('basic')">
                     <span class="plan-badge badge-basic" id="badgeBasic">Basic Plan</span>
                     <div class="price-val">₹49</div>
                     <div class="credits-val">100 क्रेडिट्स</div>
                     <div class="duration-val">वैधता: ठीक 30 दिन</div>
                 </div>
-                <!-- Pro Plan Card -->
                 <div class="price-box pro" id="cardProPlan" onclick="handleSelectPlan('pro')">
                     <span class="plan-badge badge-pro">⭐ Pro Plan</span>
                     <div class="price-val">₹99</div>
@@ -748,7 +741,7 @@
     </div>
 </div>
 
-<!-- Modal 3: Feature Lock Modal for Free Users -->
+<!-- Modal 3: Feature Lock Modal -->
 <div class="modal-overlay" id="featureLockModal">
     <div class="modal-card" style="text-align:center; padding:24px 20px;">
         <div style="font-size:44px;">🔒</div>
@@ -820,7 +813,7 @@
     </div>
 </div>
 
-<!-- Modal 6: Ultra-Compact 3-Month Payment History List -->
+<!-- Modal 6: Payment History List -->
 <div class="modal-overlay" id="historyModal">
     <div class="modal-card">
         <div class="modal-header">
@@ -881,6 +874,14 @@
 <div class="toast-popup" id="toastNotice">सूचना</div>
 
 <script>
+    // AUTO-CLEAN URL: Removes ugly ?error= or #access_token from browser address bar immediately
+    (function cleanUrlParameters() {
+        if (window.location.search || window.location.hash) {
+            const cleanUrl = window.location.origin + window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+        }
+    })();
+
     const SUPABASE_URL = "https://wvptpethggrslyeqsjdn.supabase.co";
     const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind2cHRwZXRoZ2dyc2x5ZXFzamRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzODAyNzUsImV4cCI6MjEwODk1NjI3NX0.XdPonPJI0XeRzwcP9hkfYwo1zowcg-SLPNLGt6_s1Qg"; 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
@@ -892,6 +893,9 @@
     let selectedAttachments = [];
     let isWebSearchActive = false;
 
+    // Toast Guard: Completely suppresses any font toasts during initialization & logins
+    let isUserInteractionPermitted = false;
+
     let refreshClickCount = 0;
     let refreshLockTimer = null;
 
@@ -899,6 +903,10 @@
     const FONT_PREF_KEY = 'agri_font_preference';
 
     function showToast(msg, duration = 2500) {
+        // Absolute safeguard against automatic font toast popups
+        if (!isUserInteractionPermitted && msg.includes('फॉन्ट')) {
+            return;
+        }
         const t = document.getElementById('toastNotice');
         t.textContent = msg;
         t.classList.add('show');
@@ -914,8 +922,8 @@
         document.getElementById('loadingOverlay').style.display = 'none';
     }
 
-    // Dynamic Font Size Controller (with isSilent parameter to suppress toasts on page reload / login)
-    function setFontSize(size, isSilent = false) {
+    // Dynamic Font Size Controller
+    function setFontSize(size, triggeredByUser = true) {
         const root = document.documentElement;
         document.querySelectorAll('.font-size-btn').forEach(b => b.classList.remove('active'));
         if (size === 'small') {
@@ -933,15 +941,15 @@
         }
         localStorage.setItem(FONT_PREF_KEY, size);
         
-        // Show toast ONLY on deliberate user click
-        if (!isSilent) {
+        // Only show toast when explicitly clicked by user inside settings
+        if (triggeredByUser && isUserInteractionPermitted) {
             showToast('फॉन्ट साइज़ अपडेट हुआ');
         }
     }
 
     function loadSavedFontPreference() {
         const saved = localStorage.getItem(FONT_PREF_KEY) || 'medium';
-        setFontSize(saved, true); // true = silent on initial page load / login
+        setFontSize(saved, false); // false = Silent on boot
     }
 
     function clearLocalHistoryManual() {
@@ -950,13 +958,11 @@
         location.reload();
     }
 
-    // Dynamic Language Selector Handler
     function handleLanguageChange(lang) {
         currentLanguage = lang;
         showToast(lang === 'hi' ? 'भाषा: हिन्दी सक्रिय (100% Hindi Response)' : 'Language: English Active (100% English Response)');
     }
 
-    // Dismiss Dropdown on Outside Click
     document.addEventListener('click', (e) => {
         const menu = document.getElementById('userMenu');
         const profileRing = document.getElementById('btnProfileRing');
@@ -989,7 +995,6 @@
         document.getElementById('featureLockModal').style.display = 'none';
     }
 
-    // Pro Internet Search Toggle Logic
     function toggleWebSearch() {
         if (!isUserPaidActive || currentUserPlan !== 'pro') {
             showToast('🌐 इंटरनेट सर्च केवल Pro प्लान में उपलब्ध है।');
@@ -1007,13 +1012,11 @@
         }
     }
 
-    // Quick Trending Question Chip Click Handler
     function askQuickChip(questionText) {
         document.getElementById('msgField').value = questionText;
         submitMessage(questionText);
     }
 
-    // Attachment Limit: Max 2 Files, Images & PDF only, Max 10MB each
     function handleFileSelected(event) {
         const files = Array.from(event.target.files);
         if (!files.length) return;
@@ -1054,7 +1057,6 @@
         document.getElementById('attachmentChip').style.display = 'none';
     }
 
-    // 24-Hour Rolling Local Storage
     function cleanAndLoadLocalHistory() {
         try {
             const raw = localStorage.getItem(CHAT_STORAGE_KEY);
@@ -1179,7 +1181,6 @@
             const res = await apiRequest('/user-stats?user_id=' + currentUser.id);
             const data = await res.json();
             
-            // Non-Dismissible Pending Screen
             if (data.status === 'pending') {
                 document.getElementById('pendingScreen').style.display = 'flex';
                 document.getElementById('inputFooterBar').style.display = 'none';
@@ -1189,7 +1190,6 @@
                 document.getElementById('inputFooterBar').style.display = 'flex';
             }
 
-            // Announcement Banner
             const sc = data.super_control;
             if (sc && sc.banner_enabled && sc.banner_text) {
                 document.getElementById('promoBanner').style.display = 'block';
@@ -1199,12 +1199,11 @@
             }
 
             const total = data.total_credits || 0;
-            const maxPack = data.max_pack_credits || (total > 0 ? total : 10);
+            const maxPack = data.max_pack_credits || (total > 0 ? total : 1);
             const plan = data.plan_type || 'free';
             currentUserPlan = plan;
             isUserPaidActive = data.is_paid_active || false;
 
-            // Welcome Offer Eligibility: Only if not claimed yet AND not on paid plan
             const isWelcomeEligible = (!data.is_trial_claimed) && (!isUserPaidActive) && (plan === 'free');
             if (isWelcomeEligible) {
                 const wCredits = (sc && sc.welcome_credits) || 10;
@@ -1251,12 +1250,10 @@
                 circle.style.stroke = '#25d366';
                 circle.setAttribute('stroke-width', '3');
             } else {
-                // Free Plan: Thin, subtle single grey ring
                 circle.style.stroke = '#94a3b8';
                 circle.setAttribute('stroke-width', '2');
             }
 
-            // Web toggle button look
             const webBtn = document.getElementById('btnWebToggle');
             if (plan === 'pro' && isUserPaidActive) {
                 webBtn.classList.remove('locked');
@@ -1280,7 +1277,6 @@
     function openPricing() { 
         document.getElementById('userMenu').style.display = 'none'; 
         
-        // No-Downgrade Safeguard: If user has an active Pro plan, visually lock Basic Plan
         const cardBasic = document.getElementById('cardBasicPlan');
         const badgeBasic = document.getElementById('badgeBasic');
         if (currentUserPlan === 'pro' && isUserPaidActive) {
@@ -1295,7 +1291,6 @@
     }
     function closePricing() { document.getElementById('pricingModal').style.display = 'none'; }
 
-    // Intercept Plan Selection for Downgrade Protection
     function handleSelectPlan(planId) {
         if (planId === 'basic' && currentUserPlan === 'pro' && isUserPaidActive) {
             alert('आपका Pro प्लान अभी सक्रिय है! बेसिक प्लान केवल प्रो प्लान समाप्त (क्रेडिट 0) होने के बाद ही लिया जा सकता है। आप प्रो प्लान का टॉप-अप कर सकते हैं।');
@@ -1347,7 +1342,6 @@
         }
     }
 
-    // Load Last 3 Months Payment History
     async function loadPaymentHistory() {
         if (!currentUser) return;
         const container = document.getElementById('historyListContainer');
@@ -1477,7 +1471,6 @@
         }
     }
 
-    // Direct Payment Flow
     async function initiatePayment(planId) {
         if (!currentUser) return;
         const couponVal = (document.getElementById('couponInput').value || '').trim();
@@ -1588,7 +1581,6 @@
         }
     }
 
-    // Modern Virtual Keyboard Smooth Glide using visualViewport
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', () => {
             const vHeight = window.visualViewport.height;
@@ -1616,25 +1608,15 @@
         navigator.clipboard.writeText(text).then(() => showToast('उत्तर कॉपी हो गया!')).catch(() => {});
     }
 
-    // Single-Click Direct WhatsApp Share with Clean Native WhatsApp Formatting
+    // Direct WhatsApp Share (Zero Menu Hassle)
     function shareToWhatsAppDirect(rawText) {
-        // Convert Markdown / Clean formatting for WhatsApp
         let formatted = rawText
-            .replace(/\*\*(.*?)\*\*/g, '*$1*')   // Bold
-            .replace(/###\s*(.*?)
-/g, '*$1*
-')  // Headings
-            .replace(/##\s*(.*?)
-/g, '*$1*
-')
+            .replace(/\*\*(.*?)\*\*/g, '*$1*')
+            .replace(/###\s*(.*?)\n/g, '*$1*\n')
+            .replace(/##\s*(.*?)\n/g, '*$1*\n')
             .trim();
 
-        const shareMessage = `🌾 *Agri Mitra (कृषि मित्र) सलाह*
-
-${formatted}
-
-━━━━━━━━━━━━━━━━━━━━
-📲 *कृषि मित्र AI से अपनी फसल के सवाल पूछें:* https://agri-assistant.vercel.app`;
+        const shareMessage = `🌾 *Agri Mitra (कृषि मित्र) सलाह*\n\n${formatted}\n\n━━━━━━━━━━━━━━━━━━━━\n📲 *कृषि मित्र AI से अपनी फसल के सवाल पूछें:* https://agri-assistant-two.vercel.app`;
         const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareMessage)}`;
         window.open(waUrl, '_blank');
     }
@@ -1658,14 +1640,12 @@ ${formatted}
         return rowId;
     }
 
-    // Bot Bubble with WhatsApp Single-Click Share Action
     function renderBotBubbleDirect(innerHtml, time, isLatest = false, rawForCopy = '') {
         document.querySelectorAll('.meta-action-bar').forEach(el => el.remove());
 
         let actionsHtml = '';
         if (isLatest && rawForCopy) {
-            const escaped = rawForCopy.replace(/'/g, "\'").replace(/
-/g, '\n').replace(//g, '');
+            const escaped = rawForCopy.replace(/'/g, "\'").replace(/\n/g, '\n').replace(/\r/g, '');
             actionsHtml = `
                 <div class="meta-action-bar">
                     <span class="ai-gen-label">
@@ -1722,8 +1702,7 @@ ${formatted}
             displayMsg = (text ? text + '<br>' : '') + `<small style="color:#065f46; font-weight:600;">📎 ${selectedAttachments.length} संलग्न फाइलें: ${fileList}</small>`;
         }
 
-        const safeUserText = displayMsg.split('
-').join('<br>');
+        const safeUserText = displayMsg.split('\n').join('<br>');
         const rowId = renderUserBubbleDirect(safeUserText, time, false);
         saveLocalMessage('user', safeUserText, time);
         
@@ -1766,8 +1745,7 @@ ${formatted}
             fetchStats();
 
             let rawText = data.answer.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-            rawText = rawText.split('
-').join('<br>');
+            rawText = rawText.split('\n').join('<br>');
             let finalContent = '<div>' + rawText + '</div>';
 
             if (data.sources && data.sources.length > 0) {
@@ -1796,6 +1774,11 @@ ${formatted}
         updateDateDivider();
         cleanAndLoadLocalHistory();
         loadSavedFontPreference();
+        
+        // Enable user-triggered toasts only after 1.5 seconds of clean initial boot
+        setTimeout(() => {
+            isUserInteractionPermitted = true;
+        }, 1500);
     });
 </script>
 
