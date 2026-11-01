@@ -44,7 +44,6 @@
             transition: height 0.08s ease-out;
         }
 
-        /* Header */
         .chat-header {
             background: #008069; color: #ffffff; padding: 11px 14px;
             display: flex; align-items: center; justify-content: space-between;
@@ -104,6 +103,7 @@
             font-size: 12px; color: #854d0e; font-weight: 600; text-align: center;
         }
 
+        /* 7-Day Header Welcome Banner */
         .claim-welcome-banner {
             display: none; background: linear-gradient(90deg, #ecfdf5, #dcfce7);
             border-bottom: 1.5px solid #86efac; padding: 7px 12px;
@@ -139,7 +139,6 @@
             font-weight: 500;
         }
 
-        /* Trending Questions Scrollable Row */
         .trending-chips-container {
             display: flex; gap: 7px; overflow-x: auto; padding: 2px 2px 6px 2px;
             margin-bottom: 2px; flex-shrink: 0;
@@ -400,25 +399,6 @@
             display: flex; flex-direction: column; gap: 1px;
         }
 
-        .pending-screen {
-            display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: #edf5ef; z-index: 400;
-            flex-direction: column; justify-content: center; align-items: center;
-            padding: 24px; text-align: center;
-        }
-        .pending-card {
-            background: #ffffff; border-radius: 16px; padding: 26px 20px;
-            box-shadow: 0 4px 18px rgba(0,0,0,0.12); width: 100%; max-width: 380px;
-            color: #1e293b; border: 1px solid #e2e8f0;
-        }
-        .refresh-status-btn {
-            background: #f1f5f9; border: 1px solid #cbd5e1; color: #0f172a;
-            padding: 8px 14px; border-radius: 18px; font-size: 12px; font-weight: 600;
-            margin-top: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
-            transition: all 0.2s;
-        }
-        .refresh-status-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
         .auth-screen {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: #edf5ef; z-index: 500; display: flex; flex-direction: column;
@@ -517,9 +497,9 @@
         <span id="promoBannerText">📢 विशेष कृषि सलाह एवं नए ऑफर्स!</span>
     </div>
 
-    <!-- Welcome 10 Credits Offer Banner -->
+    <!-- 7-Day Header Welcome Banner -->
     <div class="claim-welcome-banner" id="welcomeBanner">
-        <span id="welcomeBannerText">🎁 10 निःशुल्क स्वागत क्रेडिट्स (वैधता: 10 दिन) क्लेम करें!</span>
+        <span id="welcomeBannerText">🎁 10 निःशुल्क स्वागत क्रेडिट्स (Basic Plan) क्लेम करें!</span>
         <button class="claim-welcome-btn" onclick="openWelcomeModal()">क्लेम करें</button>
     </div>
 
@@ -529,7 +509,7 @@
         <button class="banner-buy-btn" onclick="openPricing()">प्लान अपग्रेड</button>
     </div>
 
-    <!-- Streamlined Dropdown Menu -->
+    <!-- Dropdown Menu -->
     <div class="dropdown-menu" id="userMenu">
         <div class="menu-header">
             <b id="userName">किसान साथी</b><br>
@@ -578,7 +558,7 @@
         </div>
     </main>
 
-    <!-- Sleek Composer Bar with Pro Internet Toggle -->
+    <!-- Composer Bar -->
     <footer class="input-bar" id="inputFooterBar">
         <div class="attachment-preview-chip" id="attachmentChip">
             <span id="attachedFileName">📎 1 फाइल संलग्न</span>
@@ -591,7 +571,6 @@
             <svg class="attach-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
         </button>
 
-        <!-- Pro Internet Grounding Toggle Button -->
         <button class="web-search-toggle" id="btnWebToggle" onclick="toggleWebSearch()" title="इंटरनेट सर्च (Pro Plan Only)">
             <svg class="web-search-icon" viewBox="0 0 24 24">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
@@ -609,31 +588,6 @@
             </svg>
         </button>
     </footer>
-
-    <!-- Non-Dismissible Pending Screen -->
-    <div class="pending-screen" id="pendingScreen">
-        <div class="pending-card">
-            <div style="font-size:42px; margin-bottom:10px;">⏳</div>
-            <h3 style="color:#008069; font-size:17px; margin-bottom:6px;">खाता स्वीकृति विचाराधीन है</h3>
-            <p style="font-size:13px; color:#64748b; line-height:1.5; margin-bottom:16px;">
-                सुरक्षा एवं गुणवत्ता सुनिश्चित करने हेतु आपका खाता एडमिन समीक्षा में है। स्वीकृति मिलते ही आप तुरंत उपयोग शुरू कर सकेंगे।
-            </p>
-            <button onclick="openContactModal('approval')" style="background:#008069; color:#fff; border:none; padding:10px 18px; border-radius:20px; font-weight:600; font-size:13px; cursor:pointer; width:100%;">
-                ⚡ शीघ्र स्वीकृति हेतु संपर्क करें (Fast Approval)
-            </button>
-            
-            <div style="margin-top:14px;">
-                <button class="refresh-status-btn" id="btnRefreshStatus" onclick="handleRefreshApproval()">
-                    🔄 स्थिति जांचें (Refresh Status)
-                </button>
-                <div id="refreshTimerLabel" style="font-size:11px; color:#dc2626; margin-top:5px; display:none;"></div>
-            </div>
-
-            <button onclick="signOutUser()" style="background:none; border:none; color:#dc2626; font-size:12px; margin-top:14px; cursor:pointer;">
-                लॉगआउट करें
-            </button>
-        </div>
-    </div>
 
     <!-- Auth Login Overlay -->
     <div class="auth-screen" id="authScreen" style="display:none;">
@@ -666,7 +620,7 @@
     </div>
 </div>
 
-<!-- Modal 1: Settings Modal -->
+<!-- Modal 1: Settings Modal (Clean Font Size Click Handlers) -->
 <div class="modal-overlay" id="settingsModal">
     <div class="modal-card">
         <div class="modal-header">
@@ -678,9 +632,9 @@
                 <span style="font-size:13.5px; font-weight:700; color:#1e293b;">अक्षर का आकार (Text Size)</span>
                 <p style="font-size:11.5px; color:#64748b; margin-top:2px;">सुविधानुसार चैट पढ़ने के लिए फॉन्ट साइज़ चुनें:</p>
                 <div class="font-size-btn-group">
-                    <button class="font-size-btn" id="btnFontSmall" onclick="setFontSize('small')">A छोटा</button>
-                    <button class="font-size-btn active" id="btnFontMedium" onclick="setFontSize('medium')">A सामान्य</button>
-                    <button class="font-size-btn" id="btnFontLarge" onclick="setFontSize('large')">A बड़ा</button>
+                    <button class="font-size-btn" id="btnFontSmall" onclick="setFontSize('small'); showToast('फॉन्ट साइज़ अपडेट हुआ');">A छोटा</button>
+                    <button class="font-size-btn active" id="btnFontMedium" onclick="setFontSize('medium'); showToast('फॉन्ट साइज़ अपडेट हुआ');">A सामान्य</button>
+                    <button class="font-size-btn" id="btnFontLarge" onclick="setFontSize('large'); showToast('फॉन्ट साइज़ अपडेट हुआ');">A बड़ा</button>
                 </div>
             </div>
 
@@ -758,16 +712,20 @@
     </div>
 </div>
 
-<!-- Modal 4: Welcome Credits Claim Modal -->
+<!-- Modal 4: Interactive Welcome Onboarding Popup with 0 -> 10 Animation -->
 <div class="modal-overlay" id="welcomeClaimModal">
     <div class="modal-card" style="text-align:center; padding:24px 20px;">
         <div style="font-size:46px;">🎁</div>
-        <h2 style="color:#008069; font-size:18px; margin-top:8px;">स्वागत है किसान भाई!</h2>
-        <p style="font-size:13px; color:#475569; margin:10px 0 16px 0; line-height:1.5;" id="welcomeModalDesc">
-            आपका खाता स्वीकृत हो चुका है। शुरुआत के लिए <b>10 निःशुल्क क्रेडिट्स (वैधता: 10 दिन)</b> तुरंत क्लेम करें!
+        <h2 style="color:#008069; font-size:19px; margin-top:8px;">स्वागत है किसान भाई!</h2>
+        <div id="welcomeCounterAnim" style="font-size:36px; font-weight:bold; color:#008069; margin:10px 0;">+0 क्रेडिट्स</div>
+        <p style="font-size:13.5px; color:#475569; margin:4px 0 12px 0; line-height:1.5;">
+            आपको <b>10 निःशुल्क स्वागत क्रेडिट्स</b> उपहार में मिलते हैं! इससे आपका <b>Basic Plan</b> सक्रिय हो जाएगा।
         </p>
+        <div style="font-size:11.5px; color:#64748b; margin-bottom:14px; font-weight:600;">
+            ⏳ वैधता: ठीक 10 दिन
+        </div>
         <button onclick="claimWelcomeCredits()" style="background:#00a884; color:#fff; border:none; padding:11px 24px; border-radius:24px; font-weight:700; font-size:14px; cursor:pointer; width:100%; box-shadow:0 2px 8px rgba(0,168,132,0.3);">
-            ✨ Free Credits क्लेम करें
+            ✨ अभी क्लेम करें (Claim Free)
         </button>
         <button onclick="closeWelcomeModal()" style="background:none; border:none; color:#64748b; font-size:12px; margin-top:12px; cursor:pointer;">
             बाद में (Skip)
@@ -893,20 +851,10 @@
     let selectedAttachments = [];
     let isWebSearchActive = false;
 
-    // Toast Guard: Completely suppresses any font toasts during initialization & logins
-    let isUserInteractionPermitted = false;
-
-    let refreshClickCount = 0;
-    let refreshLockTimer = null;
-
     const CHAT_STORAGE_KEY = 'agri_mitra_chat_history_v2';
     const FONT_PREF_KEY = 'agri_font_preference';
 
     function showToast(msg, duration = 2500) {
-        // Absolute safeguard against automatic font toast popups
-        if (!isUserInteractionPermitted && msg.includes('फॉन्ट')) {
-            return;
-        }
         const t = document.getElementById('toastNotice');
         t.textContent = msg;
         t.classList.add('show');
@@ -922,8 +870,8 @@
         document.getElementById('loadingOverlay').style.display = 'none';
     }
 
-    // Dynamic Font Size Controller
-    function setFontSize(size, triggeredByUser = true) {
+    // Dynamic Font Size Controller - NEVER shows toast automatically!
+    function setFontSize(size) {
         const root = document.documentElement;
         document.querySelectorAll('.font-size-btn').forEach(b => b.classList.remove('active'));
         if (size === 'small') {
@@ -940,16 +888,11 @@
             document.getElementById('btnFontMedium').classList.add('active');
         }
         localStorage.setItem(FONT_PREF_KEY, size);
-        
-        // Only show toast when explicitly clicked by user inside settings
-        if (triggeredByUser && isUserInteractionPermitted) {
-            showToast('फॉन्ट साइज़ अपडेट हुआ');
-        }
     }
 
     function loadSavedFontPreference() {
         const saved = localStorage.getItem(FONT_PREF_KEY) || 'medium';
-        setFontSize(saved, false); // false = Silent on boot
+        setFontSize(saved); // Runs 100% silently!
     }
 
     function clearLocalHistoryManual() {
@@ -1144,51 +1087,32 @@
                d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) + ' IST';
     }
 
-    async function handleRefreshApproval() {
-        const btn = document.getElementById('btnRefreshStatus');
-        const timerLabel = document.getElementById('refreshTimerLabel');
-
-        refreshClickCount++;
-        if (refreshClickCount >= 2) {
-            btn.disabled = true;
-            let secondsLeft = 120;
-            timerLabel.style.display = 'block';
-
-            refreshLockTimer = setInterval(() => {
-                secondsLeft--;
-                const mins = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
-                const secs = String(secondsLeft % 60).padStart(2, '0');
-                timerLabel.textContent = `कृपया ${mins}:${secs} मिनट प्रतीक्षा करें...`;
-
-                if (secondsLeft <= 0) {
-                    clearInterval(refreshLockTimer);
-                    btn.disabled = false;
-                    refreshClickCount = 0;
-                    timerLabel.style.display = 'none';
-                }
-            }, 1000);
-        }
-
-        showSpinner("स्थिति जांची जा रही है...");
-        await fetchStats();
-        hideSpinner();
-        showToast("ताज़ा स्थिति जांची गई।");
+    // Smooth Count-Up Animation (0 -> 10 Credits)
+    function animateWelcomeCounter(target = 10) {
+        const el = document.getElementById('welcomeCounterAnim');
+        let current = 0;
+        el.textContent = `+0 क्रेडिट्स`;
+        const stepTime = 60;
+        const interval = setInterval(() => {
+            current += 1;
+            el.textContent = `+${current} क्रेडिट्स`;
+            if (current >= target) {
+                clearInterval(interval);
+            }
+        }, stepTime);
     }
 
     async function fetchStats() {
         if (!currentUser) return;
         try {
-            const res = await apiRequest('/user-stats?user_id=' + currentUser.id);
+            const queryParams = new URLSearchParams({
+                user_id: currentUser.id,
+                email: currentUser.email || '',
+                name: currentUser.user_metadata.full_name || '',
+                avatar: currentUser.user_metadata.avatar_url || ''
+            });
+            const res = await apiRequest('/user-stats?' + queryParams.toString());
             const data = await res.json();
-            
-            if (data.status === 'pending') {
-                document.getElementById('pendingScreen').style.display = 'flex';
-                document.getElementById('inputFooterBar').style.display = 'none';
-                return;
-            } else {
-                document.getElementById('pendingScreen').style.display = 'none';
-                document.getElementById('inputFooterBar').style.display = 'flex';
-            }
 
             const sc = data.super_control;
             if (sc && sc.banner_enabled && sc.banner_text) {
@@ -1204,17 +1128,14 @@
             currentUserPlan = plan;
             isUserPaidActive = data.is_paid_active || false;
 
-            const isWelcomeEligible = (!data.is_trial_claimed) && (!isUserPaidActive) && (plan === 'free');
-            if (isWelcomeEligible) {
-                const wCredits = (sc && sc.welcome_credits) || 10;
-                const wDays = (sc && sc.welcome_days) || 10;
+            // Welcome Offer Eligibility (Valid for first 7 days from creation)
+            if (data.is_welcome_eligible) {
                 document.getElementById('welcomeBanner').style.display = 'flex';
-                document.getElementById('welcomeBannerText').textContent = `🎁 ${wCredits} निःशुल्क स्वागत क्रेडिट्स (वैधता: ${wDays} दिन) क्लेम करें!`;
-                document.getElementById('welcomeModalDesc').innerHTML = `आपका खाता स्वीकृत हो चुका है। शुरुआत के लिए <b>${wCredits} निःशुल्क क्रेडिट्स (वैधता: ${wDays} दिन)</b> तुरंत क्लेम करें!`;
                 
-                if (!sessionStorage.getItem('welcome_modal_shown')) {
+                // Show Onboarding Modal on First Entry
+                if (!sessionStorage.getItem('welcome_onboarding_shown')) {
                     openWelcomeModal();
-                    sessionStorage.setItem('welcome_modal_shown', '1');
+                    sessionStorage.setItem('welcome_onboarding_shown', '1');
                 }
             } else {
                 document.getElementById('welcomeBanner').style.display = 'none';
@@ -1276,7 +1197,6 @@
 
     function openPricing() { 
         document.getElementById('userMenu').style.display = 'none'; 
-        
         const cardBasic = document.getElementById('cardBasicPlan');
         const badgeBasic = document.getElementById('badgeBasic');
         if (currentUserPlan === 'pro' && isUserPaidActive) {
@@ -1286,7 +1206,6 @@
             cardBasic.classList.remove('disabled-plan');
             badgeBasic.textContent = 'Basic Plan';
         }
-
         document.getElementById('pricingModal').style.display = 'flex'; 
     }
     function closePricing() { document.getElementById('pricingModal').style.display = 'none'; }
@@ -1305,7 +1224,10 @@
     }
     function closeSettingsModal() { document.getElementById('settingsModal').style.display = 'none'; }
 
-    function openWelcomeModal() { document.getElementById('welcomeClaimModal').style.display = 'flex'; }
+    function openWelcomeModal() { 
+        document.getElementById('welcomeClaimModal').style.display = 'flex';
+        animateWelcomeCounter(10);
+    }
     function closeWelcomeModal() { document.getElementById('welcomeClaimModal').style.display = 'none'; }
     
     function openContactModal(category = 'general') { 
@@ -1412,6 +1334,8 @@
             closeWelcomeModal();
 
             if (res.ok) {
+                // Confetti Explosion
+                confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
                 triggerPaymentSuccess(data.credits || 10, data.plan_expires_at);
                 fetchStats();
             } else {
@@ -1608,7 +1532,6 @@
         navigator.clipboard.writeText(text).then(() => showToast('उत्तर कॉपी हो गया!')).catch(() => {});
     }
 
-    // Direct WhatsApp Share (Zero Menu Hassle)
     function shareToWhatsAppDirect(rawText) {
         let formatted = rawText
             .replace(/\*\*(.*?)\*\*/g, '*$1*')
@@ -1773,12 +1696,7 @@
     window.addEventListener('DOMContentLoaded', () => {
         updateDateDivider();
         cleanAndLoadLocalHistory();
-        loadSavedFontPreference();
-        
-        // Enable user-triggered toasts only after 1.5 seconds of clean initial boot
-        setTimeout(() => {
-            isUserInteractionPermitted = true;
-        }, 1500);
+        loadSavedFontPreference(); // Runs 100% silently!
     });
 </script>
 
