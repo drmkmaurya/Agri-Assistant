@@ -54,10 +54,36 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
     plan = PLANS[plan_id]
     credits_to_add = plan["credits"]
 
-    # 1,000 Credit Limit Check
-    user_res = supabase.table("user_profiles").select("total_credits").eq("id", user_id).single().execute()
-    current_credits = user_res.data.get("total_credits", 0) if user_res.data else 0
+    # Fetch User Profile for Limits & Downgrade Check
+    user_res = supabase.table("user_profiles").select("total_credits, plan_type, plan_expires_at").eq("id", user_id).single().execute()
+    if not user_res.data:
+        raise HTTPException(status_code=404, detail="उपयोगकर्ता खाता नहीं मिला।")
+        
+    user_data = user_res.data
+    current_credits = user_data.get("total_credits", 0)
+    current_plan = user_data.get("plan_type", "free")
+    plan_expires_at = user_data.get("plan_expires_at")
 
+    # Check if Pro Plan is actively running
+    now_utc = datetime.now(timezone.utc)
+    is_pro_active = False
+    if current_plan == "pro" and current_credits > 0:
+        if plan_expires_at:
+            try:
+                exp_dt = datetime.fromisoformat(plan_expires_at.replace("Z", "+00:00"))
+                if now_utc <= exp_dt:
+                    is_pro_active = True
+            except Exception:
+                pass
+
+    # No-Downgrade Safeguard: Active Pro users cannot downgrade to Basic
+    if is_pro_active and plan_id == "basic":
+        raise HTTPException(
+            status_code=400,
+            detail="आपका Pro प्लान अभी सक्रिय है। बेसिक प्लान केवल प्रो प्लान समाप्त (क्रेडिट 0) होने के बाद ही लिया जा सकता है। आप Pro प्लान का टॉप-अप कर सकते हैं।"
+        )
+
+    # 1,000 Credit Limit Check
     if (current_credits + credits_to_add) > MAX_CREDIT_CAP:
         raise HTTPException(
             status_code=400,
@@ -132,17 +158,37 @@ def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: s
         if expected_sig != signature:
             raise HTTPException(status_code=400, detail="भुगतान सत्यापन (Signature) विफल रहा।")
 
-    # Precise minute/second timestamp for 30 days
     now = datetime.now(timezone.utc)
-    new_expiry = (now + timedelta(days=30)).isoformat()
 
-    user_res = supabase.table("user_profiles").select("total_credits, max_pack_credits").eq("id", user_id).single().execute()
-    current_credits = user_res.data.get("total_credits", 0) if user_res.data else 0
+    user_res = supabase.table("user_profiles").select("total_credits, max_pack_credits, plan_type, plan_expires_at").eq("id", user_id).single().execute()
+    user_data = user_res.data or {}
+    current_credits = user_data.get("total_credits", 0)
+    current_plan = user_data.get("plan_type", "free")
+    current_expires_at = user_data.get("plan_expires_at")
+
+    # Stacking balance calculation: existing credits (including 1 free credit) are merged
     new_balance = min(MAX_CREDIT_CAP, current_credits + credits_to_add)
 
-    # Update User Plan & Credits
+    # Validity Extension:
+    # If the user currently has an active plan that hasn't expired yet, extend from current expiry by +30 days.
+    # Otherwise, 30 days from now.
+    base_time = now
+    if current_expires_at and current_plan in ["basic", "pro"]:
+        try:
+            curr_exp = datetime.fromisoformat(current_expires_at.replace("Z", "+00:00"))
+            if curr_exp > now:
+                base_time = curr_exp
+        except Exception:
+            pass
+            
+    new_expiry = (base_time + timedelta(days=30)).isoformat()
+
+    # Determine highest plan tier (Pro always takes precedence if active or newly bought)
+    resulting_plan = "pro" if (plan_id == "pro" or current_plan == "pro") else "basic"
+
+    # Update User Plan & Credits in Database
     supabase.table("user_profiles").update({
-        "plan_type": plan_id,
+        "plan_type": resulting_plan,
         "total_credits": new_balance,
         "max_pack_credits": new_balance,
         "plan_expires_at": new_expiry
