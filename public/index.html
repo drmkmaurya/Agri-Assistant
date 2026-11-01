@@ -8,8 +8,8 @@
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#005c4b">
     
-    <!-- Authentic Agriculture Golden Wheat Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%23F59E0B' d='M32 4c-1.5 4-4 8-8 10 4 1 8 4 10 8 2-4 6-7 10-8-4-2-6.5-6-8-10z'/%3E%3Cpath fill='%23D97706' d='M32 18c-2 5-6 9-11 11 5 1 9 5 11 10 2-5 6-9 11-10-5-2-9-6-11-11z'/%3E%3Cpath fill='%23B45309' d='M32 34c-2.5 5-7 10-13 12 6 1 11 6 13 12 2-6 7-11 13-12-6-2-10.5-7-13-12z'/%3E%3Cpath fill='none' stroke='%2315803D' stroke-width='3' stroke-linecap='round' d='M32 30v32M24 50c4-1 8-6 8-12M40 50c-4-1-8-6-8-12'/%3E%3C/svg%3E">
+    <!-- Original Crisp Wheat Agriculture Favicon -->
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/606/606553.png">
 
     <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -52,10 +52,9 @@
         .header-left { display: flex; align-items: center; gap: 10px; }
         .dp-avatar {
             width: 42px; height: 42px; border-radius: 50%;
-            background: #ffffff; display: flex; align-items: center;
+            background: #00a884; display: flex; align-items: center;
             justify-content: center; font-size: 22px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-            overflow: hidden;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.28);
         }
         .header-titles h1 { font-size: 16.5px; font-weight: 700; letter-spacing: 0.25px; }
         .status-badge { font-size: 11px; color: #d1fae5; display: flex; align-items: center; gap: 4.5px; margin-top: 1px; }
@@ -222,18 +221,11 @@
             100% { transform: scale(0.85) rotate(-10deg); opacity: 0.6; }
         }
 
+        /* Input Bar: Order -> [ 🌐 PRO ] -> [ + ] -> [ Input ] -> [ Send ] */
         .input-bar {
             background: #e2e9e3; padding: 7px 10px; display: flex; align-items: center;
             gap: 6px; flex-shrink: 0; border-top: 1px solid #d1dbd2; z-index: 100; position: relative;
         }
-        .attach-btn {
-            background: none; border: none; width: 36px; height: 36px;
-            border-radius: 50%; color: #475569; display: flex; align-items: center;
-            justify-content: center; cursor: pointer; flex-shrink: 0; transition: all 0.15s;
-        }
-        .attach-btn:hover { background: #d4ded5; color: #008069; }
-        .attach-icon { width: 21px; height: 21px; fill: currentColor; }
-
         .web-search-toggle {
             background: rgba(255, 255, 255, 0.7); border: 1px solid #cbd5e1; width: 36px; height: 36px;
             border-radius: 50%; color: #64748b; display: flex; align-items: center;
@@ -250,6 +242,14 @@
             position: absolute; top: -3px; right: -3px; background: #eab308; color: #78350f;
             font-size: 8px; font-weight: 800; padding: 1px 3px; border-radius: 6px; border: 1px solid #fff;
         }
+
+        .attach-btn {
+            background: none; border: none; width: 36px; height: 36px;
+            border-radius: 50%; color: #475569; display: flex; align-items: center;
+            justify-content: center; cursor: pointer; flex-shrink: 0; transition: all 0.15s;
+        }
+        .attach-btn:hover { background: #d4ded5; color: #008069; }
+        .attach-icon { width: 21px; height: 21px; fill: currentColor; }
 
         .attachment-preview-chip {
             display: none; position: absolute; top: -34px; left: 12px;
@@ -441,18 +441,10 @@
 <body>
 
 <div class="chat-app" id="appFrame">
-    <!-- Header -->
+    <!-- Header with Classic Wheat DP -->
     <header class="chat-header">
         <div class="header-left">
-            <div class="dp-avatar">
-                <!-- Golden Wheat SVG -->
-                <svg width="28" height="28" viewBox="0 0 64 64">
-                    <path fill="#F59E0B" d="M32 4c-1.5 4-4 8-8 10 4 1 8 4 10 8 2-4 6-7 10-8-4-2-6.5-6-8-10z"/>
-                    <path fill="#D97706" d="M32 18c-2 5-6 9-11 11 5 1 9 5 11 10 2-5 6-9 11-10-5-2-9-6-11-11z"/>
-                    <path fill="#B45309" d="M32 34c-2.5 5-7 10-13 12 6 1 11 6 13 12 2-6 7-11 13-12-6-2-10.5-7-13-12z"/>
-                    <path fill="none" stroke="#15803D" stroke-width="3" stroke-linecap="round" d="M32 30v32M24 50c4-1 8-6 8-12M40 50c-4-1-8-6-8-12"/>
-                </svg>
-            </div>
+            <div class="dp-avatar">🌾</div>
             <div class="header-titles">
                 <h1>Agri Mitra</h1>
                 <div class="status-badge"><span class="status-dot"></span> ऑनलाइन • कृषि मित्र</div>
@@ -472,7 +464,7 @@
                 <span>प्लान</span>
             </button>
 
-            <!-- Profile & Dynamic Circular Ring -->
+            <!-- Profile Ring -->
             <div class="profile-ring-container" id="btnProfileRing" onclick="toggleMenu(event)" title="खाता व कोटा विवरण">
                 <svg class="progress-ring" width="42" height="42">
                     <defs>
@@ -558,7 +550,7 @@
         </div>
     </main>
 
-    <!-- Composer Bar -->
+    <!-- Clean Composer Bar: [ 🌐 PRO ] -> [ + Attachment ] -> [ Input Box ] -> [ Send Button > ] -->
     <footer class="input-bar" id="inputFooterBar">
         <div class="attachment-preview-chip" id="attachmentChip">
             <span id="attachedFileName">📎 1 फाइल संलग्न</span>
@@ -567,10 +559,7 @@
 
         <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,application/pdf" multiple style="display:none;" onchange="handleFileSelected(event)">
 
-        <button class="attach-btn" onclick="triggerAttachmentPicker()" title="फोटो या PDF जोड़ें (अधिकतम 2 फाइलें, 10MB)">
-            <svg class="attach-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-        </button>
-
+        <!-- Leftmost: Pro Web Search Toggle -->
         <button class="web-search-toggle" id="btnWebToggle" onclick="toggleWebSearch()" title="इंटरनेट सर्च (Pro Plan Only)">
             <svg class="web-search-icon" viewBox="0 0 24 24">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
@@ -578,10 +567,17 @@
             <span class="web-search-badge" id="webBadge">PRO</span>
         </button>
 
+        <!-- Plus Icon for File Attachment -->
+        <button class="attach-btn" onclick="triggerAttachmentPicker()" title="फोटो या PDF जोड़ें (अधिकतम 2 फाइलें, 10MB)">
+            <svg class="attach-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        </button>
+
+        <!-- Input Box -->
         <div class="input-box">
             <textarea id="msgField" class="chat-textarea" rows="1" placeholder="एक संदेश टाइप करें..." oninput="autoGrowTextarea(this)" onkeydown="keyMonitor(event)"></textarea>
         </div>
         
+        <!-- Send Button -->
         <button class="send-btn" id="sendBtnEl" onclick="submitMessage()" title="संदेश भेजें">
             <svg class="plane-icon" id="planeIcon" viewBox="0 0 24 24">
                 <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
@@ -592,16 +588,9 @@
     <!-- Auth Login Overlay -->
     <div class="auth-screen" id="authScreen" style="display:none;">
         <div style="text-align:center; margin-top:40px;">
-            <div style="width:70px; height:70px; margin:0 auto; background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-                <svg width="45" height="45" viewBox="0 0 64 64">
-                    <path fill="#F59E0B" d="M32 4c-1.5 4-4 8-8 10 4 1 8 4 10 8 2-4 6-7 10-8-4-2-6.5-6-8-10z"/>
-                    <path fill="#D97706" d="M32 18c-2 5-6 9-11 11 5 1 9 5 11 10 2-5 6-9 11-10-5-2-9-6-11-11z"/>
-                    <path fill="#B45309" d="M32 34c-2.5 5-7 10-13 12 6 1 11 6 13 12 2-6 7-11 13-12-6-2-10.5-7-13-12z"/>
-                    <path fill="none" stroke="#15803D" stroke-width="3" stroke-linecap="round" d="M32 30v32M24 50c4-1 8-6 8-12M40 50c-4-1-8-6-8-12"/>
-                </svg>
-            </div>
-            <h2 style="color:#008069; margin-top:12px; font-size:22px;">Agri Mitra (कृषि मित्र)</h2>
-            <p style="color:#64748b; font-size:13.5px; margin-top:6px;">डिजिटल प्राकृतिक कृषि समाधान मंच</p>
+            <div style="font-size:52px; margin-bottom:8px;">🌾</div>
+            <h2 style="color:#008069; margin-top:6px; font-size:22px;">Agri Mitra (कृषि मित्र)</h2>
+            <p style="color:#64748b; font-size:13.5px; margin-top:4px;">डिजिटल प्राकृतिक कृषि समाधान मंच</p>
         </div>
 
         <button class="google-btn" onclick="loginWithGoogle()">
@@ -620,7 +609,23 @@
     </div>
 </div>
 
-<!-- Modal 1: Settings Modal (Clean Font Size Click Handlers) -->
+<!-- Modal: Beautiful File Attachment Error / Limit Modal -->
+<div class="modal-overlay" id="attachmentErrorModal">
+    <div class="modal-card" style="text-align:center; padding:24px 20px;">
+        <div style="font-size:46px;">📎</div>
+        <h3 style="color:#008069; margin-top:6px; font-size:17px;" id="attachErrorTitle">फाइल चयन नियम</h3>
+        <p style="font-size:13px; color:#475569; line-height:1.6; margin:10px 0 16px 0; text-align:left; background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:10px;" id="attachErrorDesc">
+            • <b>अधिकतम सीमा:</b> एक बार में अधिकतम 2 फाइलें ही संलग्न कर सकते हैं।<br>
+            • <b>फाइल साइज़:</b> प्रत्येक फाइल का साइज़ 10MB से कम होना अनिवार्य है।<br>
+            • <b>मान्य प्रारूप:</b> केवल फोटो (JPG, PNG, WEBP) या PDF फाइलें ही अपलोड करें।
+        </p>
+        <button onclick="closeAttachmentErrorModal()" style="background:#008069; color:#fff; border:none; padding:10px 22px; border-radius:20px; font-weight:600; font-size:13px; cursor:pointer; width:100%;">
+            ठीक है, समझ गया
+        </button>
+    </div>
+</div>
+
+<!-- Modal 1: Settings Modal (Silent Font Size System) -->
 <div class="modal-overlay" id="settingsModal">
     <div class="modal-card">
         <div class="modal-header">
@@ -832,7 +837,7 @@
 <div class="toast-popup" id="toastNotice">सूचना</div>
 
 <script>
-    // AUTO-CLEAN URL: Removes ugly ?error= or #access_token from browser address bar immediately
+    // AUTO-CLEAN URL: Removes ?error= or #access_token instantly
     (function cleanUrlParameters() {
         if (window.location.search || window.location.hash) {
             const cleanUrl = window.location.origin + window.location.pathname;
@@ -850,6 +855,9 @@
     let currentLanguage = 'hi';
     let selectedAttachments = [];
     let isWebSearchActive = false;
+
+    // Bulletproof In-Memory Cache for Copy & WhatsApp Share (Eliminates all JS escape errors!)
+    const botAnswersCache = {};
 
     const CHAT_STORAGE_KEY = 'agri_mitra_chat_history_v2';
     const FONT_PREF_KEY = 'agri_font_preference';
@@ -870,7 +878,7 @@
         document.getElementById('loadingOverlay').style.display = 'none';
     }
 
-    // Dynamic Font Size Controller - NEVER shows toast automatically!
+    // Dynamic Font Size Controller - Pure silence on page boot / refresh!
     function setFontSize(size) {
         const root = document.documentElement;
         document.querySelectorAll('.font-size-btn').forEach(b => b.classList.remove('active'));
@@ -892,7 +900,7 @@
 
     function loadSavedFontPreference() {
         const saved = localStorage.getItem(FONT_PREF_KEY) || 'medium';
-        setFontSize(saved); // Runs 100% silently!
+        setFontSize(saved);
     }
 
     function clearLocalHistoryManual() {
@@ -938,6 +946,16 @@
         document.getElementById('featureLockModal').style.display = 'none';
     }
 
+    function showAttachmentErrorModal(title, msgHtml) {
+        document.getElementById('attachErrorTitle').textContent = title;
+        document.getElementById('attachErrorDesc').innerHTML = msgHtml;
+        document.getElementById('attachmentErrorModal').style.display = 'flex';
+    }
+
+    function closeAttachmentErrorModal() {
+        document.getElementById('attachmentErrorModal').style.display = 'none';
+    }
+
     function toggleWebSearch() {
         if (!isUserPaidActive || currentUserPlan !== 'pro') {
             showToast('🌐 इंटरनेट सर्च केवल Pro प्लान में उपलब्ध है।');
@@ -960,27 +978,29 @@
         submitMessage(questionText);
     }
 
+    // Attachment Validator: Max 2 Files & Each File <= 10MB
     function handleFileSelected(event) {
         const files = Array.from(event.target.files);
         if (!files.length) return;
 
         if (files.length > 2) {
-            alert('आप एक बार में अधिकतम 2 फाइलें ही संलग्न कर सकते हैं।');
+            showAttachmentErrorModal('फाइलों की सीमा पार हुई', `आप एक बार में <b>अधिकतम 2 फाइलें</b> ही संलग्न कर सकते हैं। आपने <b>${files.length} फाइलें</b> चुनी हैं।`);
             event.target.value = '';
             return;
         }
 
         const validFiles = [];
         for (let f of files) {
-            if (f.size > 10 * 1024 * 1024) {
-                alert(`फाइल "${f.name}" 10MB से अधिक है। कृपया 10MB से छोटी फाइल चुनें।`);
+            const sizeMb = f.size / (1024 * 1024);
+            if (sizeMb > 10) {
+                showAttachmentErrorModal('फाइल साइज़ अधिक है', `फाइल "<b>${f.name}</b>" का साइज़ <b>${sizeMb.toFixed(1)}MB</b> है।<br>कृपया <b>10MB से छोटी</b> फाइल चुनें।`);
                 event.target.value = '';
                 return;
             }
             const isImage = f.type.startsWith('image/');
             const isPdf = f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf');
             if (!isImage && !isPdf) {
-                alert(`फाइल "${f.name}" अमान्य है। केवल इमेज (फोटो) या PDF ही मान्य हैं।`);
+                showAttachmentErrorModal('अमान्य फाइल प्रारूप', `फाइल "<b>${f.name}</b>" अमान्य है। केवल <b>फोटो (JPG, PNG, WEBP)</b> या <b>PDF</b> ही स्वीकार्य हैं।`);
                 event.target.value = '';
                 return;
             }
@@ -1087,19 +1107,17 @@
                d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) + ' IST';
     }
 
-    // Smooth Count-Up Animation (0 -> 10 Credits)
     function animateWelcomeCounter(target = 10) {
         const el = document.getElementById('welcomeCounterAnim');
         let current = 0;
         el.textContent = `+0 क्रेडिट्स`;
-        const stepTime = 60;
         const interval = setInterval(() => {
             current += 1;
             el.textContent = `+${current} क्रेडिट्स`;
             if (current >= target) {
                 clearInterval(interval);
             }
-        }, stepTime);
+        }, 60);
     }
 
     async function fetchStats() {
@@ -1128,11 +1146,10 @@
             currentUserPlan = plan;
             isUserPaidActive = data.is_paid_active || false;
 
-            // Welcome Offer Eligibility (Valid for first 7 days from creation)
+            // Welcome Offer Eligibility (Active for 7 days from creation)
             if (data.is_welcome_eligible) {
                 document.getElementById('welcomeBanner').style.display = 'flex';
                 
-                // Show Onboarding Modal on First Entry
                 if (!sessionStorage.getItem('welcome_onboarding_shown')) {
                     openWelcomeModal();
                     sessionStorage.setItem('welcome_onboarding_shown', '1');
@@ -1334,7 +1351,6 @@
             closeWelcomeModal();
 
             if (res.ok) {
-                // Confetti Explosion
                 confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
                 triggerPaymentSuccess(data.credits || 10, data.plan_expires_at);
                 fetchStats();
@@ -1528,11 +1544,22 @@
     
     function toBottom() { const c = document.getElementById('chatCanvas'); c.scrollTop = c.scrollHeight; }
 
-    function copyAnswer(text) {
-        navigator.clipboard.writeText(text).then(() => showToast('उत्तर कॉपी हो गया!')).catch(() => {});
+    // Bulletproof Copy Answer via ID Lookup (100% Works!)
+    function copyAnswerById(ansId) {
+        const text = botAnswersCache[ansId] || '';
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('उत्तर कॉपी हो गया!');
+        }).catch(() => {
+            showToast('कॉपी नहीं हो सका');
+        });
     }
 
-    function shareToWhatsAppDirect(rawText) {
+    // Bulletproof WhatsApp Share via ID Lookup (100% Works!)
+    function shareWhatsAppById(ansId) {
+        const rawText = botAnswersCache[ansId] || '';
+        if (!rawText) return;
+
         let formatted = rawText
             .replace(/\*\*(.*?)\*\*/g, '*$1*')
             .replace(/###\s*(.*?)\n/g, '*$1*\n')
@@ -1568,7 +1595,9 @@
 
         let actionsHtml = '';
         if (isLatest && rawForCopy) {
-            const escaped = rawForCopy.replace(/'/g, "\'").replace(/\n/g, '\n').replace(/\r/g, '');
+            const ansId = 'ans_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+            botAnswersCache[ansId] = rawForCopy;
+
             actionsHtml = `
                 <div class="meta-action-bar">
                     <span class="ai-gen-label">
@@ -1576,11 +1605,11 @@
                         AI Generated
                     </span>
                     <div class="action-pills-group">
-                        <button class="action-pill-btn" onclick="copyAnswer('${escaped}')" title="कॉपी करें">
+                        <button class="action-pill-btn" onclick="copyAnswerById('${ansId}')" title="कॉपी करें">
                             <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                             <span>Copy</span>
                         </button>
-                        <button class="action-pill-btn whatsapp-share-btn" onclick="shareToWhatsAppDirect('${escaped}')" title="WhatsApp पर साझा करें">
+                        <button class="action-pill-btn whatsapp-share-btn" onclick="shareWhatsAppById('${ansId}')" title="WhatsApp पर साझा करें">
                             <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-5.46-4.45-9.91-9.91-9.91zm0 18.16c-1.49 0-2.95-.4-4.22-1.16l-.3-.18-3.13.82.84-3.05-.2-.31c-.83-1.32-1.27-2.85-1.27-4.47 0-4.55 3.7-8.25 8.25-8.25 4.55 0 8.25 3.7 8.25 8.25 0 4.55-3.7 8.25-8.22 8.25zm4.52-6.19c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.5.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43s-.56-1.34-.76-1.84c-.2-.49-.4-.42-.56-.43h-.47c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.12.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.43.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.11-.22-.18-.47-.3z"/></svg>
                             <span>WhatsApp</span>
                         </button>
@@ -1696,7 +1725,7 @@
     window.addEventListener('DOMContentLoaded', () => {
         updateDateDivider();
         cleanAndLoadLocalHistory();
-        loadSavedFontPreference(); // Runs 100% silently!
+        loadSavedFontPreference();
     });
 </script>
 
