@@ -23,35 +23,50 @@ html, body {
     position: relative; overflow: hidden; box-shadow: 0 4px 25px rgba(0,0,0,0.18);
 }
 
+/* Minimalist Clean Header */
 .chat-header {
-    background: #008069; color: #ffffff; padding: 11px 14px;
+    background: #008069; color: #ffffff; padding: 10px 14px;
     display: flex; align-items: center; justify-content: space-between;
     box-shadow: 0 1.5px 4px rgba(0,0,0,0.22); z-index: 50; flex-shrink: 0;
 }
 .header-left { display: flex; align-items: center; gap: 10px; }
 .dp-avatar {
-    width: 42px; height: 42px; border-radius: 50%;
+    width: 38px; height: 38px; border-radius: 50%;
     background: #00a884; display: flex; align-items: center;
-    justify-content: center; font-size: 22px;
+    justify-content: center; font-size: 20px;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.28);
 }
-.header-titles h1 { font-size: 16.5px; font-weight: 700; letter-spacing: 0.25px; }
-.status-badge { font-size: 11px; color: #d1fae5; display: flex; align-items: center; gap: 4.5px; margin-top: 1px; }
-.status-dot { width: 7.5px; height: 7.5px; background: #25d366; border-radius: 50%; }
+.header-titles h1 { 
+    font-size: 17px; font-weight: 700; letter-spacing: 0.3px; 
+    display: flex; align-items: center; gap: 7px; 
+}
+
+/* Subtle Slow Breathing Live Green Dot */
+.live-pulse-dot {
+    width: 8px; height: 8px; background: #25d366; border-radius: 50%;
+    display: inline-block; box-shadow: 0 0 0 rgba(37, 211, 102, 0.6);
+    animation: slowBreathe 2.4s infinite ease-in-out;
+}
+@keyframes slowBreathe {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+    70% { transform: scale(1.15); box-shadow: 0 0 0 6px rgba(37, 211, 102, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+}
 
 .header-right { display: flex; align-items: center; gap: 8px; }
 
-.header-btn {
-    background: rgba(255, 255, 255, 0.18); border: 1px solid rgba(255, 255, 255, 0.35);
-    color: #ffffff; border-radius: 18px; padding: 5px 10px; font-size: 11.5px;
-    font-weight: 600; display: flex; align-items: center; gap: 5px; cursor: pointer;
+/* Icon-Only Clean Header Buttons */
+.header-icon-btn {
+    background: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.28);
+    color: #ffffff; border-radius: 50%; width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
     transition: all 0.2s ease;
 }
-.header-btn:active { transform: scale(0.95); background: rgba(255, 255, 255, 0.28); }
-.header-icon { width: 14px; height: 14px; fill: currentColor; }
+.header-icon-btn:active { transform: scale(0.92); background: rgba(255, 255, 255, 0.28); }
+.header-btn-svg { width: 18px; height: 18px; fill: currentColor; }
 
 .profile-ring-container {
-    position: relative; width: 42px; height: 42px;
+    position: relative; width: 38px; height: 38px;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
 .progress-ring { transform: rotate(-90deg); position: absolute; top: 0; left: 0; }
@@ -59,21 +74,21 @@ html, body {
     stroke-dasharray: 119.38; stroke-dashoffset: 0;
     transition: stroke-dashoffset 0.4s ease, stroke 0.4s ease;
 }
-.user-dp { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: #fff; }
+.user-dp { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; background: #fff; }
 
 .ring-credit-badge {
     position: absolute; bottom: -2px; right: -2px;
-    background: #008069; color: #ffffff; font-size: 8.5px; font-weight: bold;
+    background: #008069; color: #ffffff; font-size: 8px; font-weight: bold;
     padding: 1px 4px; border-radius: 8px; border: 1.5px solid #fff;
     box-shadow: 0 1px 2px rgba(0,0,0,0.25);
 }
 
-/* Subtle WhatsApp Styled Dot Texture */
+/* Subtle WhatsApp Styled Dot Pattern Canvas */
 .chat-canvas {
     flex: 1; overflow-y: auto; padding: 14px 12px;
     display: flex; flex-direction: column; gap: 11px;
     background-color: #efeae2;
-    background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+    background-image: radial-gradient(#d1d5db 1.1px, transparent 1.1px);
     background-size: 18px 18px;
     scroll-behavior: smooth;
     contain: layout style;
@@ -115,8 +130,8 @@ html, body {
 }
 .bot-name-label { font-size: 11.5px; font-weight: 700; color: #008069; display: flex; align-items: center; gap: 4px; }
 .credit-used-pill {
-    font-size: 10px; color: #059669; font-weight: 500; background: #ecfdf5;
-    border: 1px solid #a7f3d0; padding: 1.5px 6px; border-radius: 10px;
+    font-size: 9.5px; color: #059669; font-weight: 500; background: #f0fdf4;
+    border: 1px solid #bbf7d0; padding: 1px 6px; border-radius: 8px;
 }
 
 .bubble-meta {
@@ -125,32 +140,48 @@ html, body {
     margin-top: 4px; vertical-align: bottom;
 }
 
-.tick-box { display: inline-flex; align-items: center; margin-left: 2px; }
-.tick-svg { width: 13px; height: 10px; fill: #8696a0; transition: all 0.3s ease; }
-.tick-svg.blue { fill: #53bdeb; }
+/* Custom Wheat Sprout Tick Transitions */
+.tick-box { display: inline-flex; align-items: center; gap: 1.5px; margin-left: 2px; }
+.sprout-svg { width: 12px; height: 12px; fill: #94a3b8; transition: fill 0.3s ease; }
+.sprout-svg.green { fill: #008069; }
 
-/* Horizontal Carousel for Video Clips */
+/* Horizontal Carousel Video Clips */
 .sources-carousel-title {
-    font-size: 12px; font-weight: 700; color: #008069; margin: 8px 0 5px 0;
+    font-size: 12px; font-weight: 700; color: #008069; margin: 10px 0 6px 0;
     display: flex; align-items: center; justify-content: space-between;
 }
 .carousel-hint { font-size: 10.5px; color: #94a3b8; font-weight: normal; }
 .sources-carousel {
-    display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px;
+    display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 6px 2px;
     scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
 }
 .clip-carousel-card {
-    flex: 0 0 210px; scroll-snap-align: start; background: #f8fafc;
-    border: 1px solid #e2e8f0; border-radius: 8px; padding: 7px 9px;
+    flex: 0 0 200px; max-width: 200px; scroll-snap-align: start; background: #f8fafc;
+    border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px;
     text-decoration: none; display: flex; flex-direction: column; gap: 3px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03); transition: transform 0.15s ease;
 }
-.clip-c-header { font-size: 11.5px; font-weight: 700; color: #dc2626; display: flex; align-items: center; gap: 4px; }
+.clip-carousel-card:active { transform: scale(0.97); }
+.clip-c-header { font-size: 11px; font-weight: 700; color: #dc2626; display: flex; align-items: center; gap: 4px; }
 .clip-c-title { font-size: 12px; font-weight: 600; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .clip-c-summary {
     font-size: 11px; color: #64748b; line-height: 1.35;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 
+/* Suggested Follow-up Questions Chips */
+.suggested-questions-box {
+    margin-top: 8px; padding-top: 6px; border-top: 1px dashed #e2e8f0;
+    display: flex; flex-direction: column; gap: 4px;
+}
+.suggested-q-chip {
+    background: #f0fdf4; border: 1px solid #bbf7d0; color: #047857;
+    border-radius: 12px; padding: 4px 10px; font-size: 11.5px; font-weight: 500;
+    cursor: pointer; text-align: left; transition: background 0.15s ease;
+}
+.suggested-q-chip:active { background: #dcfce7; }
+
+/* Response Action Bar with Clean Flat SVGs */
 .meta-action-bar {
     display: flex; align-items: center; justify-content: space-between;
     margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(0,0,0,0.06);
@@ -159,12 +190,13 @@ html, body {
 .action-pills-group { display: flex; align-items: center; gap: 6px; }
 .action-pill-btn {
     background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px;
-    padding: 3px 7px; font-size: 11px; font-weight: 500; color: #334155;
-    display: flex; align-items: center; gap: 4px; cursor: pointer;
+    padding: 3px 8px; font-size: 11px; font-weight: 500; color: #334155;
+    display: flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.15s ease;
 }
 .action-pill-btn:hover { background: #e2e8f0; color: #008069; }
 .action-pill-btn.playing { background: #dcfce7; color: #059669; border-color: #86efac; }
 .action-pill-btn.whatsapp-share-btn { color: #075e54; font-weight: 600; border-color: #bbf7d0; background: #f0fdf4; }
+.action-svg { width: 12px; height: 12px; fill: currentColor; }
 
 .plant-loader-row {
     display: none; align-self: flex-start; background: #ffffff;
@@ -179,26 +211,18 @@ html, body {
     100% { transform: scale(0.85) rotate(-10deg); opacity: 0.6; }
 }
 
-/* WhatsApp Composer Bar with Morphing Send/Mic Icon */
+/* Modern WhatsApp Style Composer Bar */
 .input-bar {
     background: #f0f2f5; padding: 7px 10px; display: flex; align-items: center;
     gap: 6px; flex-shrink: 0; border-top: 1px solid #e2e8f0; z-index: 100; position: relative;
 }
-.web-search-toggle {
-    background: #ffffff; border: 1px solid #cbd5e1; width: 36px; height: 36px;
-    border-radius: 50%; color: #94a3b8; display: flex; align-items: center;
-    justify-content: center; cursor: pointer; flex-shrink: 0; transition: all 0.2s ease;
-}
-.web-search-toggle.active {
-    background: #008069; color: #ffffff; border-color: #006653;
-}
-.web-search-icon { width: 19px; height: 19px; fill: currentColor; }
 
 .attach-btn {
     background: none; border: none; width: 36px; height: 36px;
     border-radius: 50%; color: #475569; display: flex; align-items: center;
     justify-content: center; cursor: pointer; flex-shrink: 0;
 }
+.attach-btn:hover { background: #e2e8f0; color: #008069; }
 .attach-icon { width: 21px; height: 21px; fill: currentColor; }
 
 .attachment-preview-chip {
@@ -212,7 +236,7 @@ html, body {
 .input-box {
     flex: 1; background: #ffffff; border-radius: 22px; padding: 6px 14px;
     display: flex; align-items: center; min-height: 42px; box-shadow: 0 1px 1.5px rgba(0,0,0,0.08);
-    border: 1.5px solid transparent; transition: border-color 0.2s ease;
+    border: 1.5px solid transparent; transition: border-color 0.2s ease; position: relative;
 }
 .input-box:focus-within { border-color: #008069; }
 .chat-textarea {
@@ -221,38 +245,52 @@ html, body {
     background: transparent; color: #111b21; font-family: inherit; overflow-y: hidden;
 }
 
-/* Action Circle Button (Voice / Send) */
+/* Audio Waveform Effect when Voice Mic is Active */
+.voice-waveform-container {
+    display: none; position: absolute; left: 14px; right: 14px; top: 0; bottom: 0;
+    background: #ffffff; border-radius: 22px; align-items: center; gap: 5px; justify-content: center;
+}
+.voice-waveform-container.active { display: flex; }
+.wave-bar {
+    width: 3.5px; height: 10px; background: #008069; border-radius: 3px;
+    animation: waveBounce 0.8s infinite ease-in-out alternate;
+}
+.wave-bar:nth-child(2) { animation-delay: 0.15s; }
+.wave-bar:nth-child(3) { animation-delay: 0.3s; height: 18px; }
+.wave-bar:nth-child(4) { animation-delay: 0.45s; }
+.wave-bar:nth-child(5) { animation-delay: 0.6s; }
+@keyframes waveBounce {
+    0% { height: 6px; }
+    100% { height: 22px; background: #25d366; }
+}
+
 .action-circle-btn {
     background: #00a884; border: none; width: 42px; height: 42px; border-radius: 50%;
     color: white; display: flex; align-items: center; justify-content: center; cursor: pointer;
     flex-shrink: 0; transition: transform 0.15s ease, background 0.2s;
 }
 .action-circle-btn:active { transform: scale(0.92); background: #008069; }
-.action-circle-btn.listening { background: #dc2626; animation: micPulse 1.2s infinite; }
-@keyframes micPulse {
-    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
-    70% { transform: scale(1.08); box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
-    100% { transform: scale(1); }
-}
+.action-circle-btn.listening { background: #dc2626; }
 .composer-svg { width: 20px; height: 20px; fill: white; }
 
 /* Dedicated Sliding Full-Page Views */
 .app-view-screen {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     background: #ffffff; z-index: 300; display: flex; flex-direction: column;
-    transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: translateX(100%); transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .app-view-screen.active { transform: translateX(0); }
 
 .view-header {
     background: #008069; color: #ffffff; padding: 12px 14px;
     display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+    box-shadow: 0 1.5px 3px rgba(0,0,0,0.18);
 }
 .view-back-btn { background: none; border: none; color: white; cursor: pointer; display: flex; align-items: center; }
 .view-title { font-size: 16px; font-weight: 700; flex: 1; }
 .view-body { flex: 1; overflow-y: auto; padding: 16px; color: #334155; line-height: 1.6; }
 
-/* Daily Stories Cards */
+/* Daily Stories Styling */
 .story-card-item {
     background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;
     padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
@@ -264,7 +302,7 @@ html, body {
 .story-impact { font-size: 12px; color: #059669; font-weight: 600; background: #f0fdf4; padding: 4px 8px; border-radius: 6px; margin-bottom: 8px; }
 .story-content { font-size: 13px; color: #334155; line-height: 1.55; }
 
-/* Pricing Grid in Dedicated View */
+/* Pricing Grid */
 .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
 .price-box {
     border: 1.5px solid #bbf7d0; background: #f0fdf4; padding: 14px 10px;
@@ -303,30 +341,44 @@ html, body {
 }
 .setting-label { font-size: 13.5px; font-weight: 700; color: #1e293b; display: block; }
 .setting-desc { font-size: 11.5px; color: #64748b; margin-top: 2px; }
-.font-size-btn-group { display: flex; gap: 8px; margin-top: 8px; }
-.font-size-btn {
+
+/* Settings 2-Option Pill Selector */
+.pill-selector-group { display: flex; gap: 8px; margin-top: 8px; }
+.pill-choice-btn {
     flex: 1; padding: 8px 10px; border-radius: 8px; border: 1.5px solid #cbd5e1;
     background: #fff; color: #334155; font-size: 13px; font-weight: 600;
     cursor: pointer; text-align: center;
 }
-.font-size-btn.active { border-color: #008069; background: #e6f4f1; color: #008069; }
+.pill-choice-btn.active { border-color: #008069; background: #e6f4f1; color: #008069; }
 
-.settings-select {
-    width: 100%; margin-top: 8px; padding: 8px; border: 1px solid #cbd5e1;
-    border-radius: 8px; font-size: 13px; outline: none; background: #ffffff;
+/* Switch Toggle Styling */
+.switch-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.switch-toggle {
+    position: relative; display: inline-block; width: 44px; height: 24px;
 }
+.switch-toggle input { opacity: 0; width: 0; height: 0; }
+.slider-round {
+    position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #cbd5e1; transition: .3s; border-radius: 24px;
+}
+.slider-round:before {
+    position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+    background-color: white; transition: .3s; border-radius: 50%;
+}
+input:checked + .slider-round { background-color: #008069; }
+input:checked + .slider-round:before { transform: translateX(20px); }
 
-/* Modals & Popups */
+/* Menu & Modals */
 .menu-backdrop { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 190; }
 .dropdown-menu {
-    display: none; position: absolute; top: 56px; right: 12px;
+    display: none; position: absolute; top: 52px; right: 12px;
     background: #ffffff; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.18);
     width: 250px; z-index: 200; overflow: hidden; border: 1px solid #e2e8f0;
 }
 .menu-header { padding: 12px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 13.5px; color: #1e293b; }
 .menu-item {
     padding: 11.5px 14px; display: flex; align-items: center; gap: 10px;
-    font-size: 13.5px; color: #334155; cursor: pointer; border-bottom: 1px solid #f1f5f9;
+    font-size: 13px; color: #334155; cursor: pointer; border-bottom: 1px solid #f1f5f9;
 }
 .menu-item:hover { background: #f8fafc; color: #008069; }
 
