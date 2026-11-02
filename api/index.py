@@ -7,13 +7,25 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from supabase import create_client, Client
-from google import genai
-from google.genai import types
 
 try:
     from api.payments import process_order, verify_and_credit
+    from api.services.user_service import (
+        get_super_control_settings,
+        get_or_create_user_profile,
+        sync_daily_free_credit,
+        update_user_credits
+    )
+    from api.services.rag_service import generate_rag_answer
 except ImportError:
     from payments import process_order, verify_and_credit
+    from services.user_service import (
+        get_super_control_settings,
+        get_or_create_user_profile,
+        sync_daily_free_credit,
+        update_user_credits
+    )
+    from services.rag_service import generate_rag_answer
 
 app = FastAPI()
 
@@ -27,10 +39,7 @@ app.add_middleware(
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://wvptpethggrslyeqsjdn.supabase.co")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if (SUPABASE_URL and SUPABASE_KEY) else None
-client: genai.Client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
 IST = ZoneInfo("Asia/Kolkata")
 concurrency_counter = 0
@@ -80,84 +89,6 @@ class VerifyPaymentReq(BaseModel):
 
 class ClaimWelcomeReq(BaseModel):
     user_id: str
-
-def get_super_control_settings():
-    try:
-        res = supabase.table("app_settings").select("*").limit(1).execute()
-        if res.data:
-            return res.data[0]
-    except Exception:
-        pass
-    return {
-        "maintenance_mode": False,
-        "banner_enabled": False,
-        "banner_text": "",
-        "welcome_credits": 10,
-        "welcome_days": 10,
-        "welcome_enabled": True
-    }
-
-def get_or_create_user_profile(user_id: str, email: str = "", name: str = "", avatar: str = "") -> dict:
-    """
-    Self-healing: If user is authenticated in Supabase Auth but trigger didn't create
-    row in public.user_profiles, backend automatically creates it without failing!
-    """
-    try:
-        res = supabase.table("user_profiles").select("*").eq("id", user_id).limit(1).execute()
-        if res.data:
-            return res.data[0]
-        
-        today_ist_str = datetime.now(IST).strftime("%Y-%m-%d")
-        new_row = {
-            "id": user_id,
-            "email": email or "",
-            "full_name": name or "किसान साथी",
-            "avatar_url": avatar or "https://lh3.googleusercontent.com/a/default-user=s96-c",
-            "plan_type": "free",
-            "total_credits": 1,
-            "max_pack_credits": 1,
-            "status": "approved",
-            "is_trial_claimed": False,
-            "last_free_credit_date": today_ist_str
-        }
-        ins = supabase.table("user_profiles").insert(new_row).execute()
-        if ins.data:
-            return ins.data[0]
-    except Exception as e:
-        print(f"get_or_create_user_profile fallback: {e}")
-    
-    # Return basic fallback dictionary if DB write failed
-    return {
-        "id": user_id,
-        "email": email,
-        "full_name": name or "किसान साथी",
-        "plan_type": "free",
-        "total_credits": 1,
-        "max_pack_credits": 1,
-        "status": "approved",
-        "is_trial_claimed": False
-    }
-
-def sync_daily_free_credit(profile: dict, user_id: str) -> dict:
-    today_ist_str = datetime.now(IST).strftime("%Y-%m-%d")
-    plan_type = profile.get("plan_type") or "free"
-    last_free_date = profile.get("last_free_credit_date")
-
-    if plan_type == "free" and last_free_date != today_ist_str:
-        new_credits = 1
-        try:
-            supabase.table("user_profiles").update({
-                "total_credits": new_credits,
-                "max_pack_credits": 1,
-                "last_free_credit_date": today_ist_str
-            }).eq("id", user_id).execute()
-        except Exception:
-            pass
-        profile["total_credits"] = new_credits
-        profile["max_pack_credits"] = 1
-        profile["last_free_credit_date"] = today_ist_str
-
-    return profile
 
 @app.post("/api/ask")
 @app.post("/ask")
@@ -239,76 +170,18 @@ async def ask_endpoint(req: QueryReq, request: Request):
         }
 
     try:
-        emb_res = client.models.embed_content(
-            model="models/gemini-embedding-001",
-            contents=user_query,
-            config=types.EmbedContentConfig(output_dimensionality=768)
-        )
-        q_vec = emb_res.embeddings[0].values
-
-        matches_res = supabase.rpc("match_tcbt_chunks", {
-            "query_embedding": q_vec,
-            "match_threshold": 0.40,
-            "match_count": 3
-        }).execute()
-        matches = matches_res.data or []
-
-        context_text = ""
-        sources = []
-        for m in matches:
-            context_text += f"- Title: {m.get('title')}\n  Vishay: {m.get('topic')}\n  Summary: {m.get('summary')}\n\n"
-            sources.append({
-                "title": m.get("topic") or m.get("title"),
-                "duration": m.get("duration_label"),
-                "summary": m.get("summary", ""),
-                "video_url": f"https://www.youtube.com/watch?v={m['video_id']}&t={m['start_seconds']}s"
-            })
-
-        if req.language == "en":
-            lang_instruction = "CRITICAL: The user has selected English. You MUST respond 100% in pure English only. Do NOT use any Hindi or Hinglish words."
-        else:
-            lang_instruction = "CRITICAL: The user has selected Hindi. You MUST respond 100% in pure, authentic Devnagari Hindi only. Do NOT use Roman English (Hinglish)."
-
-        system_prompt = f"""You are Agri Mitra (कृषि मित्र), an authentic and expert agricultural advisor.
-{lang_instruction}
-Deliver practical, grounded, point-by-point advice in 3 to 4 clear bullet points matching the user's intent. Do not pad with unnecessary introductions.
-
-Context from video transcript library:
-{context_text}
-
-User Query:
-{user_query}
-"""
-
-        allow_web_search = (req.web_search_enabled and is_paid_active and plan_type == "pro")
-        gen_config = types.GenerateContentConfig(temperature=0.2)
-        if allow_web_search:
-            gen_config.tools = [{"google_search": {}}]
-
-        response = client.models.generate_content(
-            model="gemini-3.1-flash-lite",
-            contents=system_prompt,
-            config=gen_config
-        )
-        answer_text = response.text
-
+        allow_web_search = bool(req.web_search_enabled and is_paid_active and plan_type == "pro")
+        answer_text, sources = generate_rag_answer(user_query, req.language, allow_web_search)
     except Exception as e:
         print(f"Chat execution error: {e}")
         raise HTTPException(status_code=500, detail="उत्तर तैयार करने में तकनीकी समस्या आई। आपका कोई क्रेडिट नहीं काटा गया है।")
 
-    # POST-SUCCESS DEDUCTION ONLY
     new_balance = max(0, total_credits - credits_needed)
     updated_plan_type = plan_type
     if is_paid_active and new_balance == 0:
         updated_plan_type = "free"
 
-    try:
-        supabase.table("user_profiles").update({
-            "total_credits": new_balance,
-            "plan_type": updated_plan_type
-        }).eq("id", req.user_id).execute()
-    except Exception:
-        pass
+    update_user_credits(req.user_id, new_balance, updated_plan_type)
 
     return {
         "answer": answer_text,
@@ -318,7 +191,6 @@ User Query:
         "plan_type": updated_plan_type
     }
 
-# 2. Claim Welcome Offer (Gives 10 Credits, 10 Days, Unlocks Basic Plan)
 @app.post("/api/claim-welcome")
 @app.post("/claim-welcome")
 async def claim_welcome_endpoint(req: ClaimWelcomeReq):
@@ -333,7 +205,6 @@ async def claim_welcome_endpoint(req: ClaimWelcomeReq):
     now_utc = datetime.now(timezone.utc)
     expiry = (now_utc + timedelta(days=days_amt)).isoformat()
 
-    # Upgrades user to Basic Plan with 10 Credits for 10 Days
     supabase.table("user_profiles").update({
         "is_trial_claimed": True,
         "plan_type": "basic",
@@ -349,7 +220,6 @@ async def claim_welcome_endpoint(req: ClaimWelcomeReq):
         "plan_expires_at": expiry
     }
 
-# 3. User Stats API
 @app.get("/api/user-stats")
 @app.get("/user-stats")
 async def user_stats(user_id: str, email: str = "", name: str = "", avatar: str = ""):
@@ -381,7 +251,6 @@ async def user_stats(user_id: str, email: str = "", name: str = "", avatar: str 
         else:
             plan_type = "free"
 
-    # Check 7-day Welcome Offer eligibility window
     is_within_7_days = True
     if created_at:
         try:
@@ -411,7 +280,6 @@ async def user_stats(user_id: str, email: str = "", name: str = "", avatar: str 
         }
     }
 
-# 4. Payment APIs
 @app.get("/api/payment-history")
 @app.get("/payment-history")
 async def payment_history_endpoint(user_id: str):
