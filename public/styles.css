@@ -131,15 +131,21 @@ html, body {
 
 .msg-row { display: flex; width: 100%; contain: content; }
 .msg-row.user { justify-content: flex-end; }
-.msg-row.bot { justify-content: flex-start; }
+.msg-row.bot { justify-content: flex-start; width: 100%; }
 
 .bubble {
-    max-width: 88%; padding: 8px 12px 6px 12px; border-radius: 9px;
+    padding: 9px 12px 6px 12px; border-radius: 10px;
     font-size: var(--chat-font-size); line-height: var(--chat-line-height); word-wrap: break-word;
-    box-shadow: 0 1px 1.5px rgba(0,0,0,0.14); position: relative;
+    box-shadow: 0 1px 1.5px rgba(0,0,0,0.12); position: relative;
 }
-.user-bubble { background: #d9fdd3; border-top-right-radius: 2px; color: #111b21; }
-.bot-bubble { background: #ffffff; border-top-left-radius: 2px; color: #111b21; }
+/* User bubble leaves clean left space */
+.user-bubble { 
+    max-width: 80%; background: #d9fdd3; border-top-right-radius: 2px; color: #111b21; 
+}
+/* Bot bubble fills maximum width like Meta AI */
+.bot-bubble { 
+    width: 96%; max-width: 96%; background: #ffffff; border-top-left-radius: 2px; color: #111b21; 
+}
 
 .bubble-meta-header {
     display: flex; align-items: center; justify-content: space-between;
@@ -210,20 +216,21 @@ html, body {
 }
 .suggested-q-chip:active { background: #dcfce7; }
 
-/* Bot Bubble Action Bar with Copy, WhatsApp & Speak */
 .meta-action-bar {
-    display: flex; align-items: center; justify-content: flex-end; gap: 6px;
-    margin-top: 6px; padding-top: 5px; border-top: 1px solid rgba(0,0,0,0.05);
+    display: flex; align-items: center; justify-content: flex-start; gap: 14px;
+    margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(0,0,0,0.04);
 }
+/* Borderless, flat monochrome action icons just like Meta AI */
 .action-btn-pill {
-    background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px;
-    padding: 3px 8px; font-size: 11px; font-weight: 500; color: #334155;
-    display: flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.15s ease;
+    background: transparent; border: none; padding: 2px 4px;
+    color: #64748b; display: flex; align-items: center; gap: 5px;
+    cursor: pointer; transition: color 0.15s ease; font-size: 11px;
 }
-.action-btn-pill:hover { background: #e2e8f0; color: #008069; }
-.action-btn-pill.whatsapp-btn { background: #f0fdf4; border-color: #bbf7d0; color: #075e54; font-weight: 600; }
-.action-btn-pill.playing { background: #dcfce7; color: #059669; border-color: #86efac; }
-.action-svg { width: 12px; height: 12px; fill: currentColor; }
+.action-btn-pill:hover { color: #008069; background: transparent; }
+.action-btn-pill.whatsapp-btn { color: #64748b; font-weight: normal; background: transparent; border: none; }
+.action-btn-pill.whatsapp-btn:hover { color: #25d366; }
+.action-btn-pill.playing { color: #059669; }
+.action-svg { width: 15px; height: 15px; fill: currentColor; }
 
 .plant-loader-row {
     display: none; align-self: flex-start; background: #ffffff;
