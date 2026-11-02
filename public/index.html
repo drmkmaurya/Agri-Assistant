@@ -20,29 +20,37 @@
     <!-- Clean Minimalist Header -->
     <header class="chat-header">
         <div class="header-left">
-            <div class="dp-avatar">🌾</div>
+            <div class="agri-emblem-badge" title="Agri Mitra">
+                <!-- Sprout/Wheat Organic SVG Emblem -->
+                <svg class="agri-emblem-svg" viewBox="0 0 24 24">
+                    <path d="M12 2C8 6 6 10 6 14a6 6 0 0 0 12 0c0-4-2-8-6-12zm-1 16.9A4.01 4.01 0 0 1 8 15c0-2.6 1.3-5.3 3-7.5 1.7 2.2 3 4.9 3 7.5a4.01 4.01 0 0 1-3 3.9z"/>
+                </svg>
+            </div>
             <div class="header-titles">
                 <h1>Agri Mitra <span class="live-pulse-dot" title="ऑनलाइन"></span></h1>
             </div>
         </div>
         
         <div class="header-right">
-            <!-- Krishi Patra Icon Button -->
-            <button class="header-icon-btn" onclick="openViewWithHistory('storiesView'); loadDailyStories();" title="आज का कृषि पत्र">
+            <!-- Krishi Champions / Patra Icon Button with Unread Badge -->
+            <button class="header-icon-btn" onclick="openViewWithHistory('storiesView'); loadDailyStories();" title="कृषि चैंपियंस (सफलता की कहानियां)">
                 <svg class="header-btn-svg" viewBox="0 0 24 24">
-                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                    <!-- Champion Trophy Icon -->
+                    <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0 0 11 15.9V19H7v2h10v-2h-4v-3.1c1.86-.44 3.27-1.95 3.61-3.96A5.01 5.01 0 0 0 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
                 </svg>
+                <span class="unread-badge-dot" id="storyUnreadDot"></span>
             </button>
 
-            <!-- Plan / Recharge Icon Button -->
-            <button class="header-icon-btn" onclick="openViewWithHistory('paymentView')" title="प्लान व रिचार्ज">
+            <!-- Buy Credit Plan Icon Button -->
+            <button class="header-icon-btn" onclick="openViewWithHistory('paymentView')" title="Buy Credit Plan">
                 <svg class="header-btn-svg" viewBox="0 0 24 24">
-                    <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/>
+                    <!-- Money Wallet Icon -->
+                    <path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
                 </svg>
             </button>
 
             <!-- Profile & Ring -->
-            <div class="profile-ring-container" id="btnProfileRing" onclick="toggleMenu()" title="खाता व विवरण">
+            <div class="profile-ring-container" id="btnProfileRing" onclick="toggleMenu()" title="खाता व कोटा">
                 <svg class="progress-ring" width="38" height="38">
                     <defs>
                         <linearGradient id="rainbowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -71,10 +79,10 @@
             <span style="font-size:11px; color:#64748b;" id="quotaSummary">उपलब्ध क्रेडिट: 0</span><br>
             <span style="font-size:10.5px; color:#059669; font-weight:500;" id="planExpiryText">वैधता: सक्रिय</span>
         </div>
-        <div class="menu-item" onclick="closeMenu(); openViewWithHistory('paymentView');">💳 प्लान विवरण व अपग्रेड</div>
+        <div class="menu-item" onclick="closeMenu(); openViewWithHistory('paymentView');">💳 Buy Credit Plan</div>
         <div class="menu-item" onclick="closeMenu(); openViewWithHistory('settingsView');">⚙️ सेटिंग्स (भाषा, सर्च व फॉन्ट)</div>
         <div class="menu-item" onclick="closeMenu(); openViewWithHistory('policyView'); switchTab('terms');">📜 नियम व नीतियां</div>
-        <div class="menu-item" onclick="closeMenu(); openPaymentHistoryModal();">🧾 बिलिंग व इतिहास (3 माह)</div>
+        <div class="menu-item" onclick="closeMenu(); openPaymentHistoryModal();">🧾 बिलिंग इतिहास (3 माह)</div>
         <div class="menu-item" onclick="signOutUser()" style="color:#dc2626;">🚪 लॉगआउट</div>
     </div>
 
@@ -119,12 +127,19 @@
 
         <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,application/pdf" multiple style="display:none;" onchange="handleFileSelected(event)">
 
+        <!-- Shortcut Web Search for Pro Users Only -->
+        <button class="web-search-composer-btn" id="btnComposerWebSearch" onclick="toggleQuickWebSearch()" title="इंटरनेट सर्च ऑन/ऑफ">
+            <svg class="web-search-composer-svg" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+            </svg>
+        </button>
+
         <button class="attach-btn" onclick="triggerAttachmentPicker()" title="फोटो संलग्न करें">
             <svg class="attach-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
         </button>
 
         <div class="input-box">
-            <!-- Audio Waveform Container when listening -->
+            <!-- Audio Waveform Live Container -->
             <div class="voice-waveform-container" id="voiceWaveBar">
                 <div class="wave-bar"></div>
                 <div class="wave-bar"></div>
@@ -145,13 +160,13 @@
         </button>
     </footer>
 
-    <!-- View 1: Aaj Ka Krishi Patra -->
+    <!-- View 1: Aaj Ka Krishi Patra (Champions) -->
     <div class="app-view-screen" id="storiesView">
         <div class="view-header">
             <button class="view-back-btn" onclick="history.back()">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
             </button>
-            <div class="view-title">📖 आज का कृषि पत्र</div>
+            <div class="view-title">🏆 कृषि चैंपियंस (सफलता की कहानियां)</div>
         </div>
         <div class="view-body" id="storiesListContainer">
             <p style="color:#64748b; font-size:12.5px;">प्रेरणादायक कृषि कथाएं लोड हो रही हैं...</p>
@@ -164,7 +179,7 @@
             <button class="view-back-btn" onclick="history.back()">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
             </button>
-            <div class="view-title">💳 प्लान अपग्रेड एवं क्रेडिट्स</div>
+            <div class="view-title">💳 Buy Credit Plan</div>
         </div>
         <div class="view-body">
             <div class="coupon-section">
@@ -216,7 +231,7 @@
                 <span class="setting-label">उत्तर की भाषा (Response Language)</span>
                 <span class="setting-desc">AI द्वारा उत्तर देने का माध्यम चुनें:</span>
                 <div class="pill-selector-group">
-                    <button class="pill-choice-btn active" id="btnLangHi" onclick="setLanguageChoice('hi')">हिन्दी (Devnagari)</button>
+                    <button class="pill-choice-btn active" id="btnLangHi" onclick="setLanguageChoice('hi')">हिन्दी</button>
                     <button class="pill-choice-btn" id="btnLangEn" onclick="setLanguageChoice('en')">English</button>
                 </div>
             </div>
@@ -273,6 +288,42 @@
             <button class="pill-choice-btn" id="btn-contact" onclick="switchTab('contact')" style="margin:6px; flex:none; padding:6px 12px; font-size:11.5px;">Contact</button>
         </div>
         <div class="view-body" id="policyContent"></div>
+    </div>
+
+    <!-- High-Converting Zero Credit Modal -->
+    <div class="modal-overlay" id="zeroCreditModal">
+        <div class="modal-card" style="text-align:center; padding:24px 20px;">
+            <div style="font-size:42px;">🌾</div>
+            <h3 style="color:#008069; font-size:18px; margin-top:6px;">फसल सुरक्षा और समाधान जारी रखें</h3>
+            <p style="font-size:13px; color:#475569; line-height:1.6; margin:10px 0 16px 0; text-align:left; background:#f0fdf4; border:1px solid #bbf7d0; padding:12px; border-radius:10px;">
+                आपके आज के निःशुल्क क्रेडिट्स समाप्त हो चुके हैं। तुरंत समाधान पाने के लिए नया क्रेडिट पैक चुनें:
+                <br>• प्राकृतिक खेती व कीट नियंत्रण सलाह
+                <br>• संदर्भ वीडियो क्लिप्स व त्वरित उत्तर
+            </p>
+            <button onclick="closeZeroCreditModal(); openViewWithHistory('paymentView');" style="background:#008069; color:#fff; border:none; padding:12px 22px; border-radius:24px; font-weight:700; font-size:14px; cursor:pointer; width:100%; box-shadow:0 2px 8px rgba(0,128,105,0.3);">
+                ⚡ Buy Credit Plan (मात्र ₹49 से)
+            </button>
+            <button onclick="closeZeroCreditModal()" style="background:none; border:none; color:#64748b; font-size:12px; margin-top:12px; cursor:pointer;">
+                बाद में (कल मध्यरात्रि 1 नया क्रेडिट स्वतः मिलेगा)
+            </button>
+        </div>
+    </div>
+
+    <!-- Soft Low Credit Nudge Modal (<= 3 Credits) -->
+    <div class="modal-overlay" id="lowCreditNudgeModal">
+        <div class="modal-card" style="text-align:center; padding:22px 18px;">
+            <div style="font-size:36px;">⏳</div>
+            <h3 style="color:#0f172a; font-size:16px; margin-top:4px;">क्रेडिट बैलेंस सीमित है</h3>
+            <p style="font-size:12.5px; color:#64748b; margin:6px 0 14px 0;" id="lowCreditNudgeText">
+                आपके पास केवल 3 क्रेडिट शेष हैं। बिना रुकावट परामर्श जारी रखने के लिए क्रेडिट्स जोड़ें।
+            </p>
+            <button onclick="closeLowCreditNudge(); openViewWithHistory('paymentView');" style="background:#008069; color:#fff; border:none; padding:10px; border-radius:20px; font-weight:600; font-size:13px; cursor:pointer; width:100%;">
+                💳 Buy Credit Plan
+            </button>
+            <button onclick="proceedPendingQuery()" style="background:none; border:none; color:#059669; font-size:12.5px; margin-top:10px; cursor:pointer; font-weight:600;">
+                सवाल पूछना जारी रखें (Skip) →
+            </button>
+        </div>
     </div>
 
     <!-- Auth Login Overlay -->
@@ -348,6 +399,7 @@
         updateDateDivider();
         cleanAndLoadLocalHistory();
         loadSavedFontPreference();
+        restoreDraftMessage();
         cleanUrlParameters();
     });
 </script>
