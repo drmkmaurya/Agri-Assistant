@@ -34,11 +34,21 @@ async function apiRequest(endpoint, options = {}) {
     return res;
 }
 
-function formatPreciseIST(isoStr) {
-    if (!isoStr) return 'उपलब्ध नहीं';
+/* Format Date without "IST" (e.g. 01 Dec 2026, 01:29 AM) */
+function formatCleanDate(isoStr) {
+    if (!isoStr) return 'Active';
     const d = new Date(isoStr);
-    return d.toLocaleDateString('hi-IN', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' +
-           d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) + ' IST';
+    const day = String(d.getDate()).padStart(2, '0');
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const month = months[d.getMonth()];
+    const year = d.getFullYear();
+    let hours = d.getHours();
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    const strTime = `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
+    return `${day} ${month} ${year}, ${strTime}`;
 }
 
 async function loginWithGoogle() {
@@ -89,27 +99,33 @@ async function fetchStats() {
         currentUserPlan = plan;
         isUserPaidActive = data.is_paid_active || false;
 
+        // Global memory balance for instant submit checks
+        window.cachedTotalCredits = total;
+
         const ringBadge = document.getElementById('ringBadge');
         if (ringBadge) ringBadge.textContent = total;
 
+        // Clean Menu Items Display (Requested exact format)
         const planNameEl = document.getElementById('userPlanName');
-        if (planNameEl) planNameEl.textContent = 'प्लान: ' + (isUserPaidActive ? plan.toUpperCase() : 'Free');
+        if (planNameEl) {
+            planNameEl.textContent = 'Plan : ' + (isUserPaidActive ? (plan.charAt(0).toUpperCase() + plan.slice(1)) : 'Free');
+        }
         
         const quotaSummaryEl = document.getElementById('quotaSummary');
         if (quotaSummaryEl) {
             if (isUserPaidActive) {
-                quotaSummaryEl.textContent = `उपलब्ध क्रेडिट: ${total} / ${maxPack}`;
+                quotaSummaryEl.textContent = `Available Credit : ${total} / ${maxPack}`;
             } else {
-                quotaSummaryEl.textContent = `दैनिक फ्री क्रेडिट: ${total} (रात तक मान्य)`;
+                quotaSummaryEl.textContent = `Available Credit : ${total} (Daily Free)`;
             }
         }
         
         const planExpiryEl = document.getElementById('planExpiryText');
         if (planExpiryEl) {
             if (data.plan_expires_at && isUserPaidActive) {
-                planExpiryEl.textContent = 'वैधता: ' + formatPreciseIST(data.plan_expires_at);
+                planExpiryEl.textContent = 'Valid till : ' + formatCleanDate(data.plan_expires_at);
             } else {
-                planExpiryEl.textContent = 'वैधता: सक्रिय (दैनिक रीसेट)';
+                planExpiryEl.textContent = 'Valid till : Daily Midnight Reset';
             }
         }
 
@@ -130,15 +146,13 @@ async function fetchStats() {
             }
         }
 
-        const webBtn = document.getElementById('btnWebToggle');
-        if (webBtn) {
+        // Show Pro Search Button in Composer only for active Pro users
+        const compWebBtn = document.getElementById('btnComposerWebSearch');
+        if (compWebBtn) {
             if (plan === 'pro' && isUserPaidActive) {
-                webBtn.style.opacity = '1';
-                webBtn.style.cursor = 'pointer';
+                compWebBtn.classList.add('show');
             } else {
-                webBtn.style.opacity = '0.4';
-                if (typeof isWebSearchActive !== 'undefined') isWebSearchActive = false;
-                webBtn.classList.remove('active');
+                compWebBtn.classList.remove('show');
             }
         }
 
