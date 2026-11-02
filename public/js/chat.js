@@ -109,6 +109,7 @@ function restoreDraftMessage() {
     } catch(e) {}
 }
 
+/* Composer Action Trigger */
 function handleComposerAction() {
     const text = document.getElementById('msgField').value.trim();
     if (text || selectedAttachments.length) {
@@ -118,7 +119,7 @@ function handleComposerAction() {
     }
 }
 
-/* Voice Dictation with Reactive Waveform Visualizer */
+/* Voice Dictation (Type Only - Never Auto-Sends) */
 let waveAnimationTimer = null;
 function toggleVoiceDictation() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -154,6 +155,7 @@ function toggleVoiceDictation() {
             const field = document.getElementById('msgField');
             field.value = (field.value ? field.value + ' ' : '') + transcript;
             handleComposerInput(field);
+            // Strictly type text only — NO auto-submit!
         };
 
         speechRecognizer.onerror = () => {
@@ -177,10 +179,10 @@ function startVoiceWave() {
     clearInterval(waveAnimationTimer);
     waveAnimationTimer = setInterval(() => {
         bars.forEach(b => {
-            const h = Math.floor(Math.random() * 18) + 6;
+            const h = Math.floor(Math.random() * 16) + 6;
             b.style.height = h + 'px';
         });
-    }, 100);
+    }, 110);
 }
 
 function stopVoiceWave() {
@@ -192,7 +194,7 @@ function stopVoiceWave() {
     if (waveBar) waveBar.classList.remove('active');
 }
 
-/* Clean Speech Synthesis (Natural Hindi 0.9x Rate) */
+/* Clean Speech Synthesis */
 function speakText(btn, textToRead) {
     if (!('speechSynthesis' in window)) {
         showToast('स्पीच सिंथेसिस समर्थित नहीं है।');
@@ -222,6 +224,41 @@ function speakText(btn, textToRead) {
     window.speechSynthesis.speak(utter);
 }
 
+/* Copy Only Core Advice Text (Excludes Clips and Questions) */
+function handleCopyClick(btn) {
+    const bubble = btn.closest('.bot-bubble');
+    if (!bubble) return;
+    const clone = bubble.cloneNode(true);
+    const act = clone.querySelector('.meta-action-bar'); if (act) act.remove();
+    const crsT = clone.querySelector('.sources-carousel-title'); if (crsT) crsT.remove();
+    const crs = clone.querySelector('.sources-carousel'); if (crs) crs.remove();
+    const sq = clone.querySelector('.suggested-questions-box'); if (sq) sq.remove();
+    const head = clone.querySelector('.bubble-meta-header'); if (head) head.remove();
+    const meta = clone.querySelector('.bubble-meta'); if (meta) meta.remove();
+
+    const raw = clone.innerText.trim();
+    navigator.clipboard.writeText(raw).then(() => showToast('सलाह कॉपी हो गई!'));
+}
+
+/* Share Only Core Advice Text on WhatsApp */
+function handleWhatsAppClick(btn) {
+    const bubble = btn.closest('.bot-bubble');
+    if (!bubble) return;
+    const clone = bubble.cloneNode(true);
+    const act = clone.querySelector('.meta-action-bar'); if (act) act.remove();
+    const crsT = clone.querySelector('.sources-carousel-title'); if (crsT) crsT.remove();
+    const crs = clone.querySelector('.sources-carousel'); if (crs) crs.remove();
+    const sq = clone.querySelector('.suggested-questions-box'); if (sq) sq.remove();
+    const head = clone.querySelector('.bubble-meta-header'); if (head) head.remove();
+    const meta = clone.querySelector('.bubble-meta'); if (meta) meta.remove();
+
+    let raw = clone.innerText.trim();
+    raw = raw.replace(/\*\*(.*?)\*\*/g, '*$1*');
+
+    const shareMessage = `🌾 *Agri Mitra (कृषि मित्र) सलाह*\n\n${raw}\n\n━━━━━━━━━━━━━━━━━━━━\n📲 *कृषि मित्र AI से अपनी फसल के सवाल पूछें:* https://agri-assistant-two.vercel.app`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareMessage)}`, '_blank');
+}
+
 function keyMonitor(e) { 
     if (e.key === 'Enter' && !e.shiftKey) { 
         e.preventDefault(); 
@@ -243,21 +280,6 @@ function setLanguageChoice(lang) {
     }
 }
 
-function toggleQuickWebSearch() {
-    const btn = document.getElementById('btnComposerWebSearch');
-    const toggle = document.getElementById('settingsWebToggle');
-    isWebSearchActive = !isWebSearchActive;
-    if (isWebSearchActive) {
-        btn.classList.add('active');
-        if (toggle) toggle.checked = true;
-        showToast('इंटरनेट सर्च सक्रिय');
-    } else {
-        btn.classList.remove('active');
-        if (toggle) toggle.checked = false;
-        showToast('इंटरनेट सर्च बंद');
-    }
-}
-
 function handleWebSearchToggle(checkbox) {
     if (!isUserPaidActive || currentUserPlan !== 'pro') {
         checkbox.checked = false;
@@ -266,11 +288,6 @@ function handleWebSearchToggle(checkbox) {
         return;
     }
     isWebSearchActive = checkbox.checked;
-    const btn = document.getElementById('btnComposerWebSearch');
-    if (btn) {
-        if (isWebSearchActive) btn.classList.add('active');
-        else btn.classList.remove('active');
-    }
     showToast(isWebSearchActive ? 'इंटरनेट सर्च सक्रिय' : 'इंटरनेट सर्च बंद');
 }
 
@@ -287,7 +304,6 @@ function closeMenu() {
     document.getElementById('menuBackdrop').style.display = 'none';
 }
 
-/* Global Font Scaling across Whole App */
 function setFontSize(size) {
     const root = document.documentElement;
     document.querySelectorAll('#settingsView .pill-choice-btn').forEach(b => {
@@ -295,15 +311,15 @@ function setFontSize(size) {
     });
 
     if (size === 'small') {
-        root.style.setProperty('--chat-font-size', '14px');
+        root.style.setProperty('--chat-font-size', '13.5px');
         root.style.setProperty('--app-font-scale', '0.92');
         document.getElementById('btnFontSmall').classList.add('active');
     } else if (size === 'large') {
-        root.style.setProperty('--chat-font-size', '17.5px');
-        root.style.setProperty('--app-font-scale', '1.12');
+        root.style.setProperty('--chat-font-size', '17px');
+        root.style.setProperty('--app-font-scale', '1.10');
         document.getElementById('btnFontLarge').classList.add('active');
     } else {
-        root.style.setProperty('--chat-font-size', '15.5px');
+        root.style.setProperty('--chat-font-size', '15px');
         root.style.setProperty('--app-font-scale', '1');
         document.getElementById('btnFontMedium').classList.add('active');
     }
@@ -346,7 +362,7 @@ function handleFileSelected(event) {
     }
     selectedAttachments = files;
     const chip = document.getElementById('attachmentChip');
-    document.getElementById('attachedFileName').textContent = `📎 ${files.length} फाइल संलग्न`;
+    document.getElementById('attachedFileName').textContent = `📎 ${files.length} फोटो संलग्न`;
     chip.style.display = 'flex';
 }
 
@@ -389,13 +405,12 @@ function cleanAndLoadLocalHistory() {
     } catch(e) {}
 }
 
+/* Clean Date Divider (Only "आज" or "कल") */
 function updateDateDivider() {
-    const d = new Date();
-    const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-    document.getElementById('todayDateDivider').textContent = `आज • ${d.toLocaleDateString('hi-IN', options)}`;
+    document.getElementById('todayDateDivider').textContent = 'आज';
 }
 
-/* User Bubble: Completely Tick-Free Clean Design */
+/* Clean User Bubble (No ticks) */
 function renderUserBubbleDirect(textHtml, time) {
     const rowId = 'usr-' + Date.now();
     const uHtml = `
@@ -412,7 +427,7 @@ function renderUserBubbleDirect(textHtml, time) {
     return rowId;
 }
 
-/* Bot Bubble: No Emojis, No Copy/Share pills, Clean Audio Action Button */
+/* Bot Bubble with Copy, WhatsApp & Speak Action Buttons */
 function renderBotBubbleDirect(innerHtml, time, isLatest = false, rawForSpeech = '') {
     if (currentActiveActionBar && currentActiveActionBar.parentNode) {
         currentActiveActionBar.remove();
@@ -423,9 +438,17 @@ function renderBotBubbleDirect(innerHtml, time, isLatest = false, rawForSpeech =
     if (isLatest) {
         actionsHtml = `
             <div class="meta-action-bar" id="activeActionBar">
-                <button class="action-speak-btn" onclick="speakText(this, '${encodeURIComponent(rawForSpeech)}')" title="बोलकर सुनें">
+                <button class="action-btn-pill" onclick="speakText(this, '${encodeURIComponent(rawForSpeech)}')" title="बोलकर सुनें">
                     <svg class="action-svg" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
                     <span>सुनें</span>
+                </button>
+                <button class="action-btn-pill" onclick="handleCopyClick(this)" title="सलाह कॉपी करें">
+                    <svg class="action-svg" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    <span>कॉपी</span>
+                </button>
+                <button class="action-btn-pill whatsapp-btn" onclick="handleWhatsAppClick(this)" title="WhatsApp पर साझा करें">
+                    <svg class="action-svg" viewBox="0 0 24 24"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-5.46-4.45-9.91-9.91-9.91zm0 18.16c-1.49 0-2.95-.4-4.22-1.16l-.3-.18-3.13.82.84-3.05-.2-.31c-.83-1.32-1.27-2.85-1.27-4.47 0-4.55 3.7-8.25 8.25-8.25 4.55 0 8.25 3.7 8.25 8.25 0 4.55-3.7 8.25-8.22 8.25z"/></svg>
+                    <span>शेयर</span>
                 </button>
             </div>`;
     }
@@ -449,7 +472,6 @@ function renderBotBubbleDirect(innerHtml, time, isLatest = false, rawForSpeech =
     toBottom();
 }
 
-/* Conversion-Oriented Modals */
 function closeZeroCreditModal() {
     document.getElementById('zeroCreditModal').style.display = 'none';
 }
@@ -467,7 +489,6 @@ function proceedPendingQuery() {
     }
 }
 
-/* High-Converting Credit Gatekeeper Engine */
 async function submitMessage(customTxt) {
     const field = document.getElementById('msgField');
     const text = (customTxt || field.value).trim();
@@ -477,13 +498,11 @@ async function submitMessage(customTxt) {
     const attachCount = selectedAttachments.length;
     const creditsNeeded = 1 + Math.min(2, attachCount);
 
-    // Free plan exhausted check -> High converting Zero Credit popup
     if (!isUserPaidActive && window.cachedTotalCredits < creditsNeeded) {
         document.getElementById('zeroCreditModal').style.display = 'flex';
         return;
     }
 
-    // Basic / Pro low credits nudge (<= 3 credits)
     if (isUserPaidActive && window.cachedTotalCredits <= 3) {
         pendingUserQuery = { text, attachCount };
         document.getElementById('lowCreditNudgeText').textContent = 
@@ -499,7 +518,7 @@ async function executeSubmit(text, attachCount) {
     const time = nowTime();
     let displayMsg = text;
     if (attachCount > 0) {
-        displayMsg = (text ? text + '<br>' : '') + `<small style="color:#065f46; font-weight:600;">📎 ${attachCount} संलग्न फाइलें</small>`;
+        displayMsg = (text ? text + '<br>' : '') + `<small style="color:#065f46; font-weight:600;">📎 ${attachCount} फोटो संलग्न</small>`;
     }
 
     const safeUserText = displayMsg.replace(/\n/g, '<br>');
@@ -540,26 +559,32 @@ async function executeSubmit(text, attachCount) {
         let rawText = data.answer.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
         let finalContent = '<div>' + rawText + '</div>';
 
-        // Render Strictly Horizontal Swipeable Carousel (No Main Title, Compact Card)
+        // Strictly Horizontal Swipeable Video Clips Carousel
         if (data.sources && data.sources.length > 0) {
             finalContent += `
                 <div class="sources-carousel-title">
-                    <span>📺 संदर्भ वीडियो क्लिप्स</span>
+                    <span>📺 संदर्भ वीडियो क्लिप्स (सटीक भाग)</span>
                     <span class="carousel-hint">स्वाइप करें →</span>
                 </div>
                 <div class="sources-carousel">`;
             data.sources.forEach(s => {
                 finalContent += `
                     <a href="${s.video_url}" target="_blank" class="clip-carousel-card">
-                        <div class="clip-c-header">▶️ ${s.duration || '00:00'}</div>
-                        <div class="clip-c-summary">${s.summary || s.title}</div>
+                        <div>
+                            <div class="clip-c-header">
+                                <span>▶️ ${s.duration || '00:00'}</span>
+                                <span class="clip-hd-tag">HD</span>
+                            </div>
+                            <div class="clip-c-title">${s.title}</div>
+                            <div class="clip-c-summary">${s.summary || s.title}</div>
+                        </div>
                         <div class="clip-c-link">क्लिप देखें →</div>
                     </a>`;
             });
             finalContent += '</div>';
         }
 
-        // Suggested Follow-up Questions
+        // Suggested Follow-up Question Chips
         const followups = [
             "इसका छिड़काव किस समय करना सही रहेगा?",
             "प्रति एकड़ कितनी मात्रा में उपयोग करें?",
@@ -581,7 +606,7 @@ async function executeSubmit(text, attachCount) {
     toBottom();
 }
 
-/* Load Daily Stories (Champions) from Supabase */
+/* Load Daily Stories from Supabase */
 async function loadDailyStories() {
     const container = document.getElementById('storiesListContainer');
     container.innerHTML = '<p style="color:#64748b; font-size:12.5px;">प्रेरणादायक कृषि कथाएं लोड हो रही हैं...</p>';
@@ -614,7 +639,6 @@ async function loadDailyStories() {
         });
         container.innerHTML = html;
 
-        // Mark stories read
         const dot = document.getElementById('storyUnreadDot');
         if (dot) dot.classList.remove('show');
     } catch (e) {
