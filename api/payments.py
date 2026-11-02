@@ -6,9 +6,11 @@ from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException
 import razorpay
 
-# Razorpay credentials with whitespace auto-trimming
 RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID", "").strip()
 RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "").strip()
+
+CASHFREE_APP_ID = os.environ.get("CASHFREE_APP_ID", "").strip()
+CASHFREE_SECRET_KEY = os.environ.get("CASHFREE_SECRET_KEY", "").strip()
 
 rz_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)) if (RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET) else None
 
@@ -26,6 +28,15 @@ PLANS = {
 }
 
 MAX_CREDIT_CAP = 1000
+
+def get_active_gateway(supabase) -> str:
+    try:
+        res = supabase.table("app_settings").select("active_payment_gateway").limit(1).execute()
+        if res.data and res.data[0].get("active_payment_gateway"):
+            return str(res.data[0]["active_payment_gateway"]).lower()
+    except Exception:
+        pass
+    return "razorpay"
 
 def validate_coupon(coupon_code: str, plan_id: str, supabase):
     if not coupon_code:
@@ -54,8 +65,7 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
     plan = PLANS[plan_id]
     credits_to_add = plan["credits"]
 
-    # Fetch User Profile for Limits & Downgrade Check
-    user_res = supabase.table("user_profiles").select("total_credits, plan_type, plan_expires_at").eq("id", user_id).single().execute()
+    user_res = supabase.table("user_profiles").select("total_credits, plan_type, plan_expires_at, email, full_name").eq("id", user_id).single().execute()
     if not user_res.data:
         raise HTTPException(status_code=404, detail="उपयोगकर्ता खाता नहीं मिला।")
         
@@ -64,7 +74,6 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
     current_plan = user_data.get("plan_type", "free")
     plan_expires_at = user_data.get("plan_expires_at")
 
-    # Check if Pro Plan is actively running
     now_utc = datetime.now(timezone.utc)
     is_pro_active = False
     if current_plan == "pro" and current_credits > 0:
@@ -76,18 +85,16 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
             except Exception:
                 pass
 
-    # No-Downgrade Safeguard: Active Pro users cannot downgrade to Basic
     if is_pro_active and plan_id == "basic":
         raise HTTPException(
             status_code=400,
-            detail="आपका Pro प्लान अभी सक्रिय है। बेसिक प्लान केवल प्रो प्लान समाप्त (क्रेडिट 0) होने के बाद ही लिया जा सकता है। आप Pro प्लान का टॉप-अप कर सकते हैं।"
+            detail="आपका Pro प्लान अभी सक्रिय है। बेसिक प्लान केवल प्रो प्लान समाप्त (क्रेडिट 0) होने के बाद ही लिया जा सकता है।"
         )
 
-    # 1,000 Credit Limit Check
     if (current_credits + credits_to_add) > MAX_CREDIT_CAP:
         raise HTTPException(
             status_code=400,
-            detail=f"कृपया पहले अपने मौजूदा क्रेडिट का उपयोग करें। आपके पास अभी {current_credits} क्रेडिट उपलब्ध हैं (अधिकतम सीमा: 1,000 क्रेडिट)।"
+            detail=f"कृपया पहले अपने मौजूदा क्रेडिट का उपयोग करें। आपके पास अभी {current_credits} क्रेडिट उपलब्ध हैं।"
         )
 
     base_amount = plan["amount"]
@@ -105,37 +112,52 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
             "order_id": f"free_{user_id[:8]}_{int(time.time()*1000)}",
             "amount": 0,
             "is_free": True,
-            "key_id": RAZORPAY_KEY_ID,
+            "gateway": "vip_free",
+            "key_id": "",
             "applied_coupon": valid_code
         }
 
-    if not rz_client or not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
-        raise HTTPException(status_code=500, detail="Razorpay credentials Vercel Environment Variables में अनुपलब्ध या अमान्य हैं।")
+    gateway = get_active_gateway(supabase)
 
-    try:
-        # Millisecond-based unique receipt to prevent "order is already paid" error
-        unique_receipt = f"rc_{user_id[:6]}_{int(time.time()*1000)}"[:40]
-        order = rz_client.order.create({
+    if gateway == "cashfree":
+        # Cashfree Gateway Architecture Payload
+        unique_order_id = f"cf_{user_id[:6]}_{int(time.time()*1000)}"[:40]
+        return {
+            "order_id": unique_order_id,
+            "amount": final_amount / 100,
+            "is_free": False,
+            "gateway": "cashfree",
+            "app_id": CASHFREE_APP_ID,
+            "applied_coupon": valid_code
+        }
+    else:
+        # Default Razorpay Architecture
+        if not rz_client or not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
+            raise HTTPException(status_code=500, detail="Razorpay credentials Vercel Environment Variables में अनुपलब्ध हैं।")
+
+        try:
+            unique_receipt = f"rc_{user_id[:6]}_{int(time.time()*1000)}"[:40]
+            order = rz_client.order.create({
+                "amount": final_amount,
+                "currency": "INR",
+                "receipt": unique_receipt,
+                "notes": {
+                    "user_id": str(user_id),
+                    "plan_id": str(plan_id),
+                    "coupon": str(valid_code or "")
+                }
+            })
+        except Exception as rz_err:
+            raise HTTPException(status_code=400, detail=f"Order Error: {str(rz_err)}")
+
+        return {
+            "order_id": order["id"],
             "amount": final_amount,
-            "currency": "INR",
-            "receipt": unique_receipt,
-            "notes": {
-                "user_id": str(user_id),
-                "plan_id": str(plan_id),
-                "coupon": str(valid_code or "")
-            }
-        })
-    except Exception as rz_err:
-        print(f"Razorpay Order Creation Failed: {rz_err}")
-        raise HTTPException(status_code=400, detail=f"Razorpay Order Error: {str(rz_err)}")
-
-    return {
-        "order_id": order["id"],
-        "amount": final_amount,
-        "is_free": False,
-        "key_id": RAZORPAY_KEY_ID,
-        "applied_coupon": valid_code
-    }
+            "is_free": False,
+            "gateway": "razorpay",
+            "key_id": RAZORPAY_KEY_ID,
+            "applied_coupon": valid_code
+        }
 
 def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: str, plan_id: str, coupon_code: str, supabase):
     if plan_id not in PLANS:
@@ -149,29 +171,30 @@ def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: s
         if discount_pct != 100:
             raise HTTPException(status_code=400, detail="निःशुल्क सक्रियण अमान्य है।")
     else:
-        msg = f"{order_id}|{payment_id}"
-        expected_sig = hmac.new(
-            RAZORPAY_KEY_SECRET.encode(),
-            msg.encode(),
-            hashlib.sha256
-        ).hexdigest()
-        if expected_sig != signature:
-            raise HTTPException(status_code=400, detail="भुगतान सत्यापन (Signature) विफल रहा।")
+        gateway = get_active_gateway(supabase)
+        if gateway == "razorpay":
+            msg = f"{order_id}|{payment_id}"
+            expected_sig = hmac.new(
+                RAZORPAY_KEY_SECRET.encode(),
+                msg.encode(),
+                hashlib.sha256
+            ).hexdigest()
+            if expected_sig != signature:
+                raise HTTPException(status_code=400, detail="भुगतान सत्यापन (Signature) विफल रहा।")
+        elif gateway == "cashfree":
+            # Cashfree verification
+            if not payment_id:
+                raise HTTPException(status_code=400, detail="Cashfree payment ID आवश्यक है।")
 
     now = datetime.now(timezone.utc)
-
     user_res = supabase.table("user_profiles").select("total_credits, max_pack_credits, plan_type, plan_expires_at").eq("id", user_id).single().execute()
     user_data = user_res.data or {}
     current_credits = user_data.get("total_credits", 0)
     current_plan = user_data.get("plan_type", "free")
     current_expires_at = user_data.get("plan_expires_at")
 
-    # Stacking balance calculation: existing credits (including 1 free credit) are merged
     new_balance = min(MAX_CREDIT_CAP, current_credits + credits_to_add)
 
-    # Validity Extension:
-    # If the user currently has an active plan that hasn't expired yet, extend from current expiry by +30 days.
-    # Otherwise, 30 days from now.
     base_time = now
     if current_expires_at and current_plan in ["basic", "pro"]:
         try:
@@ -182,11 +205,8 @@ def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: s
             pass
             
     new_expiry = (base_time + timedelta(days=30)).isoformat()
-
-    # Determine highest plan tier (Pro always takes precedence if active or newly bought)
     resulting_plan = "pro" if (plan_id == "pro" or current_plan == "pro") else "basic"
 
-    # Update User Plan & Credits in Database
     supabase.table("user_profiles").update({
         "plan_type": resulting_plan,
         "total_credits": new_balance,
@@ -194,7 +214,6 @@ def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: s
         "plan_expires_at": new_expiry
     }).eq("id", user_id).execute()
 
-    # Log Transaction with Expiry Date for 3-Month History
     supabase.table("credit_transactions").insert({
         "user_id": user_id,
         "order_id": order_id,
