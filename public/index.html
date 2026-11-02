@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
-    <title>Agri Mitra - कृषि मित्र</title>
+    <title>Agri Mitra</title>
     
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#005c4b">
@@ -17,32 +17,33 @@
 <body>
 
 <div class="chat-app" id="appFrame">
-    <!-- Chat Header -->
+    <!-- Clean Minimalist Header -->
     <header class="chat-header">
         <div class="header-left">
             <div class="dp-avatar">🌾</div>
             <div class="header-titles">
-                <h1>Agri Mitra</h1>
-                <div class="status-badge"><span class="status-dot"></span> ऑनलाइन • कृषि मित्र</div>
+                <h1>Agri Mitra <span class="live-pulse-dot" title="ऑनलाइन"></span></h1>
             </div>
         </div>
         
         <div class="header-right">
-            <!-- Daily Krishi Patra (Inspiring Success Stories) -->
-            <button class="header-btn" onclick="openView('storiesView'); loadDailyStories();" title="आज का कृषि पत्र (सफलता की कहानियां)">
-                <span>📖</span>
-                <span>कृषि पत्र</span>
+            <!-- Krishi Patra Icon Button -->
+            <button class="header-icon-btn" onclick="openViewWithHistory('storiesView'); loadDailyStories();" title="आज का कृषि पत्र">
+                <svg class="header-btn-svg" viewBox="0 0 24 24">
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                </svg>
             </button>
 
-            <!-- Quick Plan Button -->
-            <button class="header-btn" onclick="openView('paymentView')" title="प्लान विवरण एवं अपग्रेड">
-                <span>💳</span>
-                <span>प्लान</span>
+            <!-- Plan / Recharge Icon Button -->
+            <button class="header-icon-btn" onclick="openViewWithHistory('paymentView')" title="प्लान व रिचार्ज">
+                <svg class="header-btn-svg" viewBox="0 0 24 24">
+                    <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/>
+                </svg>
             </button>
 
             <!-- Profile & Ring -->
-            <div class="profile-ring-container" id="btnProfileRing" onclick="toggleMenu()" title="खाता व कोटा विवरण">
-                <svg class="progress-ring" width="42" height="42">
+            <div class="profile-ring-container" id="btnProfileRing" onclick="toggleMenu()" title="खाता व विवरण">
+                <svg class="progress-ring" width="38" height="38">
                     <defs>
                         <linearGradient id="rainbowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                             <stop offset="0%" stop-color="#ff007f" />
@@ -52,7 +53,7 @@
                             <stop offset="100%" stop-color="#f5a623" />
                         </linearGradient>
                     </defs>
-                    <circle class="progress-ring__circle" stroke-width="3" fill="transparent" r="19" cx="21" cy="21" id="creditRing"/>
+                    <circle class="progress-ring__circle" stroke-width="2.5" fill="transparent" r="17" cx="19" cy="19" id="creditRing"/>
                 </svg>
                 <img src="https://lh3.googleusercontent.com/a/default-user=s96-c" id="userAvatar" class="user-dp" alt="Avatar">
                 <div class="ring-credit-badge" id="ringBadge">--</div>
@@ -70,9 +71,9 @@
             <span style="font-size:11px; color:#64748b;" id="quotaSummary">उपलब्ध क्रेडिट: 0</span><br>
             <span style="font-size:10.5px; color:#059669; font-weight:500;" id="planExpiryText">वैधता: सक्रिय</span>
         </div>
-        <div class="menu-item" onclick="closeMenu(); openView('paymentView');">💳 प्लान अपग्रेड / विवरण</div>
-        <div class="menu-item" onclick="closeMenu(); openView('settingsView');">⚙️ सेटिंग्स (भाषा, फॉन्ट व कैशे)</div>
-        <div class="menu-item" onclick="closeMenu(); openView('policyView'); switchTab('terms');">📜 नियम व नीतियां (Compliance)</div>
+        <div class="menu-item" onclick="closeMenu(); openViewWithHistory('paymentView');">💳 प्लान विवरण व अपग्रेड</div>
+        <div class="menu-item" onclick="closeMenu(); openViewWithHistory('settingsView');">⚙️ सेटिंग्स (भाषा, सर्च व फॉन्ट)</div>
+        <div class="menu-item" onclick="closeMenu(); openViewWithHistory('policyView'); switchTab('terms');">📜 नियम व नीतियां</div>
         <div class="menu-item" onclick="closeMenu(); openPaymentHistoryModal();">🧾 बिलिंग व इतिहास (3 माह)</div>
         <div class="menu-item" onclick="signOutUser()" style="color:#dc2626;">🚪 लॉगआउट</div>
     </div>
@@ -96,7 +97,7 @@
                     <span class="bot-name-label">🌾 Agri Mitra AI</span>
                 </div>
                 प्रणाम किसान भाई! 🙏<br>
-                मैं आपका डिजिटल कृषि मित्र हूँ। आप प्राकृतिक खेती, जीवामृत या फसल उपचार से जुड़ा कोई भी सवाल यहाँ पूछ सकते हैं।
+                मैं आपका डिजिटल कृषि मित्र हूँ। प्राकृतिक खेती, खाद या फसल सुरक्षा से जुड़ा कोई भी सवाल पूछें।
                 <div class="bubble-meta">
                     <span id="initClock"></span>
                 </div>
@@ -109,26 +110,30 @@
         </div>
     </main>
 
-    <!-- Smooth WhatsApp Style Composer -->
+    <!-- WhatsApp Style Morphing Composer Bar -->
     <footer class="input-bar" id="inputFooterBar">
         <div class="attachment-preview-chip" id="attachmentChip">
-            <span id="attachedFileName">📎 1 फाइल संलग्न</span>
+            <span id="attachedFileName">📎 1 फाइल</span>
             <span class="chip-remove" onclick="removeAttachment()">✕</span>
         </div>
 
         <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,application/pdf" multiple style="display:none;" onchange="handleFileSelected(event)">
 
-        <button class="web-search-toggle" id="btnWebToggle" onclick="toggleWebSearch()" title="इंटरनेट सर्च">
-            <svg class="web-search-icon" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-            </svg>
-        </button>
-
-        <button class="attach-btn" onclick="triggerAttachmentPicker()" title="फोटो या PDF जोड़ें">
+        <button class="attach-btn" onclick="triggerAttachmentPicker()" title="फोटो संलग्न करें">
             <svg class="attach-icon" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
         </button>
 
         <div class="input-box">
+            <!-- Audio Waveform Container when listening -->
+            <div class="voice-waveform-container" id="voiceWaveBar">
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <span style="font-size:12px; color:#008069; font-weight:600; margin-left:8px;">सुन रहे हैं...</span>
+            </div>
+
             <textarea id="msgField" class="chat-textarea" rows="1" placeholder="एक संदेश टाइप करें..." oninput="handleComposerInput(this)" onkeydown="keyMonitor(event)"></textarea>
         </div>
         
@@ -140,23 +145,23 @@
         </button>
     </footer>
 
-    <!-- View 1: Aaj Ka Krishi Patra (Daily Stories) -->
+    <!-- View 1: Aaj Ka Krishi Patra -->
     <div class="app-view-screen" id="storiesView">
         <div class="view-header">
-            <button class="view-back-btn" onclick="closeView('storiesView')">
+            <button class="view-back-btn" onclick="history.back()">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
             </button>
-            <div class="view-title">📖 आज का कृषि पत्र (सफलता की कहानियां)</div>
+            <div class="view-title">📖 आज का कृषि पत्र</div>
         </div>
         <div class="view-body" id="storiesListContainer">
             <p style="color:#64748b; font-size:12.5px;">प्रेरणादायक कृषि कथाएं लोड हो रही हैं...</p>
         </div>
     </div>
 
-    <!-- View 2: Dedicated Payment & Recharge Screen -->
+    <!-- View 2: Dedicated Payment Screen -->
     <div class="app-view-screen" id="paymentView">
         <div class="view-header">
-            <button class="view-back-btn" onclick="closeView('paymentView')">
+            <button class="view-back-btn" onclick="history.back()">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
             </button>
             <div class="view-title">💳 प्लान अपग्रेड एवं क्रेडिट्स</div>
@@ -174,7 +179,7 @@
                 <div id="couponFeedbackMsg" class="coupon-feedback"></div>
             </div>
 
-            <p style="font-size:12.5px; color:#475569; margin-top:16px; font-weight:600;">अपनी आवश्यकतानुसार प्लान चुनें:</p>
+            <p style="font-size:12.5px; color:#475569; margin-top:16px; font-weight:600;">उपयुक्त पैक चुनें:</p>
             <div class="pricing-grid">
                 <div class="price-box" id="cardBasicPlan" onclick="handleSelectPlan('basic')">
                     <span class="plan-badge badge-basic" id="badgeBasic">Basic Plan</span>
@@ -191,43 +196,60 @@
             </div>
 
             <p style="font-size:11.5px; color:#64748b; margin-top:16px; line-height:1.6;">
-                • वॉलेट में अधिकतम 1,000 क्रेडिट संचय अनुमत है।<br>
-                • कार्ड, नेटबैंकिंग एवं UPI भुगतान 256-बिट सुरक्षित गेटवे द्वारा संसाधित किए जाते हैं।
+                • अधिकतम वॉलेट सीमा 1,000 क्रेडिट्स है।<br>
+                • कार्ड, नेटबैंकिंग एवं UPI भुगतान अधिकृत सुरक्षित गेटवे द्वारा 256-बिट सुरक्षित प्रणाली से प्रोसेस होते हैं।
             </p>
         </div>
     </div>
 
-    <!-- View 3: Dedicated App Settings -->
+    <!-- View 3: Dedicated Settings Screen -->
     <div class="app-view-screen" id="settingsView">
         <div class="view-header">
-            <button class="view-back-btn" onclick="closeView('settingsView')">
+            <button class="view-back-btn" onclick="history.back()">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
             </button>
-            <div class="view-title">⚙️ ऐप सेटिंग्स (Settings)</div>
+            <div class="view-title">⚙️ सेटिंग्स (Settings)</div>
         </div>
         <div class="view-body">
+            <!-- Language Selector with Clean Pill Selection -->
             <div class="settings-option-card">
-                <span class="setting-label">पसंदीदा भाषा (Response Language)</span>
-                <span class="setting-desc">AI द्वारा उत्तर देने की भाषा चुनें:</span>
-                <select class="settings-select" id="langSelector" onchange="handleLanguageChange(this.value)">
-                    <option value="hi" selected>हिन्दी (100% Shuddh Hindi)</option>
-                    <option value="en">English (100% English)</option>
-                </select>
-            </div>
-
-            <div class="settings-option-card">
-                <span class="setting-label">अक्षर का आकार (Text Size)</span>
-                <span class="setting-desc">सुविधानुसार चैट पढ़ने के लिए फॉन्ट साइज़ चुनें:</span>
-                <div class="font-size-btn-group">
-                    <button class="font-size-btn" id="btnFontSmall" onclick="setFontSize('small'); showToast('फॉन्ट साइज़ अपडेट हुआ');">A छोटा</button>
-                    <button class="font-size-btn active" id="btnFontMedium" onclick="setFontSize('medium'); showToast('फॉन्ट साइज़ अपडेट हुआ');">A सामान्य</button>
-                    <button class="font-size-btn" id="btnFontLarge" onclick="setFontSize('large'); showToast('फॉन्ट साइज़ अपडेट हुआ');">A बड़ा</button>
+                <span class="setting-label">उत्तर की भाषा (Response Language)</span>
+                <span class="setting-desc">AI द्वारा उत्तर देने का माध्यम चुनें:</span>
+                <div class="pill-selector-group">
+                    <button class="pill-choice-btn active" id="btnLangHi" onclick="setLanguageChoice('hi')">हिन्दी (Devnagari)</button>
+                    <button class="pill-choice-btn" id="btnLangEn" onclick="setLanguageChoice('en')">English</button>
                 </div>
             </div>
 
+            <!-- Internet Live Search Toggle (Pro Only) -->
             <div class="settings-option-card">
-                <span class="setting-label">स्थानीय डेटा व कैशे</span>
-                <span class="setting-desc">ब्राउज़र में सुरक्षित 24-घंटे की स्थानीय चैट साफ़ करें:</span>
+                <div class="switch-row">
+                    <div>
+                        <span class="setting-label">इंटरनेट लाइव सर्च</span>
+                        <span class="setting-desc">ऑनलाइन कृषि डेटा से ताज़ा जानकारी (Pro Plan)</span>
+                    </div>
+                    <label class="switch-toggle">
+                        <input type="checkbox" id="settingsWebToggle" onchange="handleWebSearchToggle(this)">
+                        <span class="slider-round"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Text Size -->
+            <div class="settings-option-card">
+                <span class="setting-label">अक्षर का आकार (Text Size)</span>
+                <span class="setting-desc">सुविधानुसार फॉन्ट साइज़ चुनें:</span>
+                <div class="pill-selector-group">
+                    <button class="pill-choice-btn" id="btnFontSmall" onclick="setFontSize('small'); showToast('फॉन्ट साइज़ बदला गया');">छोटा</button>
+                    <button class="pill-choice-btn active" id="btnFontMedium" onclick="setFontSize('medium'); showToast('फॉन्ट साइज़ बदला गया');">सामान्य</button>
+                    <button class="pill-choice-btn" id="btnFontLarge" onclick="setFontSize('large'); showToast('फॉन्ट साइज़ बदला गया');">बड़ा</button>
+                </div>
+            </div>
+
+            <!-- Clear Local Cache -->
+            <div class="settings-option-card">
+                <span class="setting-label">स्थानीय डेटा</span>
+                <span class="setting-desc">डिवाइस में सुरक्षित 24-घंटे की स्थानीय चैट साफ़ करें:</span>
                 <button onclick="clearLocalHistoryManual()" style="background:#fee2e2; border:1px solid #fca5a5; color:#dc2626; padding:8px 14px; border-radius:8px; font-size:12.5px; font-weight:600; margin-top:8px; cursor:pointer; width:100%;">
                     🗑️ स्थानीय चैट हिस्ट्री हटाएं
                 </button>
@@ -235,20 +257,20 @@
         </div>
     </div>
 
-    <!-- View 4: Full-Page Legal Policies Screen -->
+    <!-- View 4: Dedicated Policies Screen -->
     <div class="app-view-screen" id="policyView">
         <div class="view-header">
-            <button class="view-back-btn" onclick="closeView('policyView')">
+            <button class="view-back-btn" onclick="history.back()">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
             </button>
-            <div class="view-title">📜 नियम, शर्तें एवं नीतियां</div>
+            <div class="view-title">📜 नियम व नीतियां</div>
         </div>
         <div style="display:flex; border-bottom:1px solid #e2e8f0; background:#f8fafc; overflow-x:auto;">
-            <button class="font-size-btn active" id="btn-terms" onclick="switchTab('terms')" style="margin:6px; flex:none; padding:6px 12px; font-size:11.5px;">Terms</button>
-            <button class="font-size-btn" id="btn-privacy" onclick="switchTab('privacy')" style="margin:6px; flex:none; padding:6px 12px; font-size:11.5px;">Privacy</button>
-            <button class="font-size-btn" id="btn-refund" onclick="switchTab('refund')" style="margin:6px; flex:none; padding:6px 12px; font-size:11.5px;">Refund</button>
-            <button class="font-size-btn" id="btn-pricing" onclick="switchTab('pricing')" style="margin:6px; flex:none; padding:6px 12px; font-size:11.5px;">Pricing</button>
-            <button class="font-size-btn" id="btn-contact" onclick="switchTab('contact')" style="margin:6px; flex:none; padding:6px 12px; font-size:11.5px;">Contact</button>
+            <button class="pill-choice-btn active" id="btn-terms" onclick="switchTab('terms')" style="margin:6px; flex:none; padding:6px 12px; font-size:11.5px;">Terms</button>
+            <button class="pill-choice-btn" id="btn-privacy" onclick="switchTab('privacy')" style="margin:6px; flex:none; padding:6px 12px; font-size:11.5px;">Privacy</button>
+            <button class="pill-choice-btn" id="btn-refund" onclick="switchTab('refund')" style="margin:6px; flex:none; padding:6px 12px; font-size:11.5px;">Refund</button>
+            <button class="pill-choice-btn" id="btn-pricing" onclick="switchTab('pricing')" style="margin:6px; flex:none; padding:6px 12px; font-size:11.5px;">Pricing</button>
+            <button class="pill-choice-btn" id="btn-contact" onclick="switchTab('contact')" style="margin:6px; flex:none; padding:6px 12px; font-size:11.5px;">Contact</button>
         </div>
         <div class="view-body" id="policyContent"></div>
     </div>
@@ -257,7 +279,7 @@
     <div class="auth-screen" id="authScreen" style="display:flex;">
         <div style="text-align:center; margin-top:40px;">
             <div style="font-size:52px; margin-bottom:8px;">🌾</div>
-            <h2 style="color:#008069; margin-top:6px; font-size:22px;">Agri Mitra (कृषि मित्र)</h2>
+            <h2 style="color:#008069; margin-top:6px; font-size:22px;">Agri Mitra</h2>
             <p style="color:#64748b; font-size:13.5px; margin-top:4px;">डिजिटल प्राकृतिक कृषि समाधान मंच</p>
         </div>
 
@@ -268,20 +290,20 @@
 
         <div class="prelogin-legal-box">
             साइन इन करके आप हमारे 
-            <span class="prelogin-link" onclick="openView('policyView'); switchTab('terms');">नियम एवं शर्तें</span>, 
-            <span class="prelogin-link" onclick="openView('policyView'); switchTab('privacy');">गोपनीयता नीति</span> एवं 
-            <span class="prelogin-link" onclick="openView('policyView'); switchTab('refund');">वापसी नीति</span> 
+            <span class="prelogin-link" onclick="openViewWithHistory('policyView'); switchTab('terms');">नियम एवं शर्तें</span>, 
+            <span class="prelogin-link" onclick="openViewWithHistory('policyView'); switchTab('privacy');">गोपनीयता नीति</span> एवं 
+            <span class="prelogin-link" onclick="openViewWithHistory('policyView'); switchTab('refund');">वापसी नीति</span> 
             स्वीकार करते हैं।<br>
             <span style="font-size:10.5px; color:#94a3b8;">सर्वाधिकार सुरक्षित © 2026 Agri Mitra</span>
         </div>
     </div>
 </div>
 
-<!-- Modal 1: Payment History -->
+<!-- Modal: Payment History -->
 <div class="modal-overlay" id="historyModal">
     <div class="modal-card">
         <div class="modal-header" style="background:#008069; color:white; padding:12px 16px; display:flex; justify-content:space-between;">
-            <h3 style="font-size:15.5px;">🧾 बिलिंग व इतिहास (विगत 3 माह)</h3>
+            <h3 style="font-size:15px;">🧾 बिलिंग इतिहास (विगत 3 माह)</h3>
             <button onclick="closeHistoryModal()" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;">✕</button>
         </div>
         <div class="modal-body" id="historyListContainer" style="padding:12px; max-height:60vh; overflow-y:auto;">
@@ -290,13 +312,13 @@
     </div>
 </div>
 
-<!-- Modal 2: Celebration Modal on Credit Add -->
+<!-- Modal: Celebration on Credit Purchase -->
 <div class="modal-overlay" id="successModal">
     <div class="modal-card" style="text-align:center; padding:25px;">
         <div style="font-size:44px;">🎉</div>
         <h2 style="color:#008069; margin-top:8px;">सफल सक्रियण!</h2>
         <div id="creditRollCount" style="font-size:32px; font-weight:bold; color:#008069; margin:10px 0;">+100 क्रेडिट्स</div>
-        <p style="font-size:13px; color:#475569; line-height:1.5;">आपके खाते में नए क्रेडिट्स सफलतापूर्वक जोड़ दिए गए हैं।</p>
+        <p style="font-size:13px; color:#475569; line-height:1.5;">क्रेडिट्स सफलतापूर्वक आपके खाते में जोड़ दिए गए हैं।</p>
         <button onclick="closeSuccessModal()" style="margin-top:16px; background:#00a884; color:#fff; border:none; padding:10px 24px; border-radius:20px; font-weight:600; cursor:pointer;">पूछना शुरू करें</button>
     </div>
 </div>
@@ -313,16 +335,6 @@
 <script src="/js/chat.js"></script>
 
 <script>
-    function openView(viewId) {
-        document.querySelectorAll('.app-view-screen').forEach(el => el.classList.remove('active'));
-        const v = document.getElementById(viewId);
-        if (v) v.classList.add('active');
-    }
-    function closeView(viewId) {
-        const v = document.getElementById(viewId);
-        if (v) v.classList.remove('active');
-    }
-
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', () => {
             document.getElementById('appFrame').style.height = `${window.visualViewport.height}px`;
