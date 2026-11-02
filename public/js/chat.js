@@ -13,42 +13,78 @@ let isRecognizingVoice = false;
 let pendingUserQuery = null;
 let lastBackPressTime = 0;
 
-/* Clean Native Popstate Navigation */
-function openViewWithHistory(viewId) {
+/* Clean URL Routing & Hardware Back Navigation Engine */
+const ROUTE_VIEW_MAP = {
+    '/champions': 'storiesView',
+    '/pricing': 'paymentView',
+    '/settings': 'settingsView',
+    '/terms': 'policyView',
+    '/privacy': 'policyView',
+    '/refund': 'policyView',
+    '/contact': 'policyView'
+};
+
+function navigateTo(path) {
+    if (window.location.pathname !== path) {
+        history.pushState({ path: path }, '', path);
+    }
+    renderRoute(path);
+}
+
+function navigateBack() {
+    if (window.location.pathname === '/') {
+        return;
+    }
+    history.pushState({ path: '/' }, '', '/');
+    renderRoute('/');
+}
+
+function renderRoute(path) {
+    // Sabhi active screens ko pehle band karein
     document.querySelectorAll('.app-view-screen').forEach(el => el.classList.remove('active'));
-    const v = document.getElementById(viewId);
-    if (v) {
-        v.classList.add('active');
-        window.location.hash = viewId;
+
+    const viewId = ROUTE_VIEW_MAP[path];
+    if (viewId) {
+        const targetView = document.getElementById(viewId);
+        if (targetView) {
+            targetView.classList.add('active');
+        }
+
+        // Specific sub-actions trigger karein
+        if (path === '/champions') {
+            loadDailyStories();
+        } else if (['/terms', '/privacy', '/refund', '/contact'].includes(path)) {
+            const tabName = path.replace('/', '');
+            switchTab(tabName);
+        }
     }
 }
 
+// Hardware Back Button Listener (Mobile back dabane par chat par layega)
 window.addEventListener('popstate', (e) => {
-    const hash = window.location.hash.replace('#', '');
-    const activeViews = document.querySelectorAll('.app-view-screen.active');
+    const currentPath = window.location.pathname;
 
-    if (activeViews.length > 0 && !hash) {
-        activeViews.forEach(el => el.classList.remove('active'));
-        return;
-    }
-
-    if (hash && document.getElementById(hash)) {
+    if (currentPath === '/') {
         document.querySelectorAll('.app-view-screen').forEach(el => el.classList.remove('active'));
-        document.getElementById(hash).classList.add('active');
-    } else {
         const now = Date.now();
         if (now - lastBackPressTime < 2000) {
-            // Exit
+            // Browser exit allowed
         } else {
             lastBackPressTime = now;
             showToast('बाहर निकलने के लिए एक बार फिर बैक दबाएं');
-            history.pushState(null, '', window.location.pathname);
+            history.pushState(null, '', '/');
         }
+    } else {
+        renderRoute(currentPath);
     }
 });
 
-window.addEventListener('load', () => {
-    history.replaceState(null, '', window.location.pathname);
+// Initial Page Load / Refresh handle karein
+window.addEventListener('DOMContentLoaded', () => {
+    const initialPath = window.location.pathname;
+    if (initialPath !== '/') {
+        renderRoute(initialPath);
+    }
 });
 
 function nowTime() { 
@@ -279,7 +315,7 @@ function handleWebSearchToggle(checkbox) {
     if (!isUserPaidActive || currentUserPlan !== 'pro') {
         checkbox.checked = false;
         showToast('🌐 इंटरनेट सर्च केवल Pro प्लान में उपलब्ध है।');
-        openViewWithHistory('paymentView');
+        navigateTo('/pricing');
         return;
     }
     isWebSearchActive = checkbox.checked;
