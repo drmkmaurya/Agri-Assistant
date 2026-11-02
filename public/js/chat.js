@@ -10,6 +10,24 @@ const FONT_PREF_KEY = 'agri_font_preference';
 let speechRecognizer = null;
 let isRecognizingVoice = false;
 
+/* Hardware Native Back Button Handling via Hash History */
+function openViewWithHistory(viewId) {
+    document.querySelectorAll('.app-view-screen').forEach(el => el.classList.remove('active'));
+    const v = document.getElementById(viewId);
+    if (v) {
+        v.classList.add('active');
+        window.location.hash = viewId;
+    }
+}
+
+window.addEventListener('popstate', () => {
+    const hash = window.location.hash.replace('#', '');
+    document.querySelectorAll('.app-view-screen').forEach(el => el.classList.remove('active'));
+    if (hash && document.getElementById(hash)) {
+        document.getElementById(hash).classList.add('active');
+    }
+});
+
 function nowTime() { 
     return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }); 
 }
@@ -38,11 +56,9 @@ function handleComposerInput(el) {
     const svg = document.getElementById('svgComposerIcon');
 
     if (hasText) {
-        // Morph to Green Send Plane
         svg.innerHTML = '<path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>';
         btn.setAttribute('title', 'संदेश भेजें');
     } else {
-        // Morph to Mic Icon
         svg.innerHTML = '<path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>';
         btn.setAttribute('title', 'बोलकर पूछें');
     }
@@ -60,16 +76,18 @@ function handleComposerAction() {
 function toggleVoiceDictation() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-        showToast('आपके ब्राउज़र में वॉइस टाइपिंग समर्थित नहीं है।');
+        showToast('ब्राउज़र में वॉइस टाइपिंग उपलब्ध नहीं है।');
         return;
     }
 
     const btn = document.getElementById('btnComposerAction');
+    const waveBar = document.getElementById('voiceWaveBar');
 
     if (isRecognizingVoice) {
         if (speechRecognizer) speechRecognizer.stop();
         isRecognizingVoice = false;
         btn.classList.remove('listening');
+        if (waveBar) waveBar.classList.remove('active');
         return;
     }
 
@@ -82,7 +100,7 @@ function toggleVoiceDictation() {
         speechRecognizer.onstart = () => {
             isRecognizingVoice = true;
             btn.classList.add('listening');
-            showToast('सुन रहे हैं... कृपया बोलें');
+            if (waveBar) waveBar.classList.add('active');
         };
 
         speechRecognizer.onresult = (event) => {
@@ -95,22 +113,26 @@ function toggleVoiceDictation() {
         speechRecognizer.onerror = () => {
             isRecognizingVoice = false;
             btn.classList.remove('listening');
-            showToast('आवाज़ स्पष्ट नहीं सुनाई दी।');
+            if (waveBar) waveBar.classList.remove('active');
+            showToast('आवाज़ स्पष्ट नहीं मिली, पुनः प्रयास करें।');
         };
 
         speechRecognizer.onend = () => {
             isRecognizingVoice = false;
             btn.classList.remove('listening');
+            if (waveBar) waveBar.classList.remove('active');
         };
 
         speechRecognizer.start();
     } catch (e) {
         isRecognizingVoice = false;
         btn.classList.remove('listening');
+        if (waveBar) waveBar.classList.remove('active');
     }
 }
 
-function speakText(btn, text) {
+/* Crystal Clean Speech Synthesis */
+function speakText(btn, textToRead) {
     if (!('speechSynthesis' in window)) {
         showToast('स्पीच सिंथेसिस समर्थित नहीं है।');
         return;
@@ -122,10 +144,15 @@ function speakText(btn, text) {
         return;
     }
 
-    const clean = text.replace(/[*#]/g, '').trim();
+    const clean = decodeURIComponent(textToRead)
+        .replace(/[*#_`]/g, '')
+        .replace(/https?:\/\/\S+/g, '')
+        .trim();
+
     const utter = new SpeechSynthesisUtterance(clean);
     utter.lang = (currentLanguage === 'en') ? 'en-IN' : 'hi-IN';
-    utter.rate = 0.95;
+    utter.rate = 0.90;
+    utter.pitch = 1.0;
 
     btn.classList.add('playing');
     utter.onend = () => { btn.classList.remove('playing'); };
@@ -141,9 +168,27 @@ function keyMonitor(e) {
     } 
 }
 
-function handleLanguageChange(lang) {
+function setLanguageChoice(lang) {
     currentLanguage = lang;
-    showToast(lang === 'hi' ? 'भाषा: हिन्दी सक्रिय' : 'Language: English Active');
+    document.querySelectorAll('.pill-selector-group .pill-choice-btn').forEach(b => b.classList.remove('active'));
+    if (lang === 'hi') {
+        document.getElementById('btnLangHi').classList.add('active');
+        showToast('भाषा: हिन्दी सेट की गई');
+    } else {
+        document.getElementById('btnLangEn').classList.add('active');
+        showToast('Language: English Set');
+    }
+}
+
+function handleWebSearchToggle(checkbox) {
+    if (!isUserPaidActive || currentUserPlan !== 'pro') {
+        checkbox.checked = false;
+        showToast('🌐 इंटरनेट सर्च केवल Pro प्लान में उपलब्ध है।');
+        openViewWithHistory('paymentView');
+        return;
+    }
+    isWebSearchActive = checkbox.checked;
+    showToast(isWebSearchActive ? 'इंटरनेट सर्च सक्रिय' : 'इंटरनेट सर्च बंद');
 }
 
 function toggleMenu() {
@@ -161,7 +206,10 @@ function closeMenu() {
 
 function setFontSize(size) {
     const root = document.documentElement;
-    document.querySelectorAll('.font-size-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#settingsView .pill-choice-btn').forEach(b => {
+        if (b.id && b.id.startsWith('btnFont')) b.classList.remove('active');
+    });
+
     if (size === 'small') {
         root.style.setProperty('--chat-font-size', '14px');
         document.getElementById('btnFontSmall').classList.add('active');
@@ -195,34 +243,17 @@ function cleanUrlParameters() {
 function triggerAttachmentPicker() {
     if (!isUserPaidActive) {
         showToast('🔒 फोटो जांच केवल Basic/Pro प्लान में उपलब्ध है।');
-        openView('paymentView');
+        openViewWithHistory('paymentView');
         return;
     }
     document.getElementById('fileInput').click();
-}
-
-function toggleWebSearch() {
-    if (!isUserPaidActive || currentUserPlan !== 'pro') {
-        showToast('🌐 इंटरनेट सर्च केवल Pro प्लान में उपलब्ध है।');
-        openView('paymentView');
-        return;
-    }
-    isWebSearchActive = !isWebSearchActive;
-    const btn = document.getElementById('btnWebToggle');
-    if (isWebSearchActive) {
-        btn.classList.add('active');
-        showToast('🌐 इंटरनेट सर्च सक्रिय');
-    } else {
-        btn.classList.remove('active');
-        showToast('🌐 इंटरनेट सर्च बंद (पुस्तकालय केवल)');
-    }
 }
 
 function handleFileSelected(event) {
     const files = Array.from(event.target.files);
     if (!files.length) return;
     if (files.length > 2) {
-        showToast('अधिकतम 2 फाइलें ही चुन सकते हैं।');
+        showToast('अधिकतम 2 फाइलें ही संलग्न कर सकते हैं।');
         event.target.value = '';
         return;
     }
@@ -280,14 +311,12 @@ function updateDateDivider() {
 function handleWhatsAppClick(btn) {
     const bubble = btn.closest('.bot-bubble');
     if (!bubble) return;
-    const textClone = bubble.cloneNode(true);
-    const act = textClone.querySelector('.meta-action-bar');
-    if (act) act.remove();
-    const crs = textClone.querySelector('.sources-carousel-title');
-    if (crs) crs.remove();
-    const cw = textClone.querySelector('.sources-carousel');
-    if (cw) cw.remove();
-    const raw = textClone.innerText.trim();
+    const clone = bubble.cloneNode(true);
+    const act = clone.querySelector('.meta-action-bar'); if (act) act.remove();
+    const crs = clone.querySelector('.sources-carousel-title'); if (crs) crs.remove();
+    const cw = clone.querySelector('.sources-carousel'); if (cw) cw.remove();
+    const sq = clone.querySelector('.suggested-questions-box'); if (sq) sq.remove();
+    const raw = clone.innerText.trim();
     const shareMessage = `🌾 *Agri Mitra सलाह*\n\n${raw}\n\n📲 *पूछें:* https://agri-assistant-two.vercel.app`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareMessage)}`, '_blank');
 }
@@ -295,15 +324,18 @@ function handleWhatsAppClick(btn) {
 function handleCopyClick(btn) {
     const bubble = btn.closest('.bot-bubble');
     if (!bubble) return;
-    const textClone = bubble.cloneNode(true);
-    const act = textClone.querySelector('.meta-action-bar');
-    if (act) act.remove();
-    navigator.clipboard.writeText(textClone.innerText.trim()).then(() => showToast('कॉपी हो गया!'));
+    const clone = bubble.cloneNode(true);
+    const act = clone.querySelector('.meta-action-bar'); if (act) act.remove();
+    const crs = clone.querySelector('.sources-carousel-title'); if (crs) crs.remove();
+    const cw = clone.querySelector('.sources-carousel'); if (cw) cw.remove();
+    const sq = clone.querySelector('.suggested-questions-box'); if (sq) sq.remove();
+    navigator.clipboard.writeText(clone.innerText.trim()).then(() => showToast('कॉपी हो गया!'));
 }
 
-/* User Message with Sequential Animated WhatsApp Ticks */
+/* User Message with Organic Wheat Ear / Sprout Transitions (Grey to Green) */
 function renderUserBubbleDirect(textHtml, time, isHistory = false) {
     const rowId = 'usr-' + Date.now();
+    const sproutClass = isHistory ? 'green' : '';
     const uHtml = `
         <div class="msg-row user" id="${rowId}">
             <div class="bubble user-bubble">
@@ -311,8 +343,11 @@ function renderUserBubbleDirect(textHtml, time, isHistory = false) {
                 <div class="bubble-meta">
                     <span>${time}</span>
                     <span class="tick-box">
-                        <svg class="tick-svg ${isHistory ? 'blue' : ''}" viewBox="0 0 16 11">
-                            <path d="M11.5 0L6.5 5.5 4.5 3.5 3 5l3.5 3.5 6.5-7.5zM15 0L10 5.5 11 6.5 15.5 1.5z"/>
+                        <svg class="sprout-svg ${sproutClass}" viewBox="0 0 24 24">
+                            <path d="M12 2C8 6 6 10 6 14a6 6 0 0 0 12 0c0-4-2-8-6-12zm-1 16.9A4.01 4.01 0 0 1 8 15c0-2.6 1.3-5.3 3-7.5 1.7 2.2 3 4.9 3 7.5a4.01 4.01 0 0 1-3 3.9z"/>
+                        </svg>
+                        <svg class="sprout-svg ${sproutClass}" viewBox="0 0 24 24">
+                            <path d="M12 2C8 6 6 10 6 14a6 6 0 0 0 12 0c0-4-2-8-6-12zm-1 16.9A4.01 4.01 0 0 1 8 15c0-2.6 1.3-5.3 3-7.5 1.7 2.2 3 4.9 3 7.5a4.01 4.01 0 0 1-3 3.9z"/>
                         </svg>
                     </span>
                 </div>
@@ -333,17 +368,17 @@ function renderBotBubbleDirect(innerHtml, time, isLatest = false, rawForSpeech =
     if (isLatest) {
         actionsHtml = `
             <div class="meta-action-bar" id="activeActionBar">
-                <span style="font-size:10.5px; color:#94a3b8;">कृषि मित्र AI</span>
+                <span style="font-size:10px; color:#94a3b8; font-weight:500;">प्रमाणित कृषि समाधान</span>
                 <div class="action-pills-group">
-                    <button class="action-pill-btn" onclick="speakText(this, \`${encodeURIComponent(rawForSpeech)}\`)" title="सुनें">
-                        <span>🔊</span>
+                    <button class="action-pill-btn" onclick="speakText(this, '${encodeURIComponent(rawForSpeech)}')" title="सुनें">
+                        <svg class="action-svg" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
                         <span>सुनें</span>
                     </button>
                     <button class="action-pill-btn" onclick="handleCopyClick(this)" title="कॉपी करें">
-                        <span>📋</span>
+                        <svg class="action-svg" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
                     </button>
-                    <button class="action-pill-btn whatsapp-share-btn" onclick="handleWhatsAppClick(this)" title="WhatsApp साझा">
-                        <span>🟢</span>
+                    <button class="action-pill-btn whatsapp-share-btn" onclick="handleWhatsAppClick(this)" title="WhatsApp पर साझा करें">
+                        <svg class="action-svg" viewBox="0 0 24 24"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-5.46-4.45-9.91-9.91-9.91zm0 18.16c-1.49 0-2.95-.4-4.22-1.16l-.3-.18-3.13.82.84-3.05-.2-.31c-.83-1.32-1.27-2.85-1.27-4.47 0-4.55 3.7-8.25 8.25-8.25 4.55 0 8.25 3.7 8.25 8.25 0 4.55-3.7 8.25-8.22 8.25z"/></svg>
                     </button>
                 </div>
             </div>`;
@@ -377,7 +412,7 @@ async function submitMessage(customTxt) {
     const time = nowTime();
     let displayMsg = text;
     if (selectedAttachments.length > 0) {
-        displayMsg = (text ? text + '<br>' : '') + `<small style="color:#065f46;">📎 ${selectedAttachments.length} संलग्न फाइलें</small>`;
+        displayMsg = (text ? text + '<br>' : '') + `<small style="color:#065f46; font-weight:600;">📎 ${selectedAttachments.length} संलग्न फाइलें</small>`;
     }
 
     const safeUserText = displayMsg.replace(/\n/g, '<br>');
@@ -407,15 +442,14 @@ async function submitMessage(customTxt) {
         const data = await res.json();
         document.getElementById('plantLoader').style.display = 'none';
 
-        // Animate double ticks to Blue Double Tick on Success
+        // Animate user message sprout icons to green
         const r = document.getElementById(rowId);
         if (r) {
-            const tick = r.querySelector('.tick-svg');
-            if (tick) tick.classList.add('blue');
+            r.querySelectorAll('.sprout-svg').forEach(s => s.classList.add('green'));
         }
 
         if (!res.ok) {
-            renderBotBubbleDirect(data.detail || 'तकनीकी समस्या आई। कोई क्रेडिट नहीं कटा।', nowTime(), false);
+            renderBotBubbleDirect(data.detail || 'तकनीकी समस्या आई। आपका कोई क्रेडिट नहीं कटा।', nowTime(), false);
             return;
         }
 
@@ -424,7 +458,7 @@ async function submitMessage(customTxt) {
         let rawText = data.answer.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
         let finalContent = '<div>' + rawText + '</div>';
 
-        // Render Compact Horizontal Swipeable Carousel for Video Clips
+        // Render Horizontal Swipeable Carousel for Video Clips
         if (data.sources && data.sources.length > 0) {
             finalContent += `
                 <div class="sources-carousel-title">
@@ -443,12 +477,24 @@ async function submitMessage(customTxt) {
             finalContent += '</div>';
         }
 
+        // Contextual Follow-up Suggestions
+        const followups = [
+            "इसका छिड़काव किस समय करना सही रहेगा?",
+            "प्रति एकड़ कितनी मात्रा में उपयोग करें?",
+            "क्या इसे अन्य जैविक घोल के साथ मिला सकते हैं?"
+        ];
+        finalContent += '<div class="suggested-questions-box">';
+        followups.forEach(q => {
+            finalContent += `<div class="suggested-q-chip" onclick="askQuickChip('${q}')">👉 ${q}</div>`;
+        });
+        finalContent += '</div>';
+
         renderBotBubbleDirect(finalContent, nowTime(), true, data.answer);
         queueSaveLocalMessage('bot', finalContent, nowTime(), data.answer);
 
     } catch(e) {
         document.getElementById('plantLoader').style.display = 'none';
-        renderBotBubbleDirect('सर्वर से संपर्क नहीं हो सका। कोई क्रेडिट नहीं कटा।', nowTime(), false);
+        renderBotBubbleDirect('सर्वर से संपर्क नहीं हो सका। आपका कोई क्रेडिट नहीं काटा गया है।', nowTime(), false);
     }
     toBottom();
 }
@@ -486,6 +532,6 @@ async function loadDailyStories() {
         });
         container.innerHTML = html;
     } catch (e) {
-        container.innerHTML = '<p style="color:#ef4444; font-size:12.5px;">कथाएं लोड करने में त्रुटि आई।</p>';
+        container.innerHTML = '<p style="color:#ef4444; font-size:12.5px;">कथाएं लोड करने में समस्या आई।</p>';
     }
 }
