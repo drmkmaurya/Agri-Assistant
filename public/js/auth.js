@@ -106,21 +106,18 @@ async function fetchStats() {
 
         const planNameEl = document.getElementById('userPlanName');
         if (planNameEl) {
-            planNameEl.textContent = 'Plan : ' + (isUserPaidActive ? (plan.toUpperCase()) : 'Free');
+            const displayPlan = (plan && plan !== 'free') ? (plan.charAt(0).toUpperCase() + plan.slice(1)) : (isUserPaidActive ? 'Pro' : 'Free');
+            planNameEl.textContent = 'Plan : ' + displayPlan;
         }
         
         const quotaSummaryEl = document.getElementById('quotaSummary');
         if (quotaSummaryEl) {
-            if (isUserPaidActive) {
-                quotaSummaryEl.textContent = `Available Credit : ${total} / ${maxPack}`;
-            } else {
-                quotaSummaryEl.textContent = `Available Credit : ${total} (Daily Free)`;
-            }
+            quotaSummaryEl.textContent = `Available Credit : ${total} / ${maxPack}`;
         }
         
         const planExpiryEl = document.getElementById('planExpiryText');
         if (planExpiryEl) {
-            if (data.plan_expires_at && isUserPaidActive) {
+            if (data.plan_expires_at) {
                 planExpiryEl.textContent = 'Valid till : ' + formatCleanDate(data.plan_expires_at);
             } else {
                 planExpiryEl.textContent = 'Valid till : Daily Midnight';
