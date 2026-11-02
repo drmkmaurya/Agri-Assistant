@@ -24,23 +24,22 @@ const ROUTE_VIEW_MAP = {
     '/contact': 'policyView'
 };
 
-function navigateTo(path) {
+window.navigateTo = function(path) {
     if (window.location.pathname !== path) {
         history.pushState({ path: path }, '', path);
     }
-    renderRoute(path);
-}
+    window.renderRoute(path);
+};
 
-function navigateBack() {
+window.navigateBack = function() {
     if (window.location.pathname === '/') {
         return;
     }
     history.pushState({ path: '/' }, '', '/');
-    renderRoute('/');
-}
+    window.renderRoute('/');
+};
 
-function renderRoute(path) {
-    // Sabhi active screens ko pehle band karein
+window.renderRoute = function(path) {
     document.querySelectorAll('.app-view-screen').forEach(el => el.classList.remove('active'));
 
     const viewId = ROUTE_VIEW_MAP[path];
@@ -50,17 +49,15 @@ function renderRoute(path) {
             targetView.classList.add('active');
         }
 
-        // Specific sub-actions trigger karein
-        if (path === '/champions') {
+        if (path === '/champions' && typeof loadDailyStories === 'function') {
             loadDailyStories();
-        } else if (['/terms', '/privacy', '/refund', '/contact'].includes(path)) {
+        } else if (['/terms', '/privacy', '/refund', '/contact'].includes(path) && typeof switchTab === 'function') {
             const tabName = path.replace('/', '');
             switchTab(tabName);
         }
     }
-}
+};
 
-// Hardware Back Button Listener (Mobile back dabane par chat par layega)
 window.addEventListener('popstate', (e) => {
     const currentPath = window.location.pathname;
 
@@ -68,14 +65,14 @@ window.addEventListener('popstate', (e) => {
         document.querySelectorAll('.app-view-screen').forEach(el => el.classList.remove('active'));
         const now = Date.now();
         if (now - lastBackPressTime < 2000) {
-            // Browser exit allowed
+            // Exit allowed
         } else {
             lastBackPressTime = now;
             showToast('बाहर निकलने के लिए एक बार फिर बैक दबाएं');
             history.pushState(null, '', '/');
         }
     } else {
-        renderRoute(currentPath);
+        window.renderRoute(currentPath);
     }
 });
 
