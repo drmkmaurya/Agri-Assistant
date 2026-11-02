@@ -60,6 +60,12 @@ function switchTab(t) {
     document.querySelectorAll('#policyView .pill-choice-btn').forEach(b => b.classList.remove('active'));
     const btn = document.getElementById('btn-' + t);
     if (btn) btn.classList.add('active');
+    
+    // URL ko live update karein bina page reload kiye
+    if (window.location.pathname !== '/' + t) {
+        history.replaceState({ path: '/' + t }, '', '/' + t);
+    }
+
     const container = document.getElementById('policyContent');
     if (container) {
         container.innerHTML = (typeof policyDocs !== 'undefined' && policyDocs[t]) 
