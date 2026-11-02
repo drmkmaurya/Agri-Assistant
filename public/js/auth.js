@@ -154,6 +154,25 @@ async function fetchStats() {
     }
 }
 
+async function initAuthSession() {
+    try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session && session.user) {
+            currentUser = session.user;
+            const authScreen = document.getElementById('authScreen');
+            if (authScreen) authScreen.style.display = 'none';
+
+            const avatar = document.getElementById('userAvatar');
+            if (avatar) avatar.src = currentUser.user_metadata.avatar_url || avatar.src;
+
+            const userName = document.getElementById('userName');
+            if (userName) userName.textContent = currentUser.user_metadata.full_name || 'किसान साथी';
+
+            await fetchStats();
+        }
+    } catch(e) {}
+}
+
 supabaseClient.auth.onAuthStateChange((event, session) => {
     if (session && session.user) {
         currentUser = session.user;
@@ -173,3 +192,6 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
         if (authScreen) authScreen.style.display = 'flex';
     }
 });
+
+// Direct Session bootstrap on file load
+initAuthSession();
