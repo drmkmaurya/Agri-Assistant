@@ -8,18 +8,22 @@ let isUserPaidActive = false;
 
 function showToast(msg, duration = 2500) {
     const t = document.getElementById('toastNotice');
+    if (!t) return;
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(() => { t.classList.remove('show'); }, duration);
 }
 
 function showSpinner(text = "प्रतीक्षा करें...") {
-    document.getElementById('loadingText').textContent = text;
-    document.getElementById('loadingOverlay').style.display = 'flex';
+    const el = document.getElementById('loadingText');
+    const ov = document.getElementById('loadingOverlay');
+    if (el) el.textContent = text;
+    if (ov) ov.style.display = 'flex';
 }
 
 function hideSpinner() {
-    document.getElementById('loadingOverlay').style.display = 'none';
+    const ov = document.getElementById('loadingOverlay');
+    if (ov) ov.style.display = 'none';
 }
 
 async function apiRequest(endpoint, options = {}) {
@@ -79,70 +83,63 @@ async function fetchStats() {
         const res = await apiRequest('/user-stats?' + queryParams.toString());
         const data = await res.json();
 
-        const sc = data.super_control;
-        if (sc && sc.banner_enabled && sc.banner_text) {
-            document.getElementById('promoBanner').style.display = 'block';
-            document.getElementById('promoBannerText').textContent = sc.banner_text;
-        } else {
-            document.getElementById('promoBanner').style.display = 'none';
-        }
-
         const total = data.total_credits || 0;
         const maxPack = data.max_pack_credits || (total > 0 ? total : 1);
         const plan = data.plan_type || 'free';
         currentUserPlan = plan;
         isUserPaidActive = data.is_paid_active || false;
 
-        if (data.is_welcome_eligible) {
-            document.getElementById('welcomeBanner').style.display = 'flex';
-            if (!sessionStorage.getItem('welcome_onboarding_shown')) {
-                openWelcomeModal();
-                sessionStorage.setItem('welcome_onboarding_shown', '1');
+        const ringBadge = document.getElementById('ringBadge');
+        if (ringBadge) ringBadge.textContent = total;
+
+        const planNameEl = document.getElementById('userPlanName');
+        if (planNameEl) planNameEl.textContent = 'प्लान: ' + (isUserPaidActive ? plan.toUpperCase() : 'Free');
+        
+        const quotaSummaryEl = document.getElementById('quotaSummary');
+        if (quotaSummaryEl) {
+            if (isUserPaidActive) {
+                quotaSummaryEl.textContent = `उपलब्ध क्रेडिट: ${total} / ${maxPack}`;
+            } else {
+                quotaSummaryEl.textContent = `दैनिक फ्री क्रेडिट: ${total} (रात तक मान्य)`;
             }
-        } else {
-            document.getElementById('welcomeBanner').style.display = 'none';
-            closeWelcomeModal();
-        }
-
-        document.getElementById('ringBadge').textContent = total;
-        document.getElementById('userPlanName').textContent = 'प्लान: ' + (isUserPaidActive ? plan.toUpperCase() : 'Free');
-        
-        if (isUserPaidActive) {
-            document.getElementById('quotaSummary').textContent = `उपलब्ध क्रेडिट: ${total} / ${maxPack}`;
-        } else {
-            document.getElementById('quotaSummary').textContent = `दैनिक फ्री क्रेडिट: ${total} (रात तक मान्य)`;
         }
         
-        if (data.plan_expires_at && isUserPaidActive) {
-            document.getElementById('planExpiryText').textContent = 'वैधता: ' + formatPreciseIST(data.plan_expires_at);
-        } else {
-            document.getElementById('planExpiryText').textContent = 'वैधता: सक्रिय (दैनिक रीसेट)';
+        const planExpiryEl = document.getElementById('planExpiryText');
+        if (planExpiryEl) {
+            if (data.plan_expires_at && isUserPaidActive) {
+                planExpiryEl.textContent = 'वैधता: ' + formatPreciseIST(data.plan_expires_at);
+            } else {
+                planExpiryEl.textContent = 'वैधता: सक्रिय (दैनिक रीसेट)';
+            }
         }
-
-        document.getElementById('lowCreditBanner').style.display = (total <= 1 && isUserPaidActive) ? 'flex' : 'none';
 
         const circle = document.getElementById('creditRing');
-        const ratio = maxPack > 0 ? Math.max(0, Math.min(1, total / maxPack)) : 0;
-        circle.style.strokeDashoffset = 119.38 * (1 - ratio);
+        if (circle) {
+            const ratio = maxPack > 0 ? Math.max(0, Math.min(1, total / maxPack)) : 0;
+            circle.style.strokeDashoffset = 119.38 * (1 - ratio);
 
-        if (plan === 'pro' && isUserPaidActive) {
-            circle.style.stroke = "url(#rainbowGrad)";
-            circle.setAttribute('stroke-width', '3.5');
-        } else if (plan === 'basic' && isUserPaidActive) {
-            circle.style.stroke = '#25d366';
-            circle.setAttribute('stroke-width', '3');
-        } else {
-            circle.style.stroke = '#94a3b8';
-            circle.setAttribute('stroke-width', '2');
+            if (plan === 'pro' && isUserPaidActive) {
+                circle.style.stroke = "url(#rainbowGrad)";
+                circle.setAttribute('stroke-width', '3.5');
+            } else if (plan === 'basic' && isUserPaidActive) {
+                circle.style.stroke = '#25d366';
+                circle.setAttribute('stroke-width', '3');
+            } else {
+                circle.style.stroke = '#94a3b8';
+                circle.setAttribute('stroke-width', '2');
+            }
         }
 
         const webBtn = document.getElementById('btnWebToggle');
-        if (plan === 'pro' && isUserPaidActive) {
-            webBtn.classList.remove('locked');
-        } else {
-            webBtn.classList.add('locked');
-            if (typeof isWebSearchActive !== 'undefined') isWebSearchActive = false;
-            webBtn.classList.remove('active');
+        if (webBtn) {
+            if (plan === 'pro' && isUserPaidActive) {
+                webBtn.style.opacity = '1';
+                webBtn.style.cursor = 'pointer';
+            } else {
+                webBtn.style.opacity = '0.4';
+                if (typeof isWebSearchActive !== 'undefined') isWebSearchActive = false;
+                webBtn.classList.remove('active');
+            }
         }
 
     } catch(e) {}
@@ -151,16 +148,19 @@ async function fetchStats() {
 supabaseClient.auth.onAuthStateChange((event, session) => {
     if (session && session.user) {
         currentUser = session.user;
-        document.getElementById('authScreen').style.display = 'none';
-        document.getElementById('userAvatar').src = currentUser.user_metadata.avatar_url || document.getElementById('userAvatar').src;
-        document.getElementById('userName').textContent = currentUser.user_metadata.full_name || 'किसान साथी';
-        
-        document.getElementById('contactName').value = currentUser.user_metadata.full_name || '';
-        document.getElementById('contactEmail').value = currentUser.email || '';
+        const authScreen = document.getElementById('authScreen');
+        if (authScreen) authScreen.style.display = 'none';
+
+        const avatar = document.getElementById('userAvatar');
+        if (avatar) avatar.src = currentUser.user_metadata.avatar_url || avatar.src;
+
+        const userName = document.getElementById('userName');
+        if (userName) userName.textContent = currentUser.user_metadata.full_name || 'किसान साथी';
 
         fetchStats();
     } else {
         currentUser = null;
-        document.getElementById('authScreen').style.display = 'flex';
+        const authScreen = document.getElementById('authScreen');
+        if (authScreen) authScreen.style.display = 'flex';
     }
 });
