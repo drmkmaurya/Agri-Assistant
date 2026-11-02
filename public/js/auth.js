@@ -99,16 +99,14 @@ async function fetchStats() {
         currentUserPlan = plan;
         isUserPaidActive = data.is_paid_active || false;
 
-        // Global memory balance for instant submit checks
         window.cachedTotalCredits = total;
 
         const ringBadge = document.getElementById('ringBadge');
         if (ringBadge) ringBadge.textContent = total;
 
-        // Clean Menu Items Display (Requested exact format)
         const planNameEl = document.getElementById('userPlanName');
         if (planNameEl) {
-            planNameEl.textContent = 'Plan : ' + (isUserPaidActive ? (plan.charAt(0).toUpperCase() + plan.slice(1)) : 'Free');
+            planNameEl.textContent = 'Plan : ' + (isUserPaidActive ? (plan.toUpperCase()) : 'Free');
         }
         
         const quotaSummaryEl = document.getElementById('quotaSummary');
@@ -125,7 +123,7 @@ async function fetchStats() {
             if (data.plan_expires_at && isUserPaidActive) {
                 planExpiryEl.textContent = 'Valid till : ' + formatCleanDate(data.plan_expires_at);
             } else {
-                planExpiryEl.textContent = 'Valid till : Daily Midnight Reset';
+                planExpiryEl.textContent = 'Valid till : Daily Midnight';
             }
         }
 
@@ -146,7 +144,6 @@ async function fetchStats() {
             }
         }
 
-        // Show Pro Search Button in Composer only for active Pro users
         const compWebBtn = document.getElementById('btnComposerWebSearch');
         if (compWebBtn) {
             if (plan === 'pro' && isUserPaidActive) {
@@ -155,8 +152,9 @@ async function fetchStats() {
                 compWebBtn.classList.remove('show');
             }
         }
-
-    } catch(e) {}
+    } catch(e) {
+        console.error("fetchStats error:", e);
+    }
 }
 
 supabaseClient.auth.onAuthStateChange((event, session) => {
