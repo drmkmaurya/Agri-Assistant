@@ -53,7 +53,7 @@ def apply_rate_limit(client_ip: str):
     minute_window = now - 60
     recent = [t for t in rate_limit_records[client_ip] if t > minute_window]
     rate_limit_records[client_ip] = recent
-    if len(recent) >= 12:
+    if len(recent) >= 15:
         raise HTTPException(status_code=429, detail="आपने 1 मिनट में अधिक अनुरोध किए हैं। कृपया 1 मिनट प्रतीक्षा करें।")
     rate_limit_records[client_ip].append(now)
 
@@ -101,12 +101,12 @@ async def ask_endpoint(req: QueryReq, request: Request):
         raise HTTPException(status_code=401, detail="कृपया पहले Google से साइन इन करें।")
 
     settings = get_super_control_settings()
-    if settings.get("maintenance_mode"):
-        raise HTTPException(status_code=503, detail="सिस्टम अभी रखरखाव (Maintenance) मोड में है। कृपया कुछ समय बाद प्रयास करें।")
+    if settings.get("maintenance_mode") or settings.get("chat_maintenance"):
+        raise HTTPException(status_code=503, detail="कृषि चैट सेवा अभी रखरखाव (Maintenance) में है। कृपया कुछ समय बाद प्रयास करें।")
 
     profile = get_or_create_user_profile(req.user_id)
     if profile.get("status") == "banned":
-        raise HTTPException(status_code=403, detail="आपका खाता ब्लॉक कर दिया गया है।")
+        raise HTTPException(status_code=403, detail="खाता अवरुद्ध कर दिया गया है।")
 
     plan_type = profile.get("plan_type") or "free"
     plan_expires_at = profile.get("plan_expires_at")
@@ -133,24 +133,22 @@ async def ask_endpoint(req: QueryReq, request: Request):
     total_credits = profile.get("total_credits", 0)
 
     if not is_paid_active and req.attachment_count > 0:
-        raise HTTPException(status_code=403, detail="फोटो / दस्तावेज़ जांच केवल Basic और Pro प्लान में उपलब्ध है। कृपया प्लान अपग्रेड करें।")
+        raise HTTPException(status_code=403, detail="फोटो / दस्तावेज़ जांच केवल Basic और Pro प्लान में उपलब्ध है।")
 
     credits_needed = 1 + min(2, req.attachment_count)
 
     if total_credits < credits_needed:
         if is_paid_active:
-            raise HTTPException(status_code=402, detail=f"इस सवाल के लिए {credits_needed} क्रेडिट चाहिए, जबकि आपके पास केवल {total_credits} क्रेडिट शेष हैं। कृपया नया पैक खरीदें।")
+            raise HTTPException(status_code=402, detail=f"इस सवाल के लिए {credits_needed} क्रेडिट चाहिए। शेष बैलेंस: {total_credits}")
         else:
-            raise HTTPException(status_code=402, detail="आपके पास आज का फ्री क्रेडिट समाप्त हो गया है। कल मध्यरात्रि 12 बजे 1 नया क्रेडिट स्वतः मिलेगा, या तुरंत पूछने के लिए Basic/Pro प्लान लें।")
+            raise HTTPException(status_code=402, detail="आज का निःशुल्क क्रेडिट समाप्त हो गया है। मध्यरात्रि को स्वतः नया क्रेडिट मिलेगा या प्लान अपग्रेड करें।")
 
     async with concurrency_lock:
         concurrency_counter += 1
     
     try:
         if plan_type == "free" and concurrency_counter > 5:
-            await asyncio.sleep(1.2)
-        elif plan_type == "basic" and concurrency_counter > 15:
-            await asyncio.sleep(0.4)
+            await asyncio.sleep(1.0)
     finally:
         async with concurrency_lock:
             concurrency_counter = max(0, concurrency_counter - 1)
@@ -160,7 +158,7 @@ async def ask_endpoint(req: QueryReq, request: Request):
 
     greetings = ["hello", "hi", "namaste", "pranam", "hey", "नमस्ते", "प्रणाम", "राम राम"]
     if clean_q in greetings:
-        greeting_text = "नमस्ते किसान भाई! 🙏 बताइए, आज फसल या प्राकृतिक कृषि से संबंधित क्या सहायता चाहिए?" if req.language == "hi" else "Hello Farmer Friend! 🙏 How can I assist you with your farming, soil, or organic agriculture today?"
+        greeting_text = "नमस्ते किसान भाई! 🙏 बताइए, आज फसल, मिट्टी या प्राकृतिक कृषि से संबंधित क्या सहायता चाहिए?" if req.language == "hi" else "Hello Farmer Friend! 🙏 How can I assist you with your farming, soil, or organic agriculture today?"
         return {
             "answer": greeting_text,
             "sources": [],
@@ -171,10 +169,11 @@ async def ask_endpoint(req: QueryReq, request: Request):
 
     try:
         allow_web_search = bool(req.web_search_enabled and is_paid_active and plan_type == "pro")
-        answer_text, sources = generate_rag_answer(user_query, req.language, allow_web_search)
+        context_summary = profile.get("chat_context_summary") or ""
+        answer_text, sources = generate_rag_answer(user_query, req.language, allow_web_search, context_summary)
     except Exception as e:
         print(f"Chat execution error: {e}")
-        raise HTTPException(status_code=500, detail="उत्तर तैयार करने में तकनीकी समस्या आई। आपका कोई क्रेडिट नहीं काटा गया है।")
+        raise HTTPException(status_code=500, detail="तकनीकी समस्या आई। आपका कोई क्रेडिट नहीं काटा गया है।")
 
     new_balance = max(0, total_credits - credits_needed)
     updated_plan_type = plan_type
@@ -182,6 +181,13 @@ async def ask_endpoint(req: QueryReq, request: Request):
         updated_plan_type = "free"
 
     update_user_credits(req.user_id, new_balance, updated_plan_type)
+
+    # Lightweight sliding context memory update
+    try:
+        new_summary = f"{context_summary}\n- Q: {user_query[:60]}"[-350:]
+        supabase.table("user_profiles").update({"chat_context_summary": new_summary}).eq("id", req.user_id).execute()
+    except Exception:
+        pass
 
     return {
         "answer": answer_text,
@@ -191,49 +197,32 @@ async def ask_endpoint(req: QueryReq, request: Request):
         "plan_type": updated_plan_type
     }
 
-@app.post("/api/claim-welcome")
-@app.post("/claim-welcome")
-async def claim_welcome_endpoint(req: ClaimWelcomeReq):
-    profile = get_or_create_user_profile(req.user_id)
-    if profile.get("is_trial_claimed"):
-        raise HTTPException(status_code=400, detail="आप पहले ही स्वागत क्रेडिट्स क्लेम कर चुके हैं।")
-
+@app.post("/api/create-order")
+@app.post("/create-order")
+async def create_order_endpoint(req: OrderReq):
     settings = get_super_control_settings()
-    credits_amt = settings.get("welcome_credits", 10)
-    days_amt = settings.get("welcome_days", 10)
+    if settings.get("maintenance_mode") or settings.get("payment_maintenance"):
+        raise HTTPException(status_code=503, detail="भुगतान सेवा अभी रखरखाव (Maintenance) में है। कृपया कुछ समय बाद पुनः प्रयास करें।")
+    return process_order(req.user_id, req.plan_id, req.coupon_code, supabase)
 
-    now_utc = datetime.now(timezone.utc)
-    expiry = (now_utc + timedelta(days=days_amt)).isoformat()
-
-    supabase.table("user_profiles").update({
-        "is_trial_claimed": True,
-        "plan_type": "basic",
-        "total_credits": credits_amt,
-        "max_pack_credits": credits_amt,
-        "plan_expires_at": expiry
-    }).eq("id", req.user_id).execute()
-
-    return {
-        "status": "success",
-        "credits": credits_amt,
-        "plan_type": "basic",
-        "plan_expires_at": expiry
-    }
+@app.post("/api/verify-payment")
+@app.post("/verify-payment")
+async def verify_payment_endpoint(req: VerifyPaymentReq):
+    return verify_and_credit(
+        req.user_id, req.order_id, req.payment_id, req.signature, req.plan_id, req.coupon_code, supabase
+    )
 
 @app.get("/api/user-stats")
 @app.get("/user-stats")
 async def user_stats(user_id: str, email: str = "", name: str = "", avatar: str = ""):
     data = get_or_create_user_profile(user_id, email, name, avatar)
     data = sync_daily_free_credit(data, user_id)
-
     settings = get_super_control_settings()
 
     plan_type = data.get("plan_type") or "free"
     plan_expires_at = data.get("plan_expires_at")
     total_credits = data.get("total_credits", 0)
     max_pack = data.get("max_pack_credits", 1)
-    is_claimed = data.get("is_trial_claimed", False)
-    created_at = data.get("created_at")
 
     is_paid_active = False
     now_utc = datetime.now(timezone.utc)
@@ -251,15 +240,6 @@ async def user_stats(user_id: str, email: str = "", name: str = "", avatar: str 
         else:
             plan_type = "free"
 
-    is_within_7_days = True
-    if created_at:
-        try:
-            created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
-            if (now_utc - created_dt).days > 7:
-                is_within_7_days = False
-        except Exception:
-            pass
-
     return {
         "status": data.get("status", "approved"),
         "plan_type": plan_type,
@@ -267,16 +247,11 @@ async def user_stats(user_id: str, email: str = "", name: str = "", avatar: str 
         "max_pack_credits": max_pack,
         "plan_expires_at": plan_expires_at,
         "is_paid_active": is_paid_active,
-        "is_trial_claimed": is_claimed,
-        "created_at": created_at,
-        "is_welcome_eligible": (not is_claimed) and is_within_7_days and (not is_paid_active),
         "super_control": {
             "maintenance_mode": settings.get("maintenance_mode", False),
-            "banner_enabled": settings.get("banner_enabled", False),
-            "banner_text": settings.get("banner_text", ""),
-            "welcome_credits": settings.get("welcome_credits", 10),
-            "welcome_days": settings.get("welcome_days", 10),
-            "welcome_enabled": settings.get("welcome_enabled", True)
+            "chat_maintenance": settings.get("chat_maintenance", False),
+            "payment_maintenance": settings.get("payment_maintenance", False),
+            "active_payment_gateway": settings.get("active_payment_gateway", "razorpay")
         }
     }
 
@@ -291,37 +266,3 @@ async def payment_history_endpoint(user_id: str):
         .order("created_at", desc=True)\
         .execute()
     return {"transactions": res.data or []}
-
-@app.post("/api/request-approval")
-@app.post("/request-approval")
-async def support_endpoint(req: SupportReq):
-    assigned_priority = req.priority
-    if req.category == "payment" or req.user_plan == "pro":
-        assigned_priority = "high"
-    elif req.user_plan == "basic":
-        assigned_priority = "medium"
-
-    supabase.table("user_queries").insert({
-        "user_id": req.user_id,
-        "name": req.name,
-        "email": req.email,
-        "phone": req.phone,
-        "concern": req.concern,
-        "category": req.category,
-        "priority": assigned_priority,
-        "user_plan": req.user_plan
-    }).execute()
-    
-    return {"status": "success", "priority": assigned_priority}
-
-@app.post("/api/create-order")
-@app.post("/create-order")
-async def create_order_endpoint(req: OrderReq):
-    return process_order(req.user_id, req.plan_id, req.coupon_code, supabase)
-
-@app.post("/api/verify-payment")
-@app.post("/verify-payment")
-async def verify_payment_endpoint(req: VerifyPaymentReq):
-    return verify_and_credit(
-        req.user_id, req.order_id, req.payment_id, req.signature, req.plan_id, req.coupon_code, supabase
-    )
