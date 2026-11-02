@@ -11,7 +11,7 @@ function loadExternalScript(src) {
 
 function handleSelectPlan(planId) {
     if (planId === 'basic' && currentUserPlan === 'pro' && isUserPaidActive) {
-        alert('आपका Pro प्लान अभी सक्रिय है! बेसिक प्लान केवल प्रो प्लान समाप्त (क्रेडिट 0) होने के बाद ही लिया जा सकता है।');
+        alert('आपका Pro प्लान अभी सक्रिय है! बेसिक प्लान केवल प्रो समाप्त होने पर ही लिया जा सकता है।');
         return;
     }
     initiatePayment(planId);
@@ -35,8 +35,29 @@ function closeSuccessModal() {
     if (modal) modal.style.display = 'none'; 
 }
 
+function closeZeroCreditModal() {
+    const modal = document.getElementById('zeroCreditModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function closeLowCreditNudge() {
+    const modal = document.getElementById('lowCreditNudgeModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function proceedPendingQuery() {
+    closeLowCreditNudge();
+    if (typeof pendingUserQuery !== 'undefined' && pendingUserQuery) {
+        const q = pendingUserQuery;
+        pendingUserQuery = null;
+        if (typeof executeSubmit === 'function') {
+            executeSubmit(q.text, q.attachCount);
+        }
+    }
+}
+
 function switchTab(t) {
-    document.querySelectorAll('#policyView .font-size-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#policyView .pill-choice-btn').forEach(b => b.classList.remove('active'));
     const btn = document.getElementById('btn-' + t);
     if (btn) btn.classList.add('active');
     const container = document.getElementById('policyContent');
@@ -65,7 +86,7 @@ function applyCouponFeedback() {
     } else {
         msgEl.style.display = 'block';
         msgEl.style.color = '#008069';
-        msgEl.textContent = `कोड "${val}" सेट हुआ। प्लान चुनने पर सत्यापित होगा।`;
+        msgEl.textContent = `कोड "${val}" दर्ज हुआ। प्लान चुनने पर मान्य होगा।`;
     }
 }
 
@@ -87,15 +108,15 @@ async function loadPaymentHistory() {
 
         let html = '';
         txs.forEach(t => {
-            const buyDate = formatPreciseIST(t.created_at);
-            const expDate = formatPreciseIST(t.expires_at);
+            const buyDate = typeof formatCleanDate === 'function' ? formatCleanDate(t.created_at) : t.created_at;
+            const expDate = typeof formatCleanDate === 'function' ? formatCleanDate(t.expires_at) : t.expires_at;
             const amt = t.amount_paid == 0 ? 'मुफ़्त (VIP)' : '₹' + t.amount_paid;
-            const planTitle = t.plan_name ? t.plan_name.split('(')[0].trim() : `${t.credits_added} क्रेडिट्स`;
+            const planTitle = t.plan_name ? t.plan_name.split('(')[0].trim() : `${t.credits_added} Credits`;
             
             html += `
                 <div class="history-card-item">
                     <div class="history-top-row">
-                        <span class="history-title">${planTitle} (+${t.credits_added} क्रेडिट्स)</span>
+                        <span class="history-title">${planTitle} (+${t.credits_added} Credits)</span>
                         <span class="history-amount">${amt}</span>
                     </div>
                     <div class="history-details-grid">
@@ -117,8 +138,6 @@ async function initiatePayment(planId) {
 
     showSpinner("सुरक्षित भुगतान मॉड्यूल तैयार हो रहा है...");
     try {
-        await loadExternalScript('https://checkout.razorpay.com/v1/checkout.js');
-
         const ordRes = await apiRequest('/create-order', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -141,8 +160,12 @@ async function initiatePayment(planId) {
         }
 
         const ordData = await ordRes.json();
-        closeView('paymentView');
+        
+        // Close payment view smoothly
+        const payView = document.getElementById('paymentView');
+        if (payView) payView.classList.remove('active');
 
+        // Free VIP bypass
         if (ordData.is_free) {
             showSpinner("VIP कूपन सक्रिय हो रहा है...");
             const vRes = await apiRequest('/verify-payment', {
@@ -158,58 +181,67 @@ async function initiatePayment(planId) {
             hideSpinner();
             const vData = await vRes.json();
             if (vData.status === 'success') {
-                triggerPaymentSuccess(vData.credits_added, vData.plan_expires_at);
+                triggerPaymentSuccess(vData.credits_added);
                 fetchStats();
             }
             return;
         }
 
-        const options = {
-            key: ordData.key_id,
-            amount: ordData.amount,
-            currency: "INR",
-            name: "Agri Mitra",
-            description: planId.toUpperCase() + " Credit Pack",
-            order_id: ordData.order_id,
-            handler: async function (response) {
-                showSpinner("भुगतान सत्यापित हो रहा है...");
-                const vRes = await apiRequest('/verify-payment', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        user_id: currentUser.id,
-                        order_id: response.razorpay_order_id,
-                        payment_id: response.razorpay_payment_id,
-                        signature: response.razorpay_signature,
-                        plan_id: planId,
-                        coupon_code: couponVal
-                    })
-                });
-                hideSpinner();
-                const vData = await vRes.json();
-                if (vData.status === 'success') {
-                    triggerPaymentSuccess(vData.credits_added, vData.plan_expires_at);
-                    fetchStats();
-                }
-            },
-            prefill: {
-                name: currentUser.user_metadata.full_name || '',
-                email: currentUser.email || ''
-            },
-            theme: { color: "#008069" }
-        };
-        const rzp = new Razorpay(options);
-        rzp.on('payment.failed', function (resp) {
-            alert("भुगतान विफल रहा: " + (resp.error.description || "त्रुटि"));
-        });
-        rzp.open();
+        // Razorpay Gateway Pipeline
+        if (ordData.gateway === 'razorpay') {
+            await loadExternalScript('https://checkout.razorpay.com/v1/checkout.js');
+            const options = {
+                key: ordData.key_id,
+                amount: ordData.amount,
+                currency: "INR",
+                name: "Agri Mitra",
+                description: planId.toUpperCase() + " Credit Plan",
+                order_id: ordData.order_id,
+                handler: async function (response) {
+                    showSpinner("भुगतान सत्यापित हो रहा है...");
+                    const vRes = await apiRequest('/verify-payment', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            user_id: currentUser.id,
+                            order_id: response.razorpay_order_id,
+                            payment_id: response.razorpay_payment_id,
+                            signature: response.razorpay_signature,
+                            plan_id: planId,
+                            coupon_code: couponVal
+                        })
+                    });
+                    hideSpinner();
+                    const vData = await vRes.json();
+                    if (vData.status === 'success') {
+                        triggerPaymentSuccess(vData.credits_added);
+                        fetchStats();
+                    }
+                },
+                prefill: {
+                    name: currentUser.user_metadata.full_name || '',
+                    email: currentUser.email || ''
+                },
+                theme: { color: "#008069" }
+            };
+            const rzp = new Razorpay(options);
+            rzp.on('payment.failed', function (resp) {
+                alert("भुगतान विफल रहा: " + (resp.error.description || "त्रुटि"));
+            });
+            rzp.open();
+        } 
+        // Cashfree Gateway Pipeline Placeholder
+        else if (ordData.gateway === 'cashfree') {
+            alert('Cashfree Gateway इंटीग्रेशन सक्रिय हो रहा है...');
+        }
+
     } catch(e) {
         hideSpinner();
         alert('भुगतान आरंभ करने में त्रुटि आई। कृपया पुनः प्रयास करें।');
     }
 }
 
-function triggerPaymentSuccess(creditsAdded, expiryIso) {
+function triggerPaymentSuccess(creditsAdded) {
     loadExternalScript('https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js').then(() => {
         confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
     }).catch(() => {});
@@ -218,6 +250,6 @@ function triggerPaymentSuccess(creditsAdded, expiryIso) {
     if (successModal) {
         successModal.style.display = 'flex';
         const rollCount = document.getElementById('creditRollCount');
-        if (rollCount) rollCount.textContent = `+${creditsAdded} क्रेडिट्स`;
+        if (rollCount) rollCount.textContent = `+${creditsAdded} Credits`;
     }
 }
