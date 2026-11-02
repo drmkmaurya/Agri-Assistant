@@ -11,10 +11,9 @@ const DRAFT_STORAGE_KEY = 'agri_mitra_draft_msg';
 let speechRecognizer = null;
 let isRecognizingVoice = false;
 let pendingUserQuery = null;
-
 let lastBackPressTime = 0;
 
-/* Hardware Native Back Button Handling via Hash History & Double Back to Exit */
+/* Clean Native Popstate Navigation */
 function openViewWithHistory(viewId) {
     document.querySelectorAll('.app-view-screen').forEach(el => el.classList.remove('active'));
     const v = document.getElementById(viewId);
@@ -37,10 +36,9 @@ window.addEventListener('popstate', (e) => {
         document.querySelectorAll('.app-view-screen').forEach(el => el.classList.remove('active'));
         document.getElementById(hash).classList.add('active');
     } else {
-        // Double back to exit protection on root chat screen
         const now = Date.now();
         if (now - lastBackPressTime < 2000) {
-            // Exit allowed
+            // Exit
         } else {
             lastBackPressTime = now;
             showToast('बाहर निकलने के लिए एक बार फिर बैक दबाएं');
@@ -49,7 +47,6 @@ window.addEventListener('popstate', (e) => {
     }
 });
 
-// Set initial history state for root screen
 window.addEventListener('load', () => {
     history.replaceState(null, '', window.location.pathname);
 });
@@ -75,7 +72,7 @@ function autoGrowTextarea(el) {
     }
 }
 
-/* Auto-Save Draft (24 Hours locally) */
+/* Auto-Save Draft */
 function handleComposerInput(el) {
     autoGrowTextarea(el);
     const val = el.value;
@@ -109,17 +106,17 @@ function restoreDraftMessage() {
     } catch(e) {}
 }
 
-/* Composer Action Trigger */
+/* Safe Composer Action: Text type hone par hi send karega, mic par nahi */
 function handleComposerAction() {
     const text = document.getElementById('msgField').value.trim();
-    if (text || selectedAttachments.length) {
+    if (text.length > 0) {
         submitMessage();
     } else {
         toggleVoiceDictation();
     }
 }
 
-/* Voice Dictation (Type Only - Never Auto-Sends) */
+/* Voice Dictation (Only Types Text, Never Auto-submits) */
 let waveAnimationTimer = null;
 function toggleVoiceDictation() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -155,7 +152,7 @@ function toggleVoiceDictation() {
             const field = document.getElementById('msgField');
             field.value = (field.value ? field.value + ' ' : '') + transcript;
             handleComposerInput(field);
-            // Strictly type text only — NO auto-submit!
+            // Sirf textarea me likhega, submit bilkul nahi karega!
         };
 
         speechRecognizer.onerror = () => {
@@ -194,7 +191,7 @@ function stopVoiceWave() {
     if (waveBar) waveBar.classList.remove('active');
 }
 
-/* Clean Speech Synthesis */
+/* Natural Speech Synthesis */
 function speakText(btn, textToRead) {
     if (!('speechSynthesis' in window)) {
         showToast('स्पीच सिंथेसिस समर्थित नहीं है।');
@@ -224,7 +221,7 @@ function speakText(btn, textToRead) {
     window.speechSynthesis.speak(utter);
 }
 
-/* Copy Only Core Advice Text (Excludes Clips and Questions) */
+/* Copy Only Pure Advice */
 function handleCopyClick(btn) {
     const bubble = btn.closest('.bot-bubble');
     if (!bubble) return;
@@ -232,7 +229,6 @@ function handleCopyClick(btn) {
     const act = clone.querySelector('.meta-action-bar'); if (act) act.remove();
     const crsT = clone.querySelector('.sources-carousel-title'); if (crsT) crsT.remove();
     const crs = clone.querySelector('.sources-carousel'); if (crs) crs.remove();
-    const sq = clone.querySelector('.suggested-questions-box'); if (sq) sq.remove();
     const head = clone.querySelector('.bubble-meta-header'); if (head) head.remove();
     const meta = clone.querySelector('.bubble-meta'); if (meta) meta.remove();
 
@@ -240,7 +236,7 @@ function handleCopyClick(btn) {
     navigator.clipboard.writeText(raw).then(() => showToast('सलाह कॉपी हो गई!'));
 }
 
-/* Share Only Core Advice Text on WhatsApp */
+/* WhatsApp Share Filtered Clean Text */
 function handleWhatsAppClick(btn) {
     const bubble = btn.closest('.bot-bubble');
     if (!bubble) return;
@@ -248,7 +244,6 @@ function handleWhatsAppClick(btn) {
     const act = clone.querySelector('.meta-action-bar'); if (act) act.remove();
     const crsT = clone.querySelector('.sources-carousel-title'); if (crsT) crsT.remove();
     const crs = clone.querySelector('.sources-carousel'); if (crs) crs.remove();
-    const sq = clone.querySelector('.suggested-questions-box'); if (sq) sq.remove();
     const head = clone.querySelector('.bubble-meta-header'); if (head) head.remove();
     const meta = clone.querySelector('.bubble-meta'); if (meta) meta.remove();
 
@@ -356,7 +351,7 @@ function handleFileSelected(event) {
     const files = Array.from(event.target.files);
     if (!files.length) return;
     if (files.length > 2) {
-        showToast('अधिकतम 2 फाइलें ही संलग्न कर सकते हैं।');
+        showToast('अधिकतम 2 फोटो ही संलग्न कर सकते हैं।');
         event.target.value = '';
         return;
     }
@@ -372,14 +367,21 @@ function removeAttachment() {
     document.getElementById('attachmentChip').style.display = 'none';
 }
 
+/* Click on Suggested Question */
 function askQuickChip(questionText) {
+    clearFloatingSuggestions();
     document.getElementById('msgField').value = questionText;
     handleComposerInput(document.getElementById('msgField'));
     submitMessage(questionText);
 }
 
-function queueSaveLocalMessage(type, html, time, rawText = '') {
-    memoryChatHistory.push({ type, html, time, rawText, timestamp: Date.now() });
+function clearFloatingSuggestions() {
+    const existing = document.getElementById('floatingSuggestionsBar');
+    if (existing) existing.remove();
+}
+
+function queueSaveLocalMessage(type, html, time, rawText = '', images = []) {
+    memoryChatHistory.push({ type, html, time, rawText, images, timestamp: Date.now() });
     if (memoryChatHistory.length > 20) memoryChatHistory.shift();
     clearTimeout(storageSaveTimer);
     storageSaveTimer = setTimeout(() => {
@@ -397,26 +399,35 @@ function cleanAndLoadLocalHistory() {
         memoryChatHistory.forEach((m, idx) => {
             const isLast = (idx === memoryChatHistory.length - 1 && m.type === 'bot');
             if (m.type === 'user') {
-                renderUserBubbleDirect(m.html, m.time);
+                renderUserBubbleDirect(m.html, m.time, m.images || []);
             } else {
-                renderBotBubbleDirect(m.html, m.time, isLast, m.rawText);
+                renderBotBubbleDirect(m.html, m.time, isLast, m.rawText, false);
             }
         });
     } catch(e) {}
 }
 
-/* Clean Date Divider (Only "आज" or "कल") */
 function updateDateDivider() {
     document.getElementById('todayDateDivider').textContent = 'आज';
 }
 
-/* Clean User Bubble (No ticks) */
-function renderUserBubbleDirect(textHtml, time) {
+/* User Bubble with Real Thumbnail Images */
+function renderUserBubbleDirect(textHtml, time, imagePreviews = []) {
     const rowId = 'usr-' + Date.now();
+    let imgHtml = '';
+    if (imagePreviews && imagePreviews.length > 0) {
+        imgHtml = '<div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px;">';
+        imagePreviews.forEach(src => {
+            imgHtml += `<img src="${src}" style="width:72px; height:72px; object-fit:cover; border-radius:8px; border:1px solid rgba(0,0,0,0.1);">`;
+        });
+        imgHtml += '</div>';
+    }
+
     const uHtml = `
         <div class="msg-row user" id="${rowId}">
             <div class="bubble user-bubble">
-                ${textHtml}
+                ${imgHtml}
+                ${textHtml ? `<div>${textHtml}</div>` : ''}
                 <div class="bubble-meta">
                     <span>${time}</span>
                 </div>
@@ -427,15 +438,15 @@ function renderUserBubbleDirect(textHtml, time) {
     return rowId;
 }
 
-/* Bot Bubble with Copy, WhatsApp & Speak Action Buttons */
-function renderBotBubbleDirect(innerHtml, time, isLatest = false, rawForSpeech = '') {
+/* Bot Bubble with Dynamic Credit Badge (0 on error, 1 on success) */
+function renderBotBubbleDirect(innerHtml, time, isLatest = false, rawForSpeech = '', isError = false) {
     if (currentActiveActionBar && currentActiveActionBar.parentNode) {
         currentActiveActionBar.remove();
         currentActiveActionBar = null;
     }
 
     let actionsHtml = '';
-    if (isLatest) {
+    if (isLatest && !isError) {
         actionsHtml = `
             <div class="meta-action-bar" id="activeActionBar">
                 <button class="action-btn-pill" onclick="speakText(this, '${encodeURIComponent(rawForSpeech)}')" title="बोलकर सुनें">
@@ -453,12 +464,15 @@ function renderBotBubbleDirect(innerHtml, time, isLatest = false, rawForSpeech =
             </div>`;
     }
 
+    const badgeLabel = isError ? '0 Credit Used' : '1 Credit Used';
+    const badgeStyle = isError ? 'background:#f1f5f9; color:#64748b; border:1px solid #cbd5e1;' : 'background:#f0fdf4; color:#059669; border:1px solid #bbf7d0;';
+
     const bHtml = `
         <div class="msg-row bot">
             <div class="bubble bot-bubble">
                 <div class="bubble-meta-header">
                     <span class="bot-name-label">🌾 Agri Mitra AI</span>
-                    <span class="credit-used-pill">1 Credit Used</span>
+                    <span class="credit-used-pill" style="${badgeStyle}">${badgeLabel}</span>
                 </div>
                 ${innerHtml}
                 <div class="bubble-meta">
@@ -468,10 +482,26 @@ function renderBotBubbleDirect(innerHtml, time, isLatest = false, rawForSpeech =
             </div>
         </div>`;
     document.getElementById('plantLoader').insertAdjacentHTML('beforebegin', bHtml);
-    if (isLatest) currentActiveActionBar = document.getElementById('activeActionBar');
+    if (isLatest && !isError) currentActiveActionBar = document.getElementById('activeActionBar');
     toBottom();
 }
 
+/* Render Suggested Questions Outside the Bubble */
+function renderFloatingSuggestions(questions = []) {
+    clearFloatingSuggestions();
+    if (!questions || !questions.length) return;
+
+    let html = '<div class="suggested-questions-box" id="floatingSuggestionsBar" style="padding:4px 8px; margin-bottom:6px;">';
+    questions.forEach(q => {
+        html += `<div class="suggested-q-chip" onclick="askQuickChip('${q}')">👉 ${q}</div>`;
+    });
+    html += '</div>';
+
+    document.getElementById('plantLoader').insertAdjacentHTML('beforebegin', html);
+    toBottom();
+}
+
+/* Modal Triggers */
 function closeZeroCreditModal() {
     document.getElementById('zeroCreditModal').style.display = 'none';
 }
@@ -485,18 +515,31 @@ function proceedPendingQuery() {
     if (pendingUserQuery) {
         const q = pendingUserQuery;
         pendingUserQuery = null;
-        executeSubmit(q.text, q.attachCount);
+        executeSubmit(q.text, q.attachCount, q.images);
     }
 }
 
+/* Submit Message Handler */
 async function submitMessage(customTxt) {
     const field = document.getElementById('msgField');
     const text = (customTxt || field.value).trim();
     if (!text && !selectedAttachments.length) return;
     if (!currentUser) { showToast('कृपया पहले साइन इन करें।'); return; }
 
+    clearFloatingSuggestions();
+
     const attachCount = selectedAttachments.length;
     const creditsNeeded = 1 + Math.min(2, attachCount);
+
+    // Read image data for local preview thumbnail
+    const imagePreviews = [];
+    if (selectedAttachments.length > 0) {
+        for (let file of selectedAttachments) {
+            if (file.type.startsWith('image/')) {
+                imagePreviews.push(URL.createObjectURL(file));
+            }
+        }
+    }
 
     if (!isUserPaidActive && window.cachedTotalCredits < creditsNeeded) {
         document.getElementById('zeroCreditModal').style.display = 'flex';
@@ -504,26 +547,21 @@ async function submitMessage(customTxt) {
     }
 
     if (isUserPaidActive && window.cachedTotalCredits <= 3) {
-        pendingUserQuery = { text, attachCount };
+        pendingUserQuery = { text, attachCount, images: imagePreviews };
         document.getElementById('lowCreditNudgeText').textContent = 
-            `आपके पास केवल ${window.cachedTotalCredits} क्रेडिट शेष हैं। बिना रुकावट परामर्श जारी रखने के लिए क्रेडिट्स जोड़ें।`;
+            `आपके पास केवल ${window.cachedTotalCredits} क्रेडिट शेष हैं। बिना रुकावट जारी रखने के लिए प्लान लें।`;
         document.getElementById('lowCreditNudgeModal').style.display = 'flex';
         return;
     }
 
-    executeSubmit(text, attachCount);
+    executeSubmit(text, attachCount, imagePreviews);
 }
 
-async function executeSubmit(text, attachCount) {
+async function executeSubmit(text, attachCount, imagePreviews = []) {
     const time = nowTime();
-    let displayMsg = text;
-    if (attachCount > 0) {
-        displayMsg = (text ? text + '<br>' : '') + `<small style="color:#065f46; font-weight:600;">📎 ${attachCount} फोटो संलग्न</small>`;
-    }
-
-    const safeUserText = displayMsg.replace(/\n/g, '<br>');
-    renderUserBubbleDirect(safeUserText, time);
-    queueSaveLocalMessage('user', safeUserText, time);
+    const safeUserText = text ? text.replace(/\n/g, '<br>') : '';
+    renderUserBubbleDirect(safeUserText, time, imagePreviews);
+    queueSaveLocalMessage('user', safeUserText, time, '', imagePreviews);
 
     const field = document.getElementById('msgField');
     field.value = '';
@@ -550,7 +588,7 @@ async function executeSubmit(text, attachCount) {
         document.getElementById('plantLoader').style.display = 'none';
 
         if (!res.ok) {
-            renderBotBubbleDirect(data.detail || 'तकनीकी समस्या आई। कोई क्रेडिट नहीं कटा।', nowTime(), false);
+            renderBotBubbleDirect(data.detail || 'तकनीकी समस्या आई। आपका कोई क्रेडिट नहीं काटा गया है।', nowTime(), false, '', true);
             return;
         }
 
@@ -559,11 +597,13 @@ async function executeSubmit(text, attachCount) {
         let rawText = data.answer.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
         let finalContent = '<div>' + rawText + '</div>';
 
-        // Strictly Horizontal Swipeable Video Clips Carousel
+        // Font Awesome 6 Icons in Carousel
         if (data.sources && data.sources.length > 0) {
             finalContent += `
                 <div class="sources-carousel-title">
-                    <span>📺 संदर्भ वीडियो क्लिप्स (सटीक भाग)</span>
+                    <span style="display:flex; align-items:center; gap:5px; color:#dc2626;">
+                        <i class="fa-brands fa-youtube"></i> संदर्भ वीडियो क्लिप्स
+                    </span>
                     <span class="carousel-hint">स्वाइप करें →</span>
                 </div>
                 <div class="sources-carousel">`;
@@ -572,41 +612,37 @@ async function executeSubmit(text, attachCount) {
                     <a href="${s.video_url}" target="_blank" class="clip-carousel-card">
                         <div>
                             <div class="clip-c-header">
-                                <span>▶️ ${s.duration || '00:00'}</span>
+                                <span><i class="fa-solid fa-play" style="font-size:9px;"></i> ${s.duration || '00:00'}</span>
                                 <span class="clip-hd-tag">HD</span>
                             </div>
                             <div class="clip-c-title">${s.title}</div>
                             <div class="clip-c-summary">${s.summary || s.title}</div>
                         </div>
-                        <div class="clip-c-link">क्लिप देखें →</div>
+                        <div class="clip-c-link">क्लिप देखें <i class="fa-solid fa-arrow-right" style="font-size:8px;"></i></div>
                     </a>`;
             });
             finalContent += '</div>';
         }
 
-        // Suggested Follow-up Question Chips
+        renderBotBubbleDirect(finalContent, nowTime(), true, data.answer, false);
+        queueSaveLocalMessage('bot', finalContent, nowTime(), data.answer);
+
+        // Render Floating Suggestions OUTSIDE the Bubble
         const followups = [
             "इसका छिड़काव किस समय करना सही रहेगा?",
             "प्रति एकड़ कितनी मात्रा में उपयोग करें?",
             "क्या इसे अन्य जैविक घोल के साथ मिला सकते हैं?"
         ];
-        finalContent += '<div class="suggested-questions-box">';
-        followups.forEach(q => {
-            finalContent += `<div class="suggested-q-chip" onclick="askQuickChip('${q}')">👉 ${q}</div>`;
-        });
-        finalContent += '</div>';
-
-        renderBotBubbleDirect(finalContent, nowTime(), true, data.answer);
-        queueSaveLocalMessage('bot', finalContent, nowTime(), data.answer);
+        renderFloatingSuggestions(followups);
 
     } catch(e) {
         document.getElementById('plantLoader').style.display = 'none';
-        renderBotBubbleDirect('सर्वर से संपर्क नहीं हो सका। कोई क्रेडिट नहीं कटा।', nowTime(), false);
+        renderBotBubbleDirect('सर्वर से संपर्क नहीं हो सका। आपका कोई क्रेडिट नहीं काटा गया है।', nowTime(), false, '', true);
     }
     toBottom();
 }
 
-/* Load Daily Stories from Supabase */
+/* Load Daily Stories (Champions) */
 async function loadDailyStories() {
     const container = document.getElementById('storiesListContainer');
     container.innerHTML = '<p style="color:#64748b; font-size:12.5px;">प्रेरणादायक कृषि कथाएं लोड हो रही हैं...</p>';
