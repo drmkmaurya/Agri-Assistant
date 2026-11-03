@@ -27,10 +27,9 @@ function hideSpinner() {
 }
 
 async function apiRequest(endpoint, options = {}) {
-    let res = await fetch('/api' + endpoint, options);
-    if (res.status === 404) {
-        res = await fetch(endpoint, options);
-    }
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/' + endpoint;
+    const url = '/api' + cleanEndpoint;
+    const res = await fetch(url, options);
     return res;
 }
 
