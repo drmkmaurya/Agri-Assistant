@@ -73,9 +73,21 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
     # Safe lookup without crashing on single()
     user_res = supabase.table("user_profiles").select("total_credits, plan_type, plan_expires_at, email, full_name").eq("id", user_id).execute()
     if not user_res.data:
-        raise HTTPException(status_code=404, detail="उपयोगकर्ता खाता नहीं मिला। कृपया पुनः लॉगिन करें।")
-        
-    user_data = user_res.data[0]
+        # Fallback auto-create user profile if missing so order never fails
+        new_prof = {
+            "id": user_id,
+            "plan_type": "free",
+            "total_credits": 1,
+            "max_pack_credits": 1
+        }
+        try:
+            ins = supabase.table("user_profiles").insert(new_prof).execute()
+            user_data = ins.data[0] if ins.data else new_prof
+        except Exception:
+            user_data = new_prof
+    else:
+        user_data = user_res.data[0]
+    
     current_credits = user_data.get("total_credits", 0) or 0
     current_plan = user_data.get("plan_type", "free")
     plan_expires_at = user_data.get("plan_expires_at")
