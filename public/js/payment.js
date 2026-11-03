@@ -184,7 +184,7 @@ async function initiatePayment(planId) {
 
         const ordData = await ordRes.json();
         
-        // Close payment sliding view
+        // Close payment view smoothly
         const payView = document.getElementById('paymentView');
         if (payView) payView.classList.remove('active');
 
@@ -197,15 +197,31 @@ async function initiatePayment(planId) {
                 body: JSON.stringify({
                     user_id: currentUser.id,
                     order_id: ordData.order_id,
+                    payment_id: "VIP_COUPON",
+                    signature: "",
                     plan_id: planId,
-                    coupon_code: couponVal
+                    coupon_code: couponVal || "VIP100"
                 })
             });
             hideSpinner();
+            
+            if (!vRes.ok) {
+                let errDetail = `सत्यापन विफल (${vRes.status})`;
+                try {
+                    const errData = await vRes.json();
+                    errDetail = errData.detail || errDetail;
+                } catch(e) {
+                    const txt = await vRes.text();
+                    errDetail = txt || errDetail;
+                }
+                alert("कूपन सक्रियण त्रुटि: " + errDetail);
+                return;
+            }
+
             const vData = await vRes.json();
             if (vData.status === 'success') {
                 triggerPaymentSuccess(vData.credits_added, vData.new_balance, vData.plan_expires_at, planId);
-                fetchStats();
+                await fetchStats();
             }
             return;
         }
@@ -235,10 +251,16 @@ async function initiatePayment(planId) {
                         })
                     });
                     hideSpinner();
+
+                    if (!vRes.ok) {
+                        alert("भुगतान सफल रहा पर खाते में क्रेडिट जोड़ने में समस्या आई। सपोर्ट से संपर्क करें।");
+                        return;
+                    }
+
                     const vData = await vRes.json();
                     if (vData.status === 'success') {
                         triggerPaymentSuccess(vData.credits_added, vData.new_balance, vData.plan_expires_at, planId);
-                        fetchStats();
+                        await fetchStats();
                     }
                 },
                 prefill: {
@@ -259,13 +281,13 @@ async function initiatePayment(planId) {
 
     } catch(e) {
         hideSpinner();
-        alert('भुगतान आरंभ करने में त्रुटि आई। कृपया पुनः प्रयास करें।');
+        alert('भुगतान आरंभ करने में त्रुटि आई: ' + e.message);
     }
 }
 
 /* Premium Success Celebration with Confetti & 0 -> X Rolling Counter */
 function triggerPaymentSuccess(creditsAdded, newBalance, planExpiry, planId) {
-    // 1. Confetti Rain
+    // 1. Confetti Animation
     loadExternalScript('https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js').then(() => {
         confetti({ particleCount: 140, spread: 85, origin: { y: 0.6 } });
     }).catch(() => {});
