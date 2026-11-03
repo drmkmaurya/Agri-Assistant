@@ -94,7 +94,7 @@ async function fetchStats() {
         if (!res.ok) return;
         const data = await res.json();
 
-        const total = (data.total_credits !== undefined) ? Number(data.total_credits) : 0;
+        const total = (data.total_credits !== undefined && data.total_credits !== null) ? Number(data.total_credits) : 0;
         const maxPack = Number(data.max_pack_credits) || (total > 0 ? total : 1);
         const plan = (data.plan_type || 'free').toLowerCase();
         currentUserPlan = plan;
@@ -102,14 +102,13 @@ async function fetchStats() {
 
         window.cachedTotalCredits = total;
 
-        // Header Ring Badge
+        // Forcefully update DOM elements
         const ringBadge = document.getElementById('ringBadge');
-        if (ringBadge) ringBadge.textContent = total;
+        if (ringBadge) ringBadge.textContent = String(total);
 
-        // Menu items formatting
         const planNameEl = document.getElementById('userPlanName');
         if (planNameEl) {
-            const planDisplay = isUserPaidActive ? (plan.toUpperCase()) : 'FREE';
+            const planDisplay = isUserPaidActive ? (plan.toUpperCase()) : (plan !== 'free' ? plan.toUpperCase() : 'FREE');
             planNameEl.textContent = 'Plan : ' + planDisplay;
         }
         
@@ -122,7 +121,7 @@ async function fetchStats() {
         
         const planExpiryEl = document.getElementById('planExpiryText');
         if (planExpiryEl) {
-            if (data.plan_expires_at && isUserPaidActive) {
+            if (data.plan_expires_at) {
                 planExpiryEl.textContent = 'Valid till : ' + formatCleanDate(data.plan_expires_at);
             } else {
                 planExpiryEl.textContent = 'Valid till : Daily Midnight';
@@ -132,7 +131,7 @@ async function fetchStats() {
         const circle = document.getElementById('creditRing');
         if (circle) {
             const ratio = maxPack > 0 ? Math.max(0, Math.min(1, total / maxPack)) : 0;
-            circle.style.strokeDashoffset = 119.38 * (1 - ratio);
+            circle.style.strokeDashoffset = String(119.38 * (1 - ratio));
 
             if (plan === 'pro' && isUserPaidActive) {
                 circle.style.stroke = "url(#rainbowGrad)";
@@ -158,6 +157,7 @@ async function fetchStats() {
         console.error("fetchStats sync error:", e);
     }
 }
+
 
 async function initAuthSession() {
     try {
