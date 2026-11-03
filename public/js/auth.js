@@ -87,17 +87,17 @@ async function fetchStats() {
         const queryParams = new URLSearchParams({
             user_id: currentUser.id,
             email: currentUser.email || '',
-            name: currentUser.user_metadata.full_name || '',
-            avatar: currentUser.user_metadata.avatar_url || ''
+            name: currentUser.user_metadata?.full_name || '',
+            avatar: currentUser.user_metadata?.avatar_url || ''
         });
         const res = await apiRequest('/user-stats?' + queryParams.toString());
         const data = await res.json();
 
-        const total = data.total_credits || 0;
+        const total = (data.total_credits !== undefined) ? data.total_credits : 0;
         const maxPack = data.max_pack_credits || (total > 0 ? total : 1);
-        const plan = data.plan_type || 'free';
+        const plan = (data.plan_type || 'free').toLowerCase();
         currentUserPlan = plan;
-        isUserPaidActive = data.is_paid_active || false;
+        isUserPaidActive = Boolean(data.is_paid_active);
 
         window.cachedTotalCredits = total;
 
@@ -106,18 +106,20 @@ async function fetchStats() {
 
         const planNameEl = document.getElementById('userPlanName');
         if (planNameEl) {
-            const displayPlan = (plan && plan !== 'free') ? (plan.charAt(0).toUpperCase() + plan.slice(1)) : (isUserPaidActive ? 'Pro' : 'Free');
-            planNameEl.textContent = 'Plan : ' + displayPlan;
+            const planDisplay = isUserPaidActive ? (plan.toUpperCase()) : 'FREE';
+            planNameEl.textContent = 'Plan : ' + planDisplay;
         }
         
         const quotaSummaryEl = document.getElementById('quotaSummary');
         if (quotaSummaryEl) {
-            quotaSummaryEl.textContent = `Available Credit : ${total} / ${maxPack}`;
+            quotaSummaryEl.textContent = isUserPaidActive 
+                ? `Available Credit : ${total} / ${maxPack}`
+                : `Available Credit : ${total} (Daily Free)`;
         }
         
         const planExpiryEl = document.getElementById('planExpiryText');
         if (planExpiryEl) {
-            if (data.plan_expires_at) {
+            if (data.plan_expires_at && isUserPaidActive) {
                 planExpiryEl.textContent = 'Valid till : ' + formatCleanDate(data.plan_expires_at);
             } else {
                 planExpiryEl.textContent = 'Valid till : Daily Midnight';
@@ -150,7 +152,7 @@ async function fetchStats() {
             }
         }
     } catch(e) {
-        console.error("fetchStats error:", e);
+        console.error("fetchStats sync error:", e);
     }
 }
 
