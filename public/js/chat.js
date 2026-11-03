@@ -699,14 +699,15 @@ async function executeSubmit(text, attachCount, imagePreviews = []) {
 /* Load Daily Stories (Champions) */
 async function loadDailyStories() {
     const container = document.getElementById('storiesListContainer');
+    if (!container) return;
     container.innerHTML = '<p style="color:#64748b; font-size:12.5px;">प्रेरणादायक कृषि कथाएं लोड हो रही हैं...</p>';
 
     try {
         const { data, error } = await supabaseClient
             .table('daily_stories')
             .select('*')
-            .order('published_date', { ascending: false })
-            .limit(10);
+            .order('id', { ascending: false })
+            .limit(15);
 
         if (error || !data || data.length === 0) {
             container.innerHTML = '<p style="color:#64748b; font-size:12.5px; text-align:center; padding:20px;">आज की सफलता की कहानी जल्द प्रकाशित होगी।</p>';
@@ -720,7 +721,7 @@ async function loadDailyStories() {
                     <div>
                         <span class="story-badge">सफलता की मिसाल</span>
                         <span class="story-views-badge">👁️ ${st.views_count || 120}</span>
-                        <span class="story-date" style="margin-right:8px;">${st.published_date || 'आज'}</span>
+                        <span class="story-date" style="margin-right:8px;">${st.published_date || 'हाल ही में'}</span>
                     </div>
                     <div class="story-title">${st.title}</div>
                     <div class="story-meta">👨‍🌾 <b>${st.farmer_name}</b> • 📍 ${st.village_district}</div>
