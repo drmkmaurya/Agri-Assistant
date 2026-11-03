@@ -156,10 +156,10 @@ async function initiatePayment(planId) {
 
         hideSpinner();
         if (!ordRes.ok) {
-            let errText = "ऑर्डर तैयार करने में समस्या आई।";
+            let errText = `त्रुटि (${ordRes.status}): ऑर्डर तैयार करने में समस्या आई।`;
             try {
                 const errData = await ordRes.json();
-                errText = errData.detail || errText;
+                errText = errData.detail || errData.message || JSON.stringify(errData);
             } catch(e) {}
             alert(errText);
             return;
