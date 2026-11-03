@@ -311,5 +311,48 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
     }
 });
 
-// Direct Session bootstrap on file load
-initAuthSession();
+// Robust Session Bootstrap with Auto-Retry
+async function bootstrapSession() {
+    // 1. Check current session immediately
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session && session.user) {
+        currentUser = session.user;
+        const authScreen = document.getElementById('authScreen');
+        if (authScreen) authScreen.style.display = 'none';
+
+        const avatar = document.getElementById('userAvatar');
+        if (avatar) avatar.src = currentUser.user_metadata?.avatar_url || avatar.src;
+
+        const userName = document.getElementById('userName');
+        if (userName) userName.textContent = currentUser.user_metadata?.full_name || 'किसान साथी';
+
+        await fetchStats();
+        return;
+    }
+
+    // 2. If storage was slow, retry after 300ms
+    setTimeout(async () => {
+        const { data: { session: retrySession } } = await supabaseClient.auth.getSession();
+        if (retrySession && retrySession.user) {
+            currentUser = retrySession.user;
+            const authScreen = document.getElementById('authScreen');
+            if (authScreen) authScreen.style.display = 'none';
+
+            const avatar = document.getElementById('userAvatar');
+            if (avatar) avatar.src = currentUser.user_metadata?.avatar_url || avatar.src;
+
+            const userName = document.getElementById('userName');
+            if (userName) userName.textContent = currentUser.user_metadata?.full_name || 'किसान साथी';
+
+            await fetchStats();
+        }
+    }, 350);
+}
+
+// Global hook: DOM load hote hi forceful fetch
+window.addEventListener('DOMContentLoaded', () => {
+    bootstrapSession();
+});
+
+// Also trigger on file load
+bootstrapSession();
