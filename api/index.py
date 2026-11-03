@@ -199,6 +199,7 @@ async def ask_endpoint(req: QueryReq, request: Request):
 
 @app.post("/api/create-order")
 @app.post("/create-order")
+@app.api_route("/api/create-order", methods=["POST", "OPTIONS"])
 async def create_order_endpoint(req: OrderReq):
     settings = get_super_control_settings()
     if settings.get("maintenance_mode") or settings.get("payment_maintenance"):
@@ -214,6 +215,7 @@ async def verify_payment_endpoint(req: VerifyPaymentReq):
 
 @app.get("/api/user-stats")
 @app.get("/user-stats")
+@app.api_route("/api/user-stats", methods=["GET", "OPTIONS"])
 async def user_stats(user_id: str, email: str = "", name: str = "", avatar: str = ""):
     data = get_or_create_user_profile(user_id, email, name, avatar)
     data = sync_daily_free_credit(data, user_id)
