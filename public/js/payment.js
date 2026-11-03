@@ -103,11 +103,16 @@ async function loadPaymentHistory() {
     container.innerHTML = '<p style="color:#64748b; font-size:12px;">विगत 3 माह के लेनदेन लोड हो रहे हैं...</p>';
 
     try {
-        const res = await apiRequest('/payment-history?user_id=' + currentUser.id);
-        const data = await res.json();
-        const txs = data.transactions || [];
+        // Direct Supabase query (Serverless API bypass)
+        const threeMonthsAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+        const { data: txs, error: txErr } = await supabaseClient
+            .from('credit_transactions')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .gte('created_at', threeMonthsAgo)
+            .order('created_at', { ascending: false });
 
-        if (txs.length === 0) {
+        if (txErr || !txs || txs.length === 0) {
             container.innerHTML = '<p style="color:#64748b; font-size:12px; text-align:center; padding:20px 0;">विगत 3 माह में कोई लेनदेन रिकॉर्ड नहीं मिला।</p>';
             return;
         }
@@ -116,24 +121,25 @@ async function loadPaymentHistory() {
         txs.forEach(t => {
             const buyDate = typeof formatCleanDate === 'function' ? formatCleanDate(t.created_at) : t.created_at;
             const expDate = typeof formatCleanDate === 'function' ? formatCleanDate(t.expires_at) : t.expires_at;
-            const amt = t.amount_paid == 0 ? 'मुफ़्त (VIP)' : '₹' + t.amount_paid;
+            const amt = t.amount_paid == 0 ? 'मुफ़्त (VIP / Bonus)' : '₹' + t.amount_paid;
             const planTitle = t.plan_name ? t.plan_name.split('(')[0].trim() : `${t.credits_added} Credits`;
             
             html += `
-                <div class="history-card-item">
-                    <div class="history-top-row">
-                        <span class="history-title">${planTitle} (+${t.credits_added} Credits)</span>
-                        <span class="history-amount">${amt}</span>
+                <div class="history-card-item" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px; margin-bottom:10px;">
+                    <div class="history-top-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span class="history-title" style="font-weight:700; color:#1e293b; font-size:13px;">${planTitle} (+${t.credits_added} Credits)</span>
+                        <span class="history-amount" style="font-weight:700; color:#008069; font-size:13px;">${amt}</span>
                     </div>
-                    <div class="history-details-grid">
-                        <span>📅 <b>खरीद:</b> ${buyDate}</span>
-                        <span>⏳ <b>वैधता:</b> ${expDate}</span>
-                        <span style="font-size:10px; color:#94a3b8;">🆔 ${t.payment_id ? t.payment_id.substring(0, 20) : 'FREE'}</span>
+                    <div class="history-details-grid" style="font-size:11px; color:#64748b; line-height:1.6;">
+                        <div>📅 <b>दिनांक:</b> ${buyDate}</div>
+                        <div>⏳ <b>वैधता:</b> ${expDate || '30 Days'}</div>
+                        <div style="font-size:10px; color:#94a3b8; margin-top:2px;">🆔 ${t.payment_id ? t.payment_id.substring(0, 24) : (t.transaction_type || 'FREE')}</div>
                     </div>
                 </div>`;
         });
         container.innerHTML = html;
     } catch(e) {
+        console.error("Payment history error:", e);
         container.innerHTML = '<p style="color:#ef4444; font-size:12px;">इतिहास लोड करने में त्रुटि आई।</p>';
     }
 }
