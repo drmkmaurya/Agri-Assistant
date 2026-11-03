@@ -9,12 +9,19 @@
     <meta name="theme-color" content="#005c4b">
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/606/606553.png">
 
-    <!-- Font Awesome 6 CDN for Crisp Vector Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Preconnect to Font Origins for Faster Render -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Critical CSS -->
     <link rel="stylesheet" href="/styles.css">
 
+    <!-- Non-blocking Font Awesome Stylesheet -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
+
+    <!-- Core Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/policies.js"></script>
+    <script src="/policies.js" defer></script>
 </head>
 <body>
 
@@ -135,7 +142,7 @@
             <textarea id="msgField" class="chat-textarea" rows="1" placeholder="एक संदेश टाइप करें..." oninput="handleComposerInput(this)" onkeydown="keyMonitor(event)"></textarea>
         </div>
         
-        <!-- Morphing Action Circle: Mic when empty, Send plane when text entered -->
+        <!-- Action Circle Button -->
         <button class="action-circle-btn" id="btnComposerAction" onclick="handleComposerAction()" title="बोलकर पूछें / भेजें">
             <svg class="composer-svg" id="svgComposerIcon" viewBox="0 0 24 24">
                 <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
@@ -143,7 +150,7 @@
         </button>
     </footer>
 
-    <!-- View 1: Aaj Ka Krishi Patra (Champions) -->
+    <!-- View 1: Champions -->
     <div class="app-view-screen" id="storiesView">
         <div class="view-header">
             <button class="view-back-btn" onclick="navigateBack()">
@@ -156,7 +163,7 @@
         </div>
     </div>
 
-    <!-- View 2: Dedicated Payment Screen -->
+    <!-- View 2: Payment Screen -->
     <div class="app-view-screen" id="paymentView">
         <div class="view-header">
             <button class="view-back-btn" onclick="navigateBack()">
@@ -200,7 +207,7 @@
         </div>
     </div>
 
-    <!-- View 3: Dedicated Settings Screen -->
+    <!-- View 3: Settings Screen -->
     <div class="app-view-screen" id="settingsView">
         <div class="view-header">
             <button class="view-back-btn" onclick="navigateBack()">
@@ -209,7 +216,7 @@
             <div class="view-title">⚙️ सेटिंग्स (Settings)</div>
         </div>
         <div class="view-body">
-            <!-- Language Selector with Clean Pill Selection -->
+            <!-- Language Selector -->
             <div class="settings-option-card">
                 <span class="setting-label">उत्तर की भाषा (Response Language)</span>
                 <span class="setting-desc">AI द्वारा उत्तर देने का माध्यम चुनें:</span>
@@ -219,7 +226,7 @@
                 </div>
             </div>
 
-            <!-- Internet Live Search Toggle (Pro Only) -->
+            <!-- Internet Live Search Toggle -->
             <div class="settings-option-card">
                 <div class="switch-row">
                     <div>
@@ -255,7 +262,7 @@
         </div>
     </div>
 
-    <!-- View 4: Dedicated Policies Screen -->
+    <!-- View 4: Policies Screen -->
     <div class="app-view-screen" id="policyView">
         <div class="view-header">
             <button class="view-back-btn" onclick="navigateBack()">
@@ -292,7 +299,7 @@
         </div>
     </div>
 
-    <!-- Low Credit Nudge Modal (<= 3 Credits) -->
+    <!-- Low Credit Nudge Modal -->
     <div class="modal-overlay" id="lowCreditNudgeModal">
         <div class="modal-card" style="text-align:center; padding:22px 18px;">
             <div style="font-size:36px;">⏳</div>
@@ -377,9 +384,10 @@
 
 <div class="toast-popup" id="toastNotice">सूचना</div>
 
-<script src="/js/chat.js"></script>
-<script src="/js/auth.js"></script>
-<script src="/js/payment.js"></script>
+<!-- Core Scripts Loaded with Priority -->
+<script src="/js/chat.js" defer></script>
+<script src="/js/auth.js" defer></script>
+<script src="/js/payment.js" defer></script>
 
 <script>
     if (window.visualViewport) {
@@ -391,12 +399,14 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('initClock').textContent = nowTime();
-        updateDateDivider();
-        cleanAndLoadLocalHistory();
-        loadSavedFontPreference();
-        restoreDraftMessage();
-        cleanUrlParameters();
+        if (typeof nowTime === 'function') {
+            document.getElementById('initClock').textContent = nowTime();
+        }
+        if (typeof updateDateDivider === 'function') updateDateDivider();
+        if (typeof cleanAndLoadLocalHistory === 'function') cleanAndLoadLocalHistory();
+        if (typeof loadSavedFontPreference === 'function') loadSavedFontPreference();
+        if (typeof restoreDraftMessage === 'function') restoreDraftMessage();
+        if (typeof cleanUrlParameters === 'function') cleanUrlParameters();
     });
 </script>
 
