@@ -150,28 +150,17 @@ async function initiatePayment(planId) {
 
     showSpinner("सुरक्षित भुगतान मॉड्यूल तैयार हो रहा है...");
     try {
-        let ordRes = await fetch('/api/create-order', {
+        const ordRes = await fetch('/api/create-order', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({ 
                 user_id: currentUser.id, 
                 plan_id: planId, 
                 coupon_code: couponVal 
             })
         });
-
-        // Safe Fallback if host rewrites strip /api prefix
-        if (ordRes.status === 404) {
-            ordRes = await fetch('/create-order', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ 
-                    user_id: currentUser.id, 
-                    plan_id: planId, 
-                    coupon_code: couponVal 
-                })
-            });
-        }
 
         hideSpinner();
         if (!ordRes.ok) {
@@ -193,9 +182,11 @@ async function initiatePayment(planId) {
         // Free VIP bypass
         if (ordData.is_free) {
             showSpinner("VIP कूपन सक्रिय हो रहा है...");
-            const vRes = await apiRequest('/verify-payment', {
+            const vRes = await fetch('/api/verify-payment', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({
                     user_id: currentUser.id,
                     order_id: ordData.order_id,
@@ -224,9 +215,11 @@ async function initiatePayment(planId) {
                 order_id: ordData.order_id,
                 handler: async function (response) {
                     showSpinner("भुगतान सत्यापित हो रहा है...");
-                    const vRes = await apiRequest('/verify-payment', {
+                    const vRes = await fetch('/api/verify-payment', {
                         method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
                         body: JSON.stringify({
                             user_id: currentUser.id,
                             order_id: response.razorpay_order_id,
@@ -244,7 +237,7 @@ async function initiatePayment(planId) {
                     }
                 },
                 prefill: {
-                    name: currentUser.user_metadata.full_name || '',
+                    name: currentUser.user_metadata?.full_name || '',
                     email: currentUser.email || ''
                 },
                 theme: { color: "#008069" }
@@ -255,7 +248,6 @@ async function initiatePayment(planId) {
             });
             rzp.open();
         } 
-        // Cashfree Gateway Pipeline Placeholder
         else if (ordData.gateway === 'cashfree') {
             alert('Cashfree Gateway इंटीग्रेशन सक्रिय हो रहा है...');
         }
