@@ -65,12 +65,13 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
     plan = PLANS[plan_id]
     credits_to_add = plan["credits"]
 
-    user_res = supabase.table("user_profiles").select("total_credits, plan_type, plan_expires_at, email, full_name").eq("id", user_id).single().execute()
+    # Safe lookup without crashing on single()
+    user_res = supabase.table("user_profiles").select("total_credits, plan_type, plan_expires_at, email, full_name").eq("id", user_id).execute()
     if not user_res.data:
-        raise HTTPException(status_code=404, detail="उपयोगकर्ता खाता नहीं मिला।")
+        raise HTTPException(status_code=404, detail="उपयोगकर्ता खाता नहीं मिला। कृपया पुनः लॉगिन करें।")
         
-    user_data = user_res.data
-    current_credits = user_data.get("total_credits", 0)
+    user_data = user_res.data[0]
+    current_credits = user_data.get("total_credits", 0) or 0
     current_plan = user_data.get("plan_type", "free")
     plan_expires_at = user_data.get("plan_expires_at")
 
@@ -182,14 +183,13 @@ def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: s
             if expected_sig != signature:
                 raise HTTPException(status_code=400, detail="भुगतान सत्यापन (Signature) विफल रहा।")
         elif gateway == "cashfree":
-            # Cashfree verification
             if not payment_id:
                 raise HTTPException(status_code=400, detail="Cashfree payment ID आवश्यक है।")
 
     now = datetime.now(timezone.utc)
-    user_res = supabase.table("user_profiles").select("total_credits, max_pack_credits, plan_type, plan_expires_at").eq("id", user_id).single().execute()
-    user_data = user_res.data or {}
-    current_credits = user_data.get("total_credits", 0)
+    user_res = supabase.table("user_profiles").select("total_credits, max_pack_credits, plan_type, plan_expires_at").eq("id", user_id).execute()
+    user_data = user_res.data[0] if (user_res.data and len(user_res.data) > 0) else {}
+    current_credits = user_data.get("total_credits", 0) or 0
     current_plan = user_data.get("plan_type", "free")
     current_expires_at = user_data.get("plan_expires_at")
 
