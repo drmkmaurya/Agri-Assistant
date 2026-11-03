@@ -84,7 +84,7 @@ html, body {
 .unread-badge-dot.show { display: block; }
 
 .profile-ring-container {
-    position: relative; width: 34px; height: 34px;
+    position: relative; width: 34px; height: 34px; min-width: 34px;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
 .progress-ring { transform: rotate(-90deg); position: absolute; top: 0; left: 0; }
@@ -92,13 +92,15 @@ html, body {
     stroke-dasharray: 119.38; stroke-dashoffset: 0;
     transition: stroke-dashoffset 0.4s ease, stroke 0.4s ease;
 }
-.user-dp { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; background: #fff; }
-
+.user-dp { 
+    width: 32px; height: 32px; border-radius: 50%; object-fit: cover; 
+    background: #ffffff; border: 1.5px solid rgba(255, 255, 255, 0.4); 
+}
 .ring-credit-badge {
-    position: absolute; bottom: -2px; right: -2px;
-    background: #008069; color: #ffffff; font-size: 7.5px; font-weight: bold;
-    padding: 0.5px 3.5px; border-radius: 8px; border: 1.2px solid #fff;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+    position: absolute; bottom: -3px; right: -4px;
+    background: #008069; color: #ffffff; font-size: 8.5px; font-weight: 700;
+    padding: 1px 4px; border-radius: 8px; border: 1.2px solid #ffffff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3); z-index: 10; line-height: 1;
 }
 
 /* Chat Canvas with Dot Pattern Texture */
