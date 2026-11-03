@@ -12,7 +12,12 @@ RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "").strip()
 CASHFREE_APP_ID = os.environ.get("CASHFREE_APP_ID", "").strip()
 CASHFREE_SECRET_KEY = os.environ.get("CASHFREE_SECRET_KEY", "").strip()
 
-rz_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)) if (RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET) else None
+def get_razorpay_client():
+    key_id = os.environ.get("RAZORPAY_KEY_ID", "").strip()
+    key_secret = os.environ.get("RAZORPAY_KEY_SECRET", "").strip()
+    if not key_id or not key_secret:
+        return None, key_id
+    return razorpay.Client(auth=(key_id, key_secret)), key_id
 
 PLANS = {
     "basic": {
@@ -132,13 +137,14 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
             "applied_coupon": valid_code
         }
     else:
-        # Default Razorpay Architecture
-        if not rz_client or not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
-            raise HTTPException(status_code=500, detail="Razorpay credentials Vercel Environment Variables में अनुपलब्ध हैं।")
+        # Dynamic runtime initialization
+        client, active_key_id = get_razorpay_client()
+        if not client:
+            raise HTTPException(status_code=500, detail="Razorpay keys Vercel Environment Variables mein set nahi hain.")
 
         try:
             unique_receipt = f"rc_{user_id[:6]}_{int(time.time()*1000)}"[:40]
-            order = rz_client.order.create({
+            order = client.order.create({
                 "amount": final_amount,
                 "currency": "INR",
                 "receipt": unique_receipt,
@@ -149,16 +155,17 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
                 }
             })
         except Exception as rz_err:
-            raise HTTPException(status_code=400, detail=f"Order Error: {str(rz_err)}")
+            raise HTTPException(status_code=400, detail=f"Razorpay Error: {str(rz_err)}")
 
         return {
             "order_id": order["id"],
             "amount": final_amount,
             "is_free": False,
             "gateway": "razorpay",
-            "key_id": RAZORPAY_KEY_ID,
+            "key_id": active_key_id,
             "applied_coupon": valid_code
         }
+
 
 def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: str, plan_id: str, coupon_code: str, supabase):
     if plan_id not in PLANS:
