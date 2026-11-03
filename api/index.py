@@ -202,7 +202,7 @@ async def ask_endpoint(req: QueryReq, request: Request):
         "plan_type": updated_plan_type
     }
 
-# Universal Order Creation Routes
+# Universal Order Creation Routes (FastAPI catch-all support)
 @app.post("/api/create-order")
 @app.post("/create-order")
 @app.post("/api/create-order/")
