@@ -427,8 +427,9 @@ function cleanAndLoadLocalHistory() {
         const raw = localStorage.getItem(CHAT_STORAGE_KEY);
         if (!raw) return;
         const messages = JSON.parse(raw);
-        const dayAgo = Date.now() - (24 * 60 * 60 * 1000);
-        memoryChatHistory = messages.filter(m => m.timestamp > dayAgo).slice(-20);
+        // 48 hours strict retention window
+        const retentionWindow = Date.now() - (48 * 60 * 60 * 1000);
+        memoryChatHistory = messages.filter(m => m.timestamp > retentionWindow).slice(-25);
         memoryChatHistory.forEach((m, idx) => {
             const isLast = (idx === memoryChatHistory.length - 1 && m.type === 'bot');
             if (m.type === 'user') {
