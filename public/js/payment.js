@@ -56,21 +56,33 @@ function proceedPendingQuery() {
     }
 }
 
-function switchTab(t) {
+/* On-demand Lazy Loading for policies.js */
+async function switchTab(t) {
     document.querySelectorAll('#policyView .pill-choice-btn').forEach(b => b.classList.remove('active'));
     const btn = document.getElementById('btn-' + t);
     if (btn) btn.classList.add('active');
     
-    // URL ko live update karein bina page reload kiye
+    // Live URL update without full reload
     if (window.location.pathname !== '/' + t) {
         history.replaceState({ path: '/' + t }, '', '/' + t);
+    }
+
+    // Lazy load policies.js only when policy screen is clicked
+    if (typeof policyDocs === 'undefined') {
+        showSpinner("नीतियां लोड हो रही हैं...");
+        try {
+            await loadExternalScript('/policies.js');
+        } catch(e) {
+            console.warn("policies.js load issue:", e);
+        }
+        hideSpinner();
     }
 
     const container = document.getElementById('policyContent');
     if (container) {
         container.innerHTML = (typeof policyDocs !== 'undefined' && policyDocs[t]) 
             ? policyDocs[t] 
-            : '<p>नीतियां लोड हो रही हैं...</p>';
+            : '<p style="padding:16px; color:#64748b;">नीतियां लोड हो रही हैं...</p>';
     }
 }
 
@@ -92,7 +104,7 @@ function applyCouponFeedback() {
     } else {
         msgEl.style.display = 'block';
         msgEl.style.color = '#008069';
-        msgEl.textContent = `कोड "${val}" दर्ज हुआ। प्लान चुनने पर मान्य होगा।`;
+        msgEl.textContent = `कोड "${val}" दर्ज हुआ। प्लान चुनने पर स्वतः लागू होगा।`;
     }
 }
 
@@ -103,7 +115,6 @@ async function loadPaymentHistory() {
     container.innerHTML = '<p style="color:#64748b; font-size:12px;">विगत 3 माह के लेनदेन लोड हो रहे हैं...</p>';
 
     try {
-        // Direct Supabase query (Serverless API bypass)
         const threeMonthsAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
         const { data: txs, error: txErr } = await supabaseClient
             .from('credit_transactions')
@@ -120,7 +131,7 @@ async function loadPaymentHistory() {
         let html = '';
         txs.forEach(t => {
             const buyDate = typeof formatCleanDate === 'function' ? formatCleanDate(t.created_at) : t.created_at;
-            const expDate = typeof formatCleanDate === 'function' ? formatCleanDate(t.expires_at) : t.expires_at;
+            const expDate = typeof formatCleanDate === 'function' ? formatCleanDate(t.expires_at) : (t.expires_at || '30 Days');
             const amt = t.amount_paid == 0 ? 'मुफ़्त (VIP / Bonus)' : '₹' + t.amount_paid;
             const planTitle = t.plan_name ? t.plan_name.split('(')[0].trim() : `${t.credits_added} Credits`;
             
@@ -132,7 +143,7 @@ async function loadPaymentHistory() {
                     </div>
                     <div class="history-details-grid" style="font-size:11px; color:#64748b; line-height:1.6;">
                         <div>📅 <b>दिनांक:</b> ${buyDate}</div>
-                        <div>⏳ <b>वैधता:</b> ${expDate || '30 Days'}</div>
+                        <div>⏳ <b>वैधता:</b> ${expDate}</div>
                         <div style="font-size:10px; color:#94a3b8; margin-top:2px;">🆔 ${t.payment_id ? t.payment_id.substring(0, 24) : (t.transaction_type || 'FREE')}</div>
                     </div>
                 </div>`;
@@ -173,11 +184,11 @@ async function initiatePayment(planId) {
 
         const ordData = await ordRes.json();
         
-        // Close payment view smoothly
+        // Close payment sliding view
         const payView = document.getElementById('paymentView');
         if (payView) payView.classList.remove('active');
 
-        // Free VIP bypass
+        // 1. Free VIP Bypass (Coupon 100% off)
         if (ordData.is_free) {
             showSpinner("VIP कूपन सक्रिय हो रहा है...");
             const vRes = await fetch('/api/verify-payment', {
@@ -193,13 +204,13 @@ async function initiatePayment(planId) {
             hideSpinner();
             const vData = await vRes.json();
             if (vData.status === 'success') {
-                triggerPaymentSuccess(vData.credits_added);
+                triggerPaymentSuccess(vData.credits_added, vData.new_balance, vData.plan_expires_at, planId);
                 fetchStats();
             }
             return;
         }
 
-        // Razorpay Gateway Pipeline
+        // 2. Razorpay Gateway Pipeline
         if (ordData.gateway === 'razorpay') {
             await loadExternalScript('https://checkout.razorpay.com/v1/checkout.js');
             const options = {
@@ -226,7 +237,7 @@ async function initiatePayment(planId) {
                     hideSpinner();
                     const vData = await vRes.json();
                     if (vData.status === 'success') {
-                        triggerPaymentSuccess(vData.credits_added);
+                        triggerPaymentSuccess(vData.credits_added, vData.new_balance, vData.plan_expires_at, planId);
                         fetchStats();
                     }
                 },
@@ -252,15 +263,64 @@ async function initiatePayment(planId) {
     }
 }
 
-function triggerPaymentSuccess(creditsAdded) {
+/* Premium Success Celebration with Confetti & 0 -> X Rolling Counter */
+function triggerPaymentSuccess(creditsAdded, newBalance, planExpiry, planId) {
+    // 1. Confetti Rain
     loadExternalScript('https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js').then(() => {
-        confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+        confetti({ particleCount: 140, spread: 85, origin: { y: 0.6 } });
     }).catch(() => {});
 
     const successModal = document.getElementById('successModal');
-    if (successModal) {
-        successModal.style.display = 'flex';
-        const rollCount = document.getElementById('creditRollCount');
-        if (rollCount) rollCount.textContent = `+${creditsAdded} Credits`;
+    if (!successModal) return;
+
+    successModal.style.display = 'flex';
+
+    // 2. Clear Values Update
+    const balEl = document.getElementById('successNewBalance');
+    if (balEl) balEl.textContent = `${newBalance} क्रेडिट्स`;
+
+    const expEl = document.getElementById('successExpiryDate');
+    if (expEl) {
+        expEl.textContent = typeof formatCleanDate === 'function' ? formatCleanDate(planExpiry) : (planExpiry || '30 दिन');
+    }
+
+    const featEl = document.getElementById('successFeaturesList');
+    if (featEl) {
+        if (planId === 'pro') {
+            featEl.innerHTML = `
+                ✓ 300 संपूर्ण कृषि प्रश्न परामर्श<br>
+                ✓ <b>इंटरनेट लाइव सर्च</b> (नवीनतम मंडी व शोध डेटा)<br>
+                ✓ मल्टी-फोटो / पत्ती रोग रिपोर्ट जांच<br>
+                ✓ प्राथमिकता से सुपरफास्ट उत्तर
+            `;
+        } else {
+            featEl.innerHTML = `
+                ✓ 100 कृषि सलाह प्रश्न परामर्श<br>
+                ✓ प्रामाणिक वीडियो संदर्भ लाइब्रेरी एक्सेस<br>
+                ✓ फसल फोटो / पत्ती रोग प्राथमिक जांच<br>
+                ✓ 24x7 डिजिटल कृषि सहायता
+            `;
+        }
+    }
+
+    // 3. Smooth Rolling Counter (0 -> creditsAdded)
+    const rollCountEl = document.getElementById('creditRollCount');
+    if (rollCountEl) {
+        rollCountEl.textContent = '+0';
+        let current = 0;
+        const target = Number(creditsAdded) || 100;
+        const duration = 1200; // 1.2 seconds total roll
+        const stepTime = 25; 
+        const totalSteps = duration / stepTime;
+        const increment = Math.max(1, Math.ceil(target / totalSteps));
+
+        const counterTimer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                current = target;
+                clearInterval(counterTimer);
+            }
+            rollCountEl.textContent = `+${current}`;
+        }, stepTime);
     }
 }
