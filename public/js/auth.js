@@ -106,7 +106,7 @@ async function fetchStats() {
 
             if (userEmail) {
                 const { data, error } = await supabaseClient
-                    .table('user_profiles')
+                    .from('user_profiles')
                     .select('total_credits, plan_type, plan_expires_at')
                     .eq('email', userEmail)
                     .limit(1);
@@ -119,7 +119,7 @@ async function fetchStats() {
             // Fallback match by UUID if email check didn't return
             if (!dbUser && userId) {
                 const { data, error } = await supabaseClient
-                    .table('user_profiles')
+                    .from('user_profiles')
                     .select('total_credits, plan_type, plan_expires_at')
                     .eq('id', userId)
                     .limit(1);
