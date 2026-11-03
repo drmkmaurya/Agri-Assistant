@@ -150,17 +150,28 @@ async function initiatePayment(planId) {
 
     showSpinner("सुरक्षित भुगतान मॉड्यूल तैयार हो रहा है...");
     try {
-        const ordRes = await fetch('/api/create-order', {
+        let ordRes = await fetch('/api/create-order', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 user_id: currentUser.id, 
                 plan_id: planId, 
                 coupon_code: couponVal 
             })
         });
+
+        // Agar /api/create-order 404 ho, tabhi fallback check karein
+        if (ordRes.status === 404) {
+            ordRes = await fetch('/create-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    user_id: currentUser.id, 
+                    plan_id: planId, 
+                    coupon_code: couponVal 
+                })
+            });
+        }
 
         hideSpinner();
         if (!ordRes.ok) {
@@ -172,7 +183,6 @@ async function initiatePayment(planId) {
             alert(errText);
             return;
         }
-
         const ordData = await ordRes.json();
         
         // Close payment view smoothly
