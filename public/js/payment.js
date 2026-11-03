@@ -61,7 +61,6 @@ function switchTab(t) {
     const btn = document.getElementById('btn-' + t);
     if (btn) btn.classList.add('active');
     
-    // URL ko live update karein bina page reload kiye
     if (window.location.pathname !== '/' + t) {
         history.replaceState({ path: '/' + t }, '', '/' + t);
     }
@@ -103,7 +102,6 @@ async function loadPaymentHistory() {
     container.innerHTML = '<p style="color:#64748b; font-size:12px;">विगत 3 माह के लेनदेन लोड हो रहे हैं...</p>';
 
     try {
-        // Direct Supabase query (Serverless API bypass)
         const threeMonthsAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
         const { data: txs, error: txErr } = await supabaseClient
             .from('credit_transactions')
@@ -150,7 +148,7 @@ async function initiatePayment(planId) {
 
     showSpinner("सुरक्षित भुगतान मॉड्यूल तैयार हो रहा है...");
     try {
-        let ordRes = await fetch('/api/create-order', {
+        const ordRes = await fetch('/api/create-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -159,19 +157,6 @@ async function initiatePayment(planId) {
                 coupon_code: couponVal 
             })
         });
-
-        // Agar /api/create-order 404 ho, tabhi fallback check karein
-        if (ordRes.status === 404) {
-            ordRes = await fetch('/create-order', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    user_id: currentUser.id, 
-                    plan_id: planId, 
-                    coupon_code: couponVal 
-                })
-            });
-        }
 
         hideSpinner();
         if (!ordRes.ok) {
@@ -183,20 +168,18 @@ async function initiatePayment(planId) {
             alert(errText);
             return;
         }
+
         const ordData = await ordRes.json();
         
-        // Close payment view smoothly
         const payView = document.getElementById('paymentView');
         if (payView) payView.classList.remove('active');
 
-        // Free VIP bypass
+        // Free VIP coupon bypass
         if (ordData.is_free) {
             showSpinner("VIP कूपन सक्रिय हो रहा है...");
             const vRes = await fetch('/api/verify-payment', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     user_id: currentUser.id,
                     order_id: ordData.order_id,
@@ -227,9 +210,7 @@ async function initiatePayment(planId) {
                     showSpinner("भुगतान सत्यापित हो रहा है...");
                     const vRes = await fetch('/api/verify-payment', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             user_id: currentUser.id,
                             order_id: response.razorpay_order_id,
