@@ -80,28 +80,46 @@ async function signOutUser() {
     }, 600);
 }
 
+
 async function fetchStats() {
-    if (!currentUser) return;
+    // 1. Session check
+    if (!currentUser) {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session && session.user) {
+            currentUser = session.user;
+        } else {
+            return;
+        }
+    }
+
     try {
         let total = 0;
         let maxPack = 1;
         let plan = 'free';
         let planExpiresAt = null;
+        let dataLoaded = false;
 
-        // 1. Direct Supabase Query (Server bypass - 100% Guaranteed Data)
-        const { data: dbUser, error: dbErr } = await supabaseClient
-            .table('user_profiles')
-            .select('total_credits, max_pack_credits, plan_type, plan_expires_at')
-            .eq('id', currentUser.id)
-            .maybeSingle();
+        // 2. Direct Supabase Query with user access
+        try {
+            const { data: dbUser, error: dbErr } = await supabaseClient
+                .table('user_profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .maybeSingle();
 
-        if (!dbErr && dbUser) {
-            total = Number(dbUser.total_credits) || 0;
-            maxPack = Number(dbUser.max_pack_credits) || (total > 0 ? total : 1);
-            plan = (dbUser.plan_type || 'free').toLowerCase();
-            planExpiresAt = dbUser.plan_expires_at;
-        } else {
-            // 2. Server API fallback
+            if (!dbErr && dbUser) {
+                total = Number(dbUser.total_credits) || 0;
+                maxPack = Number(dbUser.max_pack_credits) || (total > 0 ? total : 1);
+                plan = (dbUser.plan_type || 'free').toLowerCase();
+                planExpiresAt = dbUser.plan_expires_at;
+                dataLoaded = true;
+            }
+        } catch (e) {
+            console.warn("Direct Supabase read error:", e);
+        }
+
+        // 3. Fallback to API if DB query did not load
+        if (!dataLoaded) {
             try {
                 const queryParams = new URLSearchParams({
                     user_id: currentUser.id,
@@ -116,26 +134,31 @@ async function fetchStats() {
                     maxPack = Number(data.max_pack_credits) || (total > 0 ? total : 1);
                     plan = (data.plan_type || 'free').toLowerCase();
                     planExpiresAt = data.plan_expires_at;
+                    dataLoaded = true;
                 }
-            } catch(e) {}
+            } catch (e) {
+                console.warn("API fallback error:", e);
+            }
         }
 
         currentUserPlan = plan;
         isUserPaidActive = (plan === 'basic' || plan === 'pro');
         window.cachedTotalCredits = total;
 
-        // Ring Badge (Homescreen number)
+        // Update Ring Badge (Homescreen number)
         const ringBadge = document.getElementById('ringBadge');
-        if (ringBadge) ringBadge.textContent = String(total);
+        if (ringBadge) {
+            ringBadge.textContent = String(total);
+        }
 
-        // Menu Plan Name
+        // Update Menu Plan Name
         const planNameEl = document.getElementById('userPlanName');
         if (planNameEl) {
             const planDisplay = isUserPaidActive ? plan.toUpperCase() : 'FREE';
             planNameEl.textContent = 'Plan : ' + planDisplay;
         }
         
-        // Menu Available Credit
+        // Update Menu Available Credit
         const quotaSummaryEl = document.getElementById('quotaSummary');
         if (quotaSummaryEl) {
             quotaSummaryEl.textContent = isUserPaidActive 
@@ -143,7 +166,7 @@ async function fetchStats() {
                 : `Available Credit : ${total} (Daily Free)`;
         }
         
-        // Menu Validity
+        // Update Menu Validity
         const planExpiryEl = document.getElementById('planExpiryText');
         if (planExpiryEl) {
             if (planExpiresAt && isUserPaidActive) {
@@ -159,10 +182,10 @@ async function fetchStats() {
             const ratio = maxPack > 0 ? Math.max(0, Math.min(1, total / maxPack)) : 0;
             circle.style.strokeDashoffset = String(119.38 * (1 - ratio));
 
-            if (plan === 'pro') {
+            if (plan === 'pro' && isUserPaidActive) {
                 circle.style.stroke = "url(#rainbowGrad)";
                 circle.setAttribute('stroke-width', '3.5');
-            } else if (plan === 'basic') {
+            } else if (plan === 'basic' && isUserPaidActive) {
                 circle.style.stroke = '#25d366';
                 circle.setAttribute('stroke-width', '3');
             } else {
@@ -174,18 +197,17 @@ async function fetchStats() {
         // Pro Composer Web Search Button
         const compWebBtn = document.getElementById('btnComposerWebSearch');
         if (compWebBtn) {
-            if (plan === 'pro') {
+            if (plan === 'pro' && isUserPaidActive) {
                 compWebBtn.classList.add('show');
             } else {
                 compWebBtn.classList.remove('show');
             }
         }
 
-    } catch(err) {
-        console.error("fetchStats error:", err);
+    } catch (err) {
+        console.error("fetchStats critical error:", err);
     }
 }
-
 
 async function initAuthSession() {
     try {
