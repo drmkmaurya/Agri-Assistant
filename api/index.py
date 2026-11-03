@@ -204,6 +204,8 @@ async def ask_endpoint(req: QueryReq, request: Request):
 
 @app.post("/api/create-order")
 @app.post("/create-order")
+@app.post("/api/create-order/")
+@app.post("/create-order/")
 async def create_order_endpoint(req: OrderReq):
     settings = get_super_control_settings()
     if settings.get("maintenance_mode") or settings.get("payment_maintenance"):
@@ -212,10 +214,13 @@ async def create_order_endpoint(req: OrderReq):
 
 @app.post("/api/verify-payment")
 @app.post("/verify-payment")
+@app.post("/api/verify-payment/")
+@app.post("/verify-payment/")
 async def verify_payment_endpoint(req: VerifyPaymentReq):
     return verify_and_credit(
         req.user_id, req.order_id, req.payment_id, req.signature, req.plan_id, req.coupon_code, supabase
     )
+    
 
 @app.get("/api/user-stats")
 @app.get("/user-stats")
