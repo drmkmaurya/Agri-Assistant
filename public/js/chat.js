@@ -568,11 +568,31 @@ async function submitMessage(customTxt) {
     // Read image data for local preview thumbnail
     const imagePreviews = [];
     if (selectedAttachments.length > 0) {
+        showSpinner("फोटो अपलोड हो रही है...");
         for (let file of selectedAttachments) {
             if (file.type.startsWith('image/')) {
-                imagePreviews.push(URL.createObjectURL(file));
+                try {
+                    const ext = file.name.split('.').pop() || 'jpg';
+                    const fileName = `${currentUser.id}/${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${ext}`;
+                    const { data: upData, error: upErr } = await supabaseClient.storage
+                        .from('chat-attachments')
+                        .upload(fileName, file);
+
+                    if (!upErr && upData) {
+                        const { data: pubUrlData } = supabaseClient.storage
+                            .from('chat-attachments')
+                            .getPublicUrl(fileName);
+                        imagePreviews.push(pubUrlData.publicUrl);
+                    } else {
+                        // Fallback to local URL if upload fails
+                        imagePreviews.push(URL.createObjectURL(file));
+                    }
+                } catch(e) {
+                    imagePreviews.push(URL.createObjectURL(file));
+                }
             }
         }
+        hideSpinner();
     }
 
     if (!isUserPaidActive && window.cachedTotalCredits < creditsNeeded) {
@@ -699,7 +719,8 @@ async function loadDailyStories() {
                 <div class="story-card-item">
                     <div>
                         <span class="story-badge">सफलता की मिसाल</span>
-                        <span class="story-date">${st.published_date || 'आज'}</span>
+                        <span class="story-views-badge">👁️ ${st.views_count || 120}</span>
+                        <span class="story-date" style="margin-right:8px;">${st.published_date || 'आज'}</span>
                     </div>
                     <div class="story-title">${st.title}</div>
                     <div class="story-meta">👨‍🌾 <b>${st.farmer_name}</b> • 📍 ${st.village_district}</div>
