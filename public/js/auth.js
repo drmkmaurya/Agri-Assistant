@@ -100,7 +100,7 @@ async function fetchStats() {
         const userEmail = currentUser.email || '';
         const userId = currentUser.id || '';
 
-        // 2. Direct Supabase Query: Primary match by Email (Reliable & Case-Insensitive)
+        // 2. Direct Supabase Query using .from() (NOT .table())
         try {
             let dbUser = null;
 
@@ -171,20 +171,18 @@ async function fetchStats() {
             ringBadge.textContent = String(total);
         }
 
-        // Menu Plan Name
+        // Menu Texts
         const planNameEl = document.getElementById('userPlanName');
         if (planNameEl) {
             const planDisplay = isUserPaidActive ? plan.toUpperCase() : 'FREE';
             planNameEl.textContent = 'Plan : ' + planDisplay;
         }
         
-        // Menu Available Credit
         const quotaSummaryEl = document.getElementById('quotaSummary');
         if (quotaSummaryEl) {
             quotaSummaryEl.textContent = `Available Credits : ${total}`;
         }
         
-        // Menu Validity
         const planExpiryEl = document.getElementById('planExpiryText');
         if (planExpiryEl) {
             if (planExpiresAt) {
@@ -194,7 +192,7 @@ async function fetchStats() {
             }
         }
 
-        // Pro Composer Web Search Button
+        // Pro Web Search Toggle
         const compWebBtn = document.getElementById('btnComposerWebSearch');
         if (compWebBtn) {
             if (plan === 'pro' && isUserPaidActive) {
