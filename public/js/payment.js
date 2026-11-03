@@ -150,7 +150,7 @@ async function initiatePayment(planId) {
 
     showSpinner("सुरक्षित भुगतान मॉड्यूल तैयार हो रहा है...");
     try {
-        const ordRes = await apiRequest('/create-order', {
+        let ordRes = await fetch('/api/create-order', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ 
@@ -159,6 +159,19 @@ async function initiatePayment(planId) {
                 coupon_code: couponVal 
             })
         });
+
+        // Safe Fallback if host rewrites strip /api prefix
+        if (ordRes.status === 404) {
+            ordRes = await fetch('/create-order', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    user_id: currentUser.id, 
+                    plan_id: planId, 
+                    coupon_code: couponVal 
+                })
+            });
+        }
 
         hideSpinner();
         if (!ordRes.ok) {
