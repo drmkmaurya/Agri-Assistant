@@ -80,9 +80,7 @@ async function signOutUser() {
     }, 600);
 }
 
-
 async function fetchStats() {
-    // 1. Session check
     if (!currentUser) {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session && session.user) {
@@ -94,31 +92,31 @@ async function fetchStats() {
 
     try {
         let total = 0;
-        let maxPack = 1;
         let plan = 'free';
         let planExpiresAt = null;
         let dataLoaded = false;
 
-        // 2. Direct Supabase Query with user access
+        // 1. Direct fetch: query by ID OR Email for seamless sync
         try {
+            const userEmail = currentUser.email || '';
             const { data: dbUser, error: dbErr } = await supabaseClient
                 .table('user_profiles')
-                .select('*')
-                .eq('id', currentUser.id)
+                .select('total_credits, plan_type, plan_expires_at')
+                .or(`id.eq.${currentUser.id},email.eq.${userEmail}`)
+                .limit(1)
                 .maybeSingle();
 
             if (!dbErr && dbUser) {
                 total = Number(dbUser.total_credits) || 0;
-                maxPack = Number(dbUser.max_pack_credits) || (total > 0 ? total : 1);
                 plan = (dbUser.plan_type || 'free').toLowerCase();
                 planExpiresAt = dbUser.plan_expires_at;
                 dataLoaded = true;
             }
         } catch (e) {
-            console.warn("Direct Supabase read error:", e);
+            console.warn("Direct DB fetch error:", e);
         }
 
-        // 3. Fallback to API if DB query did not load
+        // 2. Fallback to Server API if DB query did not load
         if (!dataLoaded) {
             try {
                 const queryParams = new URLSearchParams({
@@ -131,10 +129,8 @@ async function fetchStats() {
                 if (res.ok) {
                     const data = await res.json();
                     total = Number(data.total_credits) || 0;
-                    maxPack = Number(data.max_pack_credits) || (total > 0 ? total : 1);
                     plan = (data.plan_type || 'free').toLowerCase();
                     planExpiresAt = data.plan_expires_at;
-                    dataLoaded = true;
                 }
             } catch (e) {
                 console.warn("API fallback error:", e);
@@ -145,56 +141,34 @@ async function fetchStats() {
         isUserPaidActive = (plan === 'basic' || plan === 'pro');
         window.cachedTotalCredits = total;
 
-        // Update Ring Badge (Homescreen number)
+        // Homescreen Badge
         const ringBadge = document.getElementById('ringBadge');
         if (ringBadge) {
             ringBadge.textContent = String(total);
         }
 
-        // Update Menu Plan Name
+        // Menu Texts
         const planNameEl = document.getElementById('userPlanName');
         if (planNameEl) {
             const planDisplay = isUserPaidActive ? plan.toUpperCase() : 'FREE';
             planNameEl.textContent = 'Plan : ' + planDisplay;
         }
         
-        // Update Menu Available Credit
         const quotaSummaryEl = document.getElementById('quotaSummary');
         if (quotaSummaryEl) {
-            quotaSummaryEl.textContent = isUserPaidActive 
-                ? `Available Credit : ${total} / ${maxPack}`
-                : `Available Credit : ${total} (Daily Free)`;
+            quotaSummaryEl.textContent = `Available Credits : ${total}`;
         }
         
-        // Update Menu Validity
         const planExpiryEl = document.getElementById('planExpiryText');
         if (planExpiryEl) {
-            if (planExpiresAt && isUserPaidActive) {
+            if (planExpiresAt) {
                 planExpiryEl.textContent = 'Valid till : ' + formatCleanDate(planExpiresAt);
             } else {
-                planExpiryEl.textContent = 'Valid till : Daily Midnight';
+                planExpiryEl.textContent = 'Valid till : 30 Days';
             }
         }
 
-        // Circular Progress Ring Fill & Color Animation
-        const circle = document.getElementById('creditRing');
-        if (circle) {
-            const ratio = maxPack > 0 ? Math.max(0, Math.min(1, total / maxPack)) : 0;
-            circle.style.strokeDashoffset = String(119.38 * (1 - ratio));
-
-            if (plan === 'pro' && isUserPaidActive) {
-                circle.style.stroke = "url(#rainbowGrad)";
-                circle.setAttribute('stroke-width', '3.5');
-            } else if (plan === 'basic' && isUserPaidActive) {
-                circle.style.stroke = '#25d366';
-                circle.setAttribute('stroke-width', '3');
-            } else {
-                circle.style.stroke = '#94a3b8';
-                circle.setAttribute('stroke-width', '2');
-            }
-        }
-
-        // Pro Composer Web Search Button
+        // Pro Web Search Toggle
         const compWebBtn = document.getElementById('btnComposerWebSearch');
         if (compWebBtn) {
             if (plan === 'pro' && isUserPaidActive) {
@@ -205,7 +179,70 @@ async function fetchStats() {
         }
 
     } catch (err) {
-        console.error("fetchStats critical error:", err);
+        console.error("fetchStats error:", err);
+    }
+}
+
+/* 7-Day Usage History Modal Logic */
+function openUsageHistoryModal() {
+    const modal = document.getElementById('usageModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        load7DayUsageHistory();
+    }
+}
+
+function closeUsageModal() {
+    const modal = document.getElementById('usageModal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function load7DayUsageHistory() {
+    if (!currentUser) return;
+    const container = document.getElementById('usageListContainer');
+    if (!container) return;
+    container.innerHTML = '<p style="color:#64748b; font-size:12px;">उपयोग डेटा लोड हो रहा है...</p>';
+
+    try {
+        const { data, error } = await supabaseClient
+            .table('user_chat_history')
+            .select('created_at, credits_deducted')
+            .eq('user_id', currentUser.id)
+            .order('created_at', { ascending: false })
+            .limit(100);
+
+        if (error || !data || data.length === 0) {
+            container.innerHTML = '<p style="color:#64748b; font-size:12px; text-align:center; padding:20px 0;">विगत 7 दिनों में कोई उपयोग रिकॉर्ड नहीं मिला।</p>';
+            return;
+        }
+
+        // Group by Date
+        const grouped = {};
+        data.forEach(row => {
+            const d = new Date(row.created_at).toLocaleDateString('hi-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+            if (!grouped[d]) {
+                grouped[d] = { queries: 0, credits: 0 };
+            }
+            grouped[d].queries += 1;
+            grouped[d].credits += (row.credits_deducted || 1);
+        });
+
+        let html = '';
+        for (const [dateStr, val] of Object.entries(grouped)) {
+            html += `
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px 12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div style="font-size:13px; font-weight:700; color:#1e293b;">📅 ${dateStr}</div>
+                        <div style="font-size:11.5px; color:#64748b; margin-top:2px;">पूछे गए प्रश्न: ${val.queries}</div>
+                    </div>
+                    <div style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; font-size:11.5px; font-weight:700; padding:4px 8px; border-radius:6px;">
+                        -${val.credits} Credits
+                    </div>
+                </div>`;
+        }
+        container.innerHTML = html;
+    } catch(e) {
+        container.innerHTML = '<p style="color:#ef4444; font-size:12px;">उपयोग इतिहास लोड करने में समस्या आई।</p>';
     }
 }
 
@@ -218,10 +255,10 @@ async function initAuthSession() {
             if (authScreen) authScreen.style.display = 'none';
 
             const avatar = document.getElementById('userAvatar');
-            if (avatar) avatar.src = currentUser.user_metadata.avatar_url || avatar.src;
+            if (avatar) avatar.src = currentUser.user_metadata?.avatar_url || avatar.src;
 
             const userName = document.getElementById('userName');
-            if (userName) userName.textContent = currentUser.user_metadata.full_name || 'किसान साथी';
+            if (userName) userName.textContent = currentUser.user_metadata?.full_name || 'किसान साथी';
 
             await fetchStats();
         }
@@ -235,10 +272,10 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
         if (authScreen) authScreen.style.display = 'none';
 
         const avatar = document.getElementById('userAvatar');
-        if (avatar) avatar.src = currentUser.user_metadata.avatar_url || avatar.src;
+        if (avatar) avatar.src = currentUser.user_metadata?.avatar_url || avatar.src;
 
         const userName = document.getElementById('userName');
-        if (userName) userName.textContent = currentUser.user_metadata.full_name || 'किसान साथी';
+        if (userName) userName.textContent = currentUser.user_metadata?.full_name || 'किसान साथी';
 
         fetchStats();
     } else {
