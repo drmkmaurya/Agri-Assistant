@@ -13,7 +13,6 @@ try:
     from api.services.user_service import (
         get_super_control_settings,
         get_or_create_user_profile,
-        sync_daily_free_credit,
         update_user_credits
     )
     from api.services.rag_service import generate_rag_answer
@@ -22,7 +21,6 @@ except ImportError:
     from services.user_service import (
         get_super_control_settings,
         get_or_create_user_profile,
-        sync_daily_free_credit,
         update_user_credits
     )
     from services.rag_service import generate_rag_answer
@@ -53,7 +51,7 @@ def apply_rate_limit(client_ip: str):
     minute_window = now - 60
     recent = [t for t in rate_limit_records[client_ip] if t > minute_window]
     rate_limit_records[client_ip] = recent
-    if len(recent) >= 15:
+    if len(recent) >= 20:
         raise HTTPException(status_code=429, detail="आपने 1 मिनट में अधिक अनुरोध किए हैं। कृपया 1 मिनट प्रतीक्षा करें।")
     rate_limit_records[client_ip].append(now)
 
@@ -108,7 +106,7 @@ async def ask_endpoint(req: QueryReq, request: Request):
     if profile.get("status") == "banned":
         raise HTTPException(status_code=403, detail="खाता अवरुद्ध कर दिया गया है।")
 
-    plan_type = profile.get("plan_type") or "free"
+    plan_type = (profile.get("plan_type") or "free").lower()
     plan_expires_at = profile.get("plan_expires_at")
     total_credits = profile.get("total_credits", 0)
 
@@ -129,9 +127,6 @@ async def ask_endpoint(req: QueryReq, request: Request):
         else:
             plan_type = "free"
 
-    profile = sync_daily_free_credit(profile, req.user_id)
-    total_credits = profile.get("total_credits", 0)
-
     if not is_paid_active and req.attachment_count > 0:
         raise HTTPException(status_code=403, detail="फोटो / दस्तावेज़ जांच केवल Basic और Pro प्लान में उपलब्ध है।")
 
@@ -141,14 +136,14 @@ async def ask_endpoint(req: QueryReq, request: Request):
         if is_paid_active:
             raise HTTPException(status_code=402, detail=f"इस सवाल के लिए {credits_needed} क्रेडिट चाहिए। शेष बैलेंस: {total_credits}")
         else:
-            raise HTTPException(status_code=402, detail="आज का निःशुल्क क्रेडिट समाप्त हो गया है। मध्यरात्रि को स्वतः नया क्रेडिट मिलेगा या प्लान अपग्रेड करें।")
+            raise HTTPException(status_code=402, detail="आपके निःशुल्क क्रेडिट समाप्त हो चुके हैं। सवाल पूछने के लिए नया प्लान चुनें।")
 
     async with concurrency_lock:
         concurrency_counter += 1
     
     try:
         if plan_type == "free" and concurrency_counter > 5:
-            await asyncio.sleep(1.0)
+            await asyncio.sleep(0.5)
     finally:
         async with concurrency_lock:
             concurrency_counter = max(0, concurrency_counter - 1)
@@ -163,7 +158,6 @@ async def ask_endpoint(req: QueryReq, request: Request):
             "answer": greeting_text,
             "sources": [],
             "total_credits": total_credits,
-            "max_pack_credits": profile.get("max_pack_credits", 1),
             "plan_type": plan_type
         }
 
@@ -182,6 +176,18 @@ async def ask_endpoint(req: QueryReq, request: Request):
 
     update_user_credits(req.user_id, new_balance, updated_plan_type)
 
+    # Save to user_chat_history
+    try:
+        supabase.table("user_chat_history").insert({
+            "user_id": req.user_id,
+            "query_text": user_query,
+            "response_text": answer_text,
+            "credits_deducted": credits_needed,
+            "attachments_count": req.attachment_count
+        }).execute()
+    except Exception as he:
+        print(f"History log error: {he}")
+
     # Lightweight sliding context memory update
     try:
         new_summary = f"{context_summary}\n- Q: {user_query[:60]}"[-350:]
@@ -193,13 +199,11 @@ async def ask_endpoint(req: QueryReq, request: Request):
         "answer": answer_text,
         "sources": sources,
         "total_credits": new_balance,
-        "max_pack_credits": profile.get("max_pack_credits", 1),
         "plan_type": updated_plan_type
     }
 
 @app.post("/api/create-order")
 @app.post("/create-order")
-@app.api_route("/api/create-order", methods=["POST", "OPTIONS"])
 async def create_order_endpoint(req: OrderReq):
     settings = get_super_control_settings()
     if settings.get("maintenance_mode") or settings.get("payment_maintenance"):
@@ -215,16 +219,13 @@ async def verify_payment_endpoint(req: VerifyPaymentReq):
 
 @app.get("/api/user-stats")
 @app.get("/user-stats")
-@app.api_route("/api/user-stats", methods=["GET", "OPTIONS"])
 async def user_stats(user_id: str, email: str = "", name: str = "", avatar: str = ""):
     data = get_or_create_user_profile(user_id, email, name, avatar)
-    data = sync_daily_free_credit(data, user_id)
     settings = get_super_control_settings()
 
-    plan_type = data.get("plan_type") or "free"
+    plan_type = (data.get("plan_type") or "free").lower()
     plan_expires_at = data.get("plan_expires_at")
     total_credits = data.get("total_credits", 0)
-    max_pack = data.get("max_pack_credits", 1)
 
     is_paid_active = False
     now_utc = datetime.now(timezone.utc)
@@ -246,7 +247,6 @@ async def user_stats(user_id: str, email: str = "", name: str = "", avatar: str 
         "status": data.get("status", "approved"),
         "plan_type": plan_type,
         "total_credits": total_credits,
-        "max_pack_credits": max_pack,
         "plan_expires_at": plan_expires_at,
         "is_paid_active": is_paid_active,
         "super_control": {
