@@ -202,6 +202,7 @@ async def ask_endpoint(req: QueryReq, request: Request):
         "plan_type": updated_plan_type
     }
 
+# Universal Order Creation Routes
 @app.post("/api/create-order")
 @app.post("/create-order")
 @app.post("/api/create-order/")
@@ -212,6 +213,7 @@ async def create_order_endpoint(req: OrderReq):
         raise HTTPException(status_code=503, detail="भुगतान सेवा अभी रखरखाव (Maintenance) में है। कृपया कुछ समय बाद पुनः प्रयास करें।")
     return process_order(req.user_id, req.plan_id, req.coupon_code, supabase)
 
+# Universal Payment Verification Routes
 @app.post("/api/verify-payment")
 @app.post("/verify-payment")
 @app.post("/api/verify-payment/")
@@ -220,7 +222,6 @@ async def verify_payment_endpoint(req: VerifyPaymentReq):
     return verify_and_credit(
         req.user_id, req.order_id, req.payment_id, req.signature, req.plan_id, req.coupon_code, supabase
     )
-    
 
 @app.get("/api/user-stats")
 @app.get("/user-stats")
