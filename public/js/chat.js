@@ -380,17 +380,61 @@ function triggerAttachmentPicker() {
     document.getElementById('fileInput').click();
 }
 
-function handleFileSelected(event) {
-    const files = Array.from(event.target.files);
-    if (!files.length) return;
-    if (files.length > 2) {
+function compressImageToWebP(file) {
+    return new Promise((resolve) => {
+        if (!file.type.startsWith('image/')) return resolve(file);
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (e) => {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                const maxDim = 1280; // Optimal for Gemini Vision & low bandwidth
+                if (width > maxDim || height > maxDim) {
+                    if (width > height) {
+                        height = Math.round((height * maxDim) / width);
+                        width = maxDim;
+                    } else {
+                        width = Math.round((width * maxDim) / height);
+                        height = maxDim;
+                    }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        const compressed = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", {
+                            type: 'image/webp'
+                        });
+                        resolve(compressed);
+                    } else {
+                        resolve(file);
+                    }
+                }, 'image/webp', 0.82);
+            };
+        };
+    });
+}
+
+async function handleFileSelected(event) {
+    const rawFiles = Array.from(event.target.files);
+    if (!rawFiles.length) return;
+    if (rawFiles.length > 2) {
         showToast('अधिकतम 2 फोटो ही संलग्न कर सकते हैं।');
         event.target.value = '';
         return;
     }
-    selectedAttachments = files;
+    showSpinner("फोटो तैयार हो रही है...");
+    selectedAttachments = await Promise.all(rawFiles.map(f => compressImageToWebP(f)));
+    hideSpinner();
+
     const chip = document.getElementById('attachmentChip');
-    document.getElementById('attachedFileName').textContent = `📎 ${files.length} फोटो संलग्न`;
+    document.getElementById('attachedFileName').textContent = `📎 ${selectedAttachments.length} फोटो तैयार`;
     chip.style.display = 'flex';
 }
 
