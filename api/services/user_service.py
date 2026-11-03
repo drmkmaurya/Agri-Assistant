@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 from supabase import create_client, Client
 
@@ -21,66 +21,49 @@ def get_super_control_settings() -> dict:
         "banner_enabled": False,
         "banner_text": "",
         "welcome_credits": 10,
-        "welcome_days": 10,
+        "welcome_days": 30,
         "welcome_enabled": True
     }
 
 def get_or_create_user_profile(user_id: str, email: str = "", name: str = "", avatar: str = "") -> dict:
     try:
+        # Check by user_id
         res = supabase.table("user_profiles").select("*").eq("id", user_id).limit(1).execute()
-        if res.data:
+        if res.data and len(res.data) > 0:
             return res.data[0]
         
-        today_ist_str = datetime.now(IST).strftime("%Y-%m-%d")
+        # Fallback check by email to prevent duplicate accounts
+        if email:
+            email_res = supabase.table("user_profiles").select("*").eq("email", email).limit(1).execute()
+            if email_res.data and len(email_res.data) > 0:
+                return email_res.data[0]
+        
+        now = datetime.now(timezone.utc)
+        expiry_30_days = (now + timedelta(days=30)).isoformat()
         new_row = {
             "id": user_id,
             "email": email or "",
             "full_name": name or "किसान साथी",
             "avatar_url": avatar or "https://lh3.googleusercontent.com/a/default-user=s96-c",
             "plan_type": "free",
-            "total_credits": 1,
-            "max_pack_credits": 1,
+            "total_credits": 10,
             "status": "approved",
-            "is_trial_claimed": False,
-            "last_free_credit_date": today_ist_str
+            "plan_expires_at": expiry_30_days
         }
         ins = supabase.table("user_profiles").insert(new_row).execute()
-        if ins.data:
+        if ins.data and len(ins.data) > 0:
             return ins.data[0]
     except Exception as e:
-        print(f"get_or_create_user_profile fallback: {e}")
+        print(f"get_or_create_user_profile error: {e}")
     
     return {
         "id": user_id,
         "email": email,
         "full_name": name or "किसान साथी",
         "plan_type": "free",
-        "total_credits": 1,
-        "max_pack_credits": 1,
-        "status": "approved",
-        "is_trial_claimed": False
+        "total_credits": 10,
+        "status": "approved"
     }
-
-def sync_daily_free_credit(profile: dict, user_id: str) -> dict:
-    today_ist_str = datetime.now(IST).strftime("%Y-%m-%d")
-    plan_type = profile.get("plan_type") or "free"
-    last_free_date = str(profile.get("last_free_credit_date") or "")
-
-    if plan_type == "free" and last_free_date != today_ist_str:
-        new_credits = 1
-        try:
-            supabase.table("user_profiles").update({
-                "total_credits": new_credits,
-                "max_pack_credits": 1,
-                "last_free_credit_date": today_ist_str
-            }).eq("id", user_id).execute()
-        except Exception:
-            pass
-        profile["total_credits"] = new_credits
-        profile["max_pack_credits"] = 1
-        profile["last_free_credit_date"] = today_ist_str
-
-    return profile
 
 def update_user_credits(user_id: str, new_balance: int, updated_plan_type: str):
     try:
