@@ -741,31 +741,22 @@ async function executeSubmit(text, attachCount, imagePreviews = []) {
 }
 
 /* Load Daily Stories (Champions) */
+/* Load Daily Stories (Champions) */
 async function loadDailyStories() {
     const container = document.getElementById('storiesListContainer');
     if (!container) return;
     container.innerHTML = '<p style="color:#64748b; font-size:12.5px;">प्रेरणादायक कृषि कथाएं लोड हो रही हैं...</p>';
 
     try {
+        // .from() method use karein (NOT .table())
         const { data, error } = await supabaseClient
-            .table('daily_stories')
+            .from('daily_stories')
             .select('*')
+            .order('published_date', { ascending: false })
             .limit(10);
 
         if (error || !data || data.length === 0) {
-            // High-converting graceful fallback stories if database is empty
-            container.innerHTML = `
-                <div class="story-card-item">
-                    <div>
-                        <span class="story-badge">सफलता की मिसाल</span>
-                        <span class="story-views-badge">👁️ 342</span>
-                        <span class="story-date" style="margin-right:8px;">आज</span>
-                    </div>
-                    <div class="story-title">प्राकृतिक जीवामृत से धान की बंपर पैदावार और लागत 60% कम</div>
-                    <div class="story-meta">👨‍🌾 <b>रामशरण वर्मा</b> • 📍 बाराबंकी, उत्तर प्रदेश</div>
-                    <div class="story-impact">💰 प्रभाव: ₹2.4 लाख प्रति एकड़ शुद्ध लाभ</div>
-                    <div class="story-content">डीएपी और यूरिया का प्रयोग पूरी तरह बंद करके घनजीवामृत और सप्तधान्यांकुर अर्क का नियमित छिड़काव किया। मिट्टी की केंचुआ गतिविधि बढ़ी और रोग-मुक्त फसल प्राप्त हुई।</div>
-                </div>`;
+            container.innerHTML = '<p style="color:#64748b; font-size:12.5px; text-align:center; padding:20px;">आज की सफलता की कहानी जल्द प्रकाशित होगी।</p>';
             return;
         }
 
@@ -775,8 +766,8 @@ async function loadDailyStories() {
                 <div class="story-card-item">
                     <div>
                         <span class="story-badge">सफलता की मिसाल</span>
-                        <span class="story-views-badge">👁️ ${st.views_count || 150}</span>
-                        <span class="story-date" style="margin-right:8px;">${st.published_date || 'हाल ही में'}</span>
+                        <span class="story-views-badge">👁️ ${st.views_count || 120}</span>
+                        <span class="story-date" style="margin-right:8px;">${st.published_date || 'आज'}</span>
                     </div>
                     <div class="story-title">${st.title}</div>
                     <div class="story-meta">👨‍🌾 <b>${st.farmer_name}</b> • 📍 ${st.village_district}</div>
@@ -789,6 +780,7 @@ async function loadDailyStories() {
         const dot = document.getElementById('storyUnreadDot');
         if (dot) dot.classList.remove('show');
     } catch (e) {
+        console.error("Champions load error:", e);
         container.innerHTML = '<p style="color:#ef4444; font-size:12.5px;">कथाएं लोड करने में समस्या आई।</p>';
     }
 }
