@@ -81,6 +81,7 @@ async function signOutUser() {
 }
 
 async function fetchStats() {
+    // 1. Session check
     if (!currentUser) {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session && session.user) {
@@ -96,17 +97,39 @@ async function fetchStats() {
         let planExpiresAt = null;
         let dataLoaded = false;
 
-        // 1. Direct fetch: query by ID OR Email for seamless sync
-        try {
-            const userEmail = currentUser.email || '';
-            const { data: dbUser, error: dbErr } = await supabaseClient
-                .table('user_profiles')
-                .select('total_credits, plan_type, plan_expires_at')
-                .or(`id.eq.${currentUser.id},email.eq.${userEmail}`)
-                .limit(1)
-                .maybeSingle();
+        const userEmail = currentUser.email || '';
+        const userId = currentUser.id || '';
 
-            if (!dbErr && dbUser) {
+        // 2. Direct Supabase Query: Primary match by Email (Reliable & Case-Insensitive)
+        try {
+            let dbUser = null;
+
+            if (userEmail) {
+                const { data, error } = await supabaseClient
+                    .table('user_profiles')
+                    .select('total_credits, plan_type, plan_expires_at')
+                    .eq('email', userEmail)
+                    .limit(1);
+
+                if (!error && data && data.length > 0) {
+                    dbUser = data[0];
+                }
+            }
+
+            // Fallback match by UUID if email check didn't return
+            if (!dbUser && userId) {
+                const { data, error } = await supabaseClient
+                    .table('user_profiles')
+                    .select('total_credits, plan_type, plan_expires_at')
+                    .eq('id', userId)
+                    .limit(1);
+
+                if (!error && data && data.length > 0) {
+                    dbUser = data[0];
+                }
+            }
+
+            if (dbUser) {
                 total = Number(dbUser.total_credits) || 0;
                 plan = (dbUser.plan_type || 'free').toLowerCase();
                 planExpiresAt = dbUser.plan_expires_at;
@@ -116,12 +139,12 @@ async function fetchStats() {
             console.warn("Direct DB fetch error:", e);
         }
 
-        // 2. Fallback to Server API if DB query did not load
+        // 3. Fallback to Server API if Direct Query did not return
         if (!dataLoaded) {
             try {
                 const queryParams = new URLSearchParams({
-                    user_id: currentUser.id,
-                    email: currentUser.email || '',
+                    user_id: userId,
+                    email: userEmail,
                     name: currentUser.user_metadata?.full_name || '',
                     avatar: currentUser.user_metadata?.avatar_url || ''
                 });
@@ -131,6 +154,7 @@ async function fetchStats() {
                     total = Number(data.total_credits) || 0;
                     plan = (data.plan_type || 'free').toLowerCase();
                     planExpiresAt = data.plan_expires_at;
+                    dataLoaded = true;
                 }
             } catch (e) {
                 console.warn("API fallback error:", e);
@@ -141,24 +165,26 @@ async function fetchStats() {
         isUserPaidActive = (plan === 'basic' || plan === 'pro');
         window.cachedTotalCredits = total;
 
-        // Homescreen Badge
+        // Homescreen Badge (Live Balance Render)
         const ringBadge = document.getElementById('ringBadge');
         if (ringBadge) {
             ringBadge.textContent = String(total);
         }
 
-        // Menu Texts
+        // Menu Plan Name
         const planNameEl = document.getElementById('userPlanName');
         if (planNameEl) {
             const planDisplay = isUserPaidActive ? plan.toUpperCase() : 'FREE';
             planNameEl.textContent = 'Plan : ' + planDisplay;
         }
         
+        // Menu Available Credit
         const quotaSummaryEl = document.getElementById('quotaSummary');
         if (quotaSummaryEl) {
             quotaSummaryEl.textContent = `Available Credits : ${total}`;
         }
         
+        // Menu Validity
         const planExpiryEl = document.getElementById('planExpiryText');
         if (planExpiryEl) {
             if (planExpiresAt) {
@@ -168,7 +194,7 @@ async function fetchStats() {
             }
         }
 
-        // Pro Web Search Toggle
+        // Pro Composer Web Search Button
         const compWebBtn = document.getElementById('btnComposerWebSearch');
         if (compWebBtn) {
             if (plan === 'pro' && isUserPaidActive) {
