@@ -91,19 +91,22 @@ async function fetchStats() {
             avatar: currentUser.user_metadata?.avatar_url || ''
         });
         const res = await apiRequest('/user-stats?' + queryParams.toString());
+        if (!res.ok) return;
         const data = await res.json();
 
-        const total = (data.total_credits !== undefined) ? data.total_credits : 0;
-        const maxPack = data.max_pack_credits || (total > 0 ? total : 1);
+        const total = (data.total_credits !== undefined) ? Number(data.total_credits) : 0;
+        const maxPack = Number(data.max_pack_credits) || (total > 0 ? total : 1);
         const plan = (data.plan_type || 'free').toLowerCase();
         currentUserPlan = plan;
         isUserPaidActive = Boolean(data.is_paid_active);
 
         window.cachedTotalCredits = total;
 
+        // Header Ring Badge
         const ringBadge = document.getElementById('ringBadge');
         if (ringBadge) ringBadge.textContent = total;
 
+        // Menu items formatting
         const planNameEl = document.getElementById('userPlanName');
         if (planNameEl) {
             const planDisplay = isUserPaidActive ? (plan.toUpperCase()) : 'FREE';
