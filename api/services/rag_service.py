@@ -9,16 +9,33 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if (SUPABASE_URL and SUPABASE_KEY) else None
-client: genai.Client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
+def get_gemini_client():
+    key = os.environ.get("GEMINI_API_KEY", "").strip()
+    if not key:
+        return None
+    try:
+        return genai.Client(api_key=key)
+    except Exception as e:
+        print(f"Gemini client init error: {e}")
+        return None
+
+# Comprehensive Hindi and Hinglish agricultural dictionary to prevent false refusals
 AGRI_KEYWORDS = [
+    # Crops & Plants
     "kheti", "fasal", "mitti", "keet", "khad", "jeevamrut", "beej", "rog", "spray", "dhan", "gehun", 
     "chana", "sarson", "kisan", "krishi", "khet", "urja", "paudh", "organic", "neemastra", "brahmastra", 
     "fungus", "blight", "pashupalan", "gay", "goban", "gomutra", "sinchai", "crop", "pest", "soil",
     "fertilizer", "seed", "farming", "agriculture", "plant", "disease", "dairy", "cow", "harvest",
+    "tamatar", "aloo", "mirch", "pyaj", "lahsun", "adrak", "gobhi", "baingan", "bhindi", "matar",
+    "ganna", "kapas", "soyabean", "makka", "bajra", "dawa", "dawai", "keeda", "illi", "sundi",
+    # Hindi Devnagari Terms
     "खेती", "फसल", "मिट्टी", "कीट", "खाद", "जीवामृत", "बीज", "रोग", "छिड़काव", "धान", "गेहूं", "चना",
     "सरसों", "किसान", "कृषि", "खेत", "ऊर्जा जल", "पौध", "जैविक", "नीमास्त्र", "ब्रह्मास्त्र", "फंगस",
-    "झुलसा", "पशुपालन", "गाय", "गोबर", "गोमूत्र", "सिंचाई", "इल्ली", "सुंडी", "दीमक", "फल", "सब्जी"
+    "झुलसा", "पशुपालन", "गाय", "गोबर", "गोमूत्र", "सिंचाई", "इल्ली", "सुंडी", "दीमक", "फल", "सब्जी",
+    "टमाटर", "आलू", "मिर्च", "प्याज", "लहसुन", "अदरक", "गोभी", "बैंगन", "भिंडी", "मटर", "गन्ना",
+    "कपास", "सोयाबीन", "मक्का", "बाजरा", "दवा", "दवाई", "कीड़ा", "पत्ती", "पत्ते", "पीला", "सूखा",
+    "यूरिया", "डीएपी", "दशपर्णी", "अग्निहोत्र", "घनजीवामृत", "कटाई", "बुवाई", "खरपतवार", "जड़"
 ]
 
 def is_agricultural_intent(query: str) -> bool:
@@ -38,10 +55,14 @@ def is_within_agricultural_domain(query: str) -> bool:
 def generate_rag_answer(user_query: str, language: str = "hi", allow_web_search: bool = False, context_summary: str = "") -> tuple[str, list]:
     sources = []
     context_text = ""
+    client = get_gemini_client()
     
+    if not client:
+        return "तकनीकी समस्या: AI सेवा अभी उपलब्ध नहीं है। कृपया कुछ समय बाद प्रयास करें।", []
+
     # 1. Strict Out-of-Domain Guardrail Check
     if is_agricultural_intent(user_query) and not is_within_agricultural_domain(user_query):
-        # Allow short or contextual queries if user previously talked about agriculture
+        # Allow short follow-ups only if context mentions agricultural topic
         if not context_summary or len(user_query) > 20:
             if language == "en":
                 out_of_domain_reply = "I apologize, farmer friend. I am specifically designed to assist only with organic/natural agriculture, crop protection, soil health, and livestock questions. Please ask a farming-related query."
@@ -49,33 +70,34 @@ def generate_rag_answer(user_query: str, language: str = "hi", allow_web_search:
                 out_of_domain_reply = "क्षमा करें किसान भाई, मैं केवल प्राकृतिक व जैविक कृषि, फसल सुरक्षा, मिट्टी की सेहत और पशुपालन संबंधी प्रश्नों में ही सहायता कर सकता हूँ। कृपया खेती-किसानी से जुड़ा कोई प्रश्न पूछें।"
             return out_of_domain_reply, []
 
-    # 2. Intent-check: Only search video vector library when actual agri question is asked
-    if is_agricultural_intent(user_query) and client and supabase:
+    # 2. Vector RAG Embedding Search on Authentic TCBT Video Library
+    if is_agricultural_intent(user_query) and supabase:
         try:
             emb_res = client.models.embed_content(
                 model="models/gemini-embedding-001",
                 contents=user_query,
                 config=types.EmbedContentConfig(output_dimensionality=768)
             )
-            q_vec = emb_res.embeddings[0].values
+            if emb_res and emb_res.embeddings and len(emb_res.embeddings) > 0:
+                q_vec = emb_res.embeddings[0].values
 
-            matches_res = supabase.rpc("match_tcbt_chunks", {
-                "query_embedding": q_vec,
-                "match_threshold": 0.42,
-                "match_count": 3
-            }).execute()
-            matches = matches_res.data or []
+                matches_res = supabase.rpc("match_tcbt_chunks", {
+                    "query_embedding": q_vec,
+                    "match_threshold": 0.42,
+                    "match_count": 3
+                }).execute()
+                matches = matches_res.data or []
 
-            for m in matches:
-                context_text += f"- Title: {m.get('title')}\n  Vishay: {m.get('topic')}\n  Summary: {m.get('summary')}\n\n"
-                sources.append({
-                    "title": m.get("topic") or m.get("title"),
-                    "duration": m.get("duration_label"),
-                    "summary": m.get("summary", ""),
-                    "video_url": f"https://www.youtube.com/watch?v={m['video_id']}&t={m['start_seconds']}s"
-                })
+                for m in matches:
+                    context_text += f"- Title: {m.get('title')}\n  Vishay: {m.get('topic')}\n  Summary: {m.get('summary')}\n\n"
+                    sources.append({
+                        "title": m.get("topic") or m.get("title"),
+                        "duration": m.get("duration_label"),
+                        "summary": m.get("summary", ""),
+                        "video_url": f"https://www.youtube.com/watch?v={m['video_id']}&t={m['start_seconds']}s"
+                    })
         except Exception as e:
-            print(f"RAG search error: {e}")
+            print(f"RAG search warning: {e}")
 
     if language == "en":
         lang_instruction = "CRITICAL: The user has selected English. You MUST respond 100% in pure English only. Do NOT use any Hindi or Hinglish words."
@@ -108,9 +130,14 @@ User Query:
     if allow_web_search:
         gen_config.tools = [{"google_search": {}}]
 
-    response = client.models.generate_content(
-        model="gemini-3.1-flash-lite",
-        contents=system_prompt,
-        config=gen_config
-    )
-    return response.text, sources
+    try:
+        response = client.models.generate_content(
+            model="gemini-3.1-flash-lite",
+            contents=system_prompt,
+            config=gen_config
+        )
+        answer_text = response.text or "क्षमा करें, उत्तर प्राप्त नहीं हो सका। कृपया पुनः प्रयास करें।"
+        return answer_text, sources
+    except Exception as ge:
+        print(f"Gemini generation error: {ge}")
+        raise ge
