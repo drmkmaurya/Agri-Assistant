@@ -59,6 +59,13 @@ window.renderRoute = function(path) {
 };
 
 window.addEventListener('popstate', (e) => {
+    // Agar video modal open hai to pehle video modal band karein
+    const ytModal = document.getElementById('ytVideoModal');
+    if (ytModal && ytModal.style.display === 'flex') {
+        closeYtModal();
+        return;
+    }
+
     const currentPath = window.location.pathname;
 
     if (currentPath === '/') {
@@ -185,7 +192,6 @@ function toggleVoiceDictation() {
             const field = document.getElementById('msgField');
             field.value = (field.value ? field.value + ' ' : '') + transcript;
             handleComposerInput(field);
-            // Sirf textarea me likhega, submit bilkul nahi karega!
         };
 
         speechRecognizer.onerror = () => {
@@ -392,7 +398,7 @@ function compressImageToWebP(file) {
                 const canvas = document.createElement('canvas');
                 let width = img.width;
                 let height = img.height;
-                const maxDim = 1280; // Optimal for Gemini Vision & low bandwidth
+                const maxDim = 1280;
                 if (width > maxDim || height > maxDim) {
                     if (width > height) {
                         height = Math.round((height * maxDim) / width);
@@ -471,7 +477,6 @@ function cleanAndLoadLocalHistory() {
         const raw = localStorage.getItem(CHAT_STORAGE_KEY);
         if (!raw) return;
         const messages = JSON.parse(raw);
-        // 48 hours strict retention window
         const retentionWindow = Date.now() - (48 * 60 * 60 * 1000);
         memoryChatHistory = messages.filter(m => m.timestamp > retentionWindow).slice(-25);
         memoryChatHistory.forEach((m, idx) => {
@@ -597,6 +602,93 @@ function proceedPendingQuery() {
     }
 }
 
+/* =========================================================
+   YOUTUBE IN-APP CLIP PLAYER ENGINE (WhatsApp Style Popup)
+   ========================================================= */
+
+/* Helper: "13:50", "01:15:30", ya seconds string ko integer seconds me convert kare */
+function parseTimestampToSeconds(val) {
+    if (typeof val === 'number') return Math.floor(val);
+    if (!val) return 0;
+    const str = String(val).trim();
+    if (!str.includes(':')) {
+        const parsed = parseInt(str, 10);
+        return isNaN(parsed) ? 0 : parsed;
+    }
+    const parts = str.split(':').map(p => parseInt(p, 10) || 0);
+    if (parts.length === 2) {
+        return (parts[0] * 60) + parts[1];
+    } else if (parts.length === 3) {
+        return (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+    }
+    return 0;
+}
+
+/* Helper: YouTube Video ID extract kare (URL ya direct ID se) */
+function extractYtVideoId(urlOrId) {
+    if (!urlOrId) return 'LxJ4lmW9x7U';
+    const trimmed = String(urlOrId).trim();
+    if (trimmed.length === 11 && !trimmed.includes('/') && !trimmed.includes('.') && !trimmed.includes('?')) {
+        return trimmed;
+    }
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = trimmed.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : trimmed;
+}
+
+/* Open YouTube In-App Clip Modal */
+window.openYtClipModal = function(urlOrId, encodedTitle, startTime, endTime) {
+    const videoId = extractYtVideoId(urlOrId);
+    const startSec = parseTimestampToSeconds(startTime);
+    const endSec = parseTimestampToSeconds(endTime);
+
+    // YouTube Embed Parameters with strict origin & playsinline
+    let embedSrc = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1`;
+    if (startSec > 0) embedSrc += `&start=${startSec}`;
+    if (endSec > startSec) embedSrc += `&end=${endSec}`;
+
+    let titleText = 'संदर्भ वीडियो क्लिप';
+    try {
+        titleText = decodeURIComponent(encodedTitle || titleText);
+    } catch(e) {
+        titleText = encodedTitle || titleText;
+    }
+
+    const titleEl = document.getElementById('ytModalTitle');
+    const timeEl = document.getElementById('ytModalTime');
+    const directLinkEl = document.getElementById('ytOpenDirectLink');
+    const iframe = document.getElementById('ytIframePlayer');
+    const modal = document.getElementById('ytVideoModal');
+
+    if (titleEl) titleEl.textContent = titleText;
+    if (timeEl) {
+        timeEl.textContent = (startTime && endTime) ? `समय: ${startTime} - ${endTime}` : `प्रारंभ: ${startTime || '00:00'}`;
+    }
+
+    // Direct YouTube link fallback
+    let directUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    if (startSec > 0) directUrl += `&t=${startSec}s`;
+    if (directLinkEl) directLinkEl.href = directUrl;
+
+    if (iframe) iframe.src = embedSrc;
+    if (modal) modal.style.display = 'flex';
+};
+
+/* Close YouTube Modal and instantly cease playback */
+window.closeYtModal = function() {
+    const modal = document.getElementById('ytVideoModal');
+    const iframe = document.getElementById('ytIframePlayer');
+    if (modal) modal.style.display = 'none';
+    if (iframe) iframe.src = '';
+};
+
+/* Click outside modal sheet to close */
+window.handleYtBackdropClick = function(event) {
+    if (event.target && event.target.id === 'ytVideoModal') {
+        closeYtModal();
+    }
+};
+
 /* Submit Message Handler */
 async function submitMessage(customTxt) {
     const field = document.getElementById('msgField');
@@ -628,7 +720,6 @@ async function submitMessage(customTxt) {
                             .getPublicUrl(fileName);
                         imagePreviews.push(pubUrlData.publicUrl);
                     } else {
-                        // Fallback to local URL if upload fails
                         imagePreviews.push(URL.createObjectURL(file));
                     }
                 } catch(e) {
@@ -673,6 +764,7 @@ async function executeSubmit(text, attachCount, imagePreviews = []) {
     try {
         const res = await apiRequest('/ask', {
             method: 'POST',
+            headers: { 'Content- honesty-Type': 'application/json' },
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 query: text, 
@@ -695,7 +787,7 @@ async function executeSubmit(text, attachCount, imagePreviews = []) {
         let rawText = data.answer.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
         let finalContent = '<div>' + rawText + '</div>';
 
-        // Font Awesome 6 Icons in Carousel
+        // Horizontal Swipeable Carousel with WhatsApp In-App Modal Triggers
         if (data.sources && data.sources.length > 0) {
             finalContent += `
                 <div class="sources-carousel-title">
@@ -705,9 +797,23 @@ async function executeSubmit(text, attachCount, imagePreviews = []) {
                     <span class="carousel-hint">स्वाइप करें →</span>
                 </div>
                 <div class="sources-carousel">`;
+            
             data.sources.forEach(s => {
+                let start = s.start_time || '00:00';
+                let end = s.end_time || '';
+                if (!end && s.duration && s.duration.includes('-')) {
+                    const parts = s.duration.split('-');
+                    start = parts[0].trim();
+                    end = parts[1].trim();
+                } else if (!s.duration && start) {
+                    s.duration = end ? `${start} - ${end}` : start;
+                }
+
+                const safeVideoId = s.video_id || s.video_url || 'LxJ4lmW9x7U';
+                const safeTitle = encodeURIComponent(s.title || 'कृषि वीडियो क्लिप');
+
                 finalContent += `
-                    <a href="${s.video_url}" target="_blank" class="clip-carousel-card">
+                    <div class="clip-carousel-card" onclick="openYtClipModal('${safeVideoId}', '${safeTitle}', '${start}', '${end}')">
                         <div>
                             <div class="clip-c-header">
                                 <span><i class="fa-solid fa-play" style="font-size:9px;"></i> ${s.duration || '00:00'}</span>
@@ -717,7 +823,7 @@ async function executeSubmit(text, attachCount, imagePreviews = []) {
                             <div class="clip-c-summary">${s.summary || s.title}</div>
                         </div>
                         <div class="clip-c-link">क्लिप देखें <i class="fa-solid fa-arrow-right" style="font-size:8px;"></i></div>
-                    </a>`;
+                    </div>`;
             });
             finalContent += '</div>';
         }
@@ -741,14 +847,12 @@ async function executeSubmit(text, attachCount, imagePreviews = []) {
 }
 
 /* Load Daily Stories (Champions) */
-/* Load Daily Stories (Champions) */
 async function loadDailyStories() {
     const container = document.getElementById('storiesListContainer');
     if (!container) return;
     container.innerHTML = '<p style="color:#64748b; font-size:12.5px;">प्रेरणादायक कृषि कथाएं लोड हो रही हैं...</p>';
 
     try {
-        // .from() method use karein (NOT .table())
         const { data, error } = await supabaseClient
             .from('daily_stories')
             .select('*')
