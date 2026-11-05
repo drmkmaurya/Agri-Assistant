@@ -6,19 +6,6 @@ from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException
 import razorpay
 
-RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID", "").strip()
-RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "").strip()
-
-CASHFREE_APP_ID = os.environ.get("CASHFREE_APP_ID", "").strip()
-CASHFREE_SECRET_KEY = os.environ.get("CASHFREE_SECRET_KEY", "").strip()
-
-def get_razorpay_client():
-    key_id = os.environ.get("RAZORPAY_KEY_ID", "").strip()
-    key_secret = os.environ.get("RAZORPAY_KEY_SECRET", "").strip()
-    if not key_id or not key_secret:
-        return None, key_id
-    return razorpay.Client(auth=(key_id, key_secret)), key_id
-
 PLANS = {
     "basic": {
         "amount": 4900,         # ₹49 in paise
@@ -34,7 +21,16 @@ PLANS = {
 
 MAX_CREDIT_CAP = 1000
 
+def get_razorpay_client():
+    key_id = os.environ.get("RAZORPAY_KEY_ID", "").strip()
+    key_secret = os.environ.get("RAZORPAY_KEY_SECRET", "").strip()
+    if not key_id or not key_secret:
+        return None, key_id
+    return razorpay.Client(auth=(key_id, key_secret)), key_id
+
 def get_active_gateway(supabase) -> str:
+    if not supabase:
+        return "razorpay"
     try:
         res = supabase.table("app_settings").select("active_payment_gateway").limit(1).execute()
         if res.data and res.data[0].get("active_payment_gateway"):
@@ -44,13 +40,13 @@ def get_active_gateway(supabase) -> str:
     return "razorpay"
 
 def validate_coupon_for_user(coupon_code: str, plan_id: str, user_id: str, supabase):
-    if not coupon_code:
+    if not coupon_code or not coupon_code.strip():
         return 0, None
         
     code = coupon_code.strip().upper()
 
     # Rule: Per user max 1 time usage check via credit_transactions
-    if user_id:
+    if user_id and supabase:
         try:
             prev_usage = supabase.table("credit_transactions")\
                 .select("id")\
@@ -70,6 +66,9 @@ def validate_coupon_for_user(coupon_code: str, plan_id: str, user_id: str, supab
 
     if code == "VIP100":
         return 100, "VIP100"
+
+    if not supabase:
+        raise HTTPException(status_code=400, detail="डेटाबेस सेवा उपलब्ध नहीं है।")
 
     try:
         res = supabase.table("coupons").select("*").eq("code", code).eq("is_active", True).execute()
@@ -98,14 +97,14 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
     plan = PLANS[plan_id]
     credits_to_add = plan["credits"]
 
-    # Safe lookup of profile
     user_data = {}
-    try:
-        user_res = supabase.table("user_profiles").select("total_credits, plan_type, plan_expires_at").eq("id", user_id).execute()
-        if user_res.data and len(user_res.data) > 0:
-            user_data = user_res.data[0]
-    except Exception as e:
-        print(f"Profile lookup warning: {e}")
+    if supabase:
+        try:
+            user_res = supabase.table("user_profiles").select("total_credits, plan_type, plan_expires_at").eq("id", user_id).execute()
+            if user_res.data and len(user_res.data) > 0:
+                user_data = user_res.data[0]
+        except Exception as e:
+            print(f"Profile lookup warning: {e}")
     
     current_credits = user_data.get("total_credits", 0) or 0
     current_plan = (user_data.get("plan_type") or "free").lower()
@@ -165,7 +164,7 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
             "amount": final_amount / 100,
             "is_free": False,
             "gateway": "cashfree",
-            "app_id": CASHFREE_APP_ID,
+            "app_id": os.environ.get("CASHFREE_APP_ID", "").strip(),
             "applied_coupon": valid_code
         }
     else:
@@ -206,6 +205,9 @@ def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: s
     base_price = plan["amount"] / 100
     is_free_order = str(order_id).startswith("free_") or (coupon_code and coupon_code.upper() == "VIP100")
 
+    amount_paid = float(base_price)
+    discount_percent = 0
+
     if is_free_order:
         validate_coupon_for_user(coupon_code or "VIP100", plan_id, user_id, supabase)
         amount_paid = 0.0
@@ -215,84 +217,93 @@ def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: s
         verified_payment_id = payment_id or "VIP_COUPON"
     else:
         gateway = get_active_gateway(supabase)
-        if gateway == "razorpay" and RAZORPAY_KEY_SECRET and signature:
+        razorpay_secret = os.environ.get("RAZORPAY_KEY_SECRET", "").strip()
+        if gateway == "razorpay" and razorpay_secret and signature:
             msg = f"{order_id}|{payment_id}"
             expected_sig = hmac.new(
-                RAZORPAY_KEY_SECRET.encode(),
+                razorpay_secret.encode(),
                 msg.encode(),
                 hashlib.sha256
             ).hexdigest()
             if expected_sig != signature:
                 raise HTTPException(status_code=400, detail="भुगतान सत्यापन विफल रहा।")
 
-        amount_paid = float(base_price)
-        discount_percent = 0
-        payment_gateway = "razorpay"
+        # Calculate exact discounted amount paid if coupon applied
+        if coupon_code and coupon_code.strip():
+            try:
+                d_pct, _ = validate_coupon_for_user(coupon_code, plan_id, user_id, supabase)
+                discount_percent = d_pct
+                amount_paid = max(0.0, round(float(base_price) * (1 - (discount_percent / 100)), 2))
+            except Exception:
+                pass
+
+        payment_gateway = gateway
         transaction_type = "PURCHASE"
         verified_payment_id = payment_id or "PAY_SUCCESS"
 
     now = datetime.now(timezone.utc)
     current_credits = 0
     current_plan = "free"
-    current_expires_at = None
 
-    try:
-        user_res = supabase.table("user_profiles").select("total_credits, plan_type, plan_expires_at").eq("id", user_id).execute()
-        if user_res.data and len(user_res.data) > 0:
-            user_data = user_res.data[0]
-            current_credits = user_data.get("total_credits", 0) or 0
-            current_plan = (user_data.get("plan_type") or "free").lower()
-            current_expires_at = user_data.get("plan_expires_at")
-    except Exception as e:
-        print(f"Profile fetch warning: {e}")
+    if supabase:
+        try:
+            user_res = supabase.table("user_profiles").select("total_credits, plan_type, plan_expires_at").eq("id", user_id).execute()
+            if user_res.data and len(user_res.data) > 0:
+                user_data = user_res.data[0]
+                current_credits = user_data.get("total_credits", 0) or 0
+                current_plan = (user_data.get("plan_type") or "free").lower()
+        except Exception as e:
+            print(f"Profile fetch warning: {e}")
 
     # Rule: Credit stacking / carry-forward
     new_balance = min(MAX_CREDIT_CAP, current_credits + credits_to_add)
 
-    # Rule: Strict 30 days from purchase time (eliminates irrational future compounding)
+    # Rule: Strict 30 days from purchase time
     new_expiry = (now + timedelta(days=30)).isoformat()
     resulting_plan = "pro" if (plan_id == "pro" or current_plan == "pro") else "basic"
 
-    # 1. Update user_profiles
-    try:
-        supabase.table("user_profiles").update({
-            "plan_type": resulting_plan,
-            "total_credits": new_balance,
-            "plan_expires_at": new_expiry
-        }).eq("id", user_id).execute()
-    except Exception as ue:
-        print(f"Profile update warning: {ue}")
-
-    # 2. Record full audit trail in credit_transactions
-    try:
-        supabase.table("credit_transactions").insert({
-            "user_id": user_id,
-            "order_id": order_id,
-            "payment_id": verified_payment_id,
-            "amount_paid": amount_paid,
-            "original_price": base_price,
-            "discount_percent": discount_percent,
-            "coupon_code": coupon_code or ("VIP100" if is_free_order else ""),
-            "payment_gateway": payment_gateway,
-            "transaction_type": transaction_type,
-            "credits_added": credits_to_add,
-            "expires_at": new_expiry,
-            "plan_name": plan["name"],
-            "status": "success"
-        }).execute()
-    except Exception as te:
-        print(f"Transaction log insert warning: {te}")
-
-    # 3. Update coupon count if applicable
-    if coupon_code and not is_free_order:
+    if supabase:
+        # 1. Update user_profiles
         try:
-            code_upper = coupon_code.strip().upper()
-            c_row = supabase.table("coupons").select("used_count").eq("code", code_upper).limit(1).execute()
-            if c_row.data and len(c_row.data) > 0:
-                new_count = (c_row.data[0].get("used_count") or 0) + 1
-                supabase.table("coupons").update({"used_count": new_count}).eq("code", code_upper).execute()
-        except Exception:
-            pass
+            supabase.table("user_profiles").update({
+                "plan_type": resulting_plan,
+                "total_credits": new_balance,
+                "plan_expires_at": new_expiry,
+                "updated_at": now.isoformat()
+            }).eq("id", user_id).execute()
+        except Exception as ue:
+            print(f"Profile update warning: {ue}")
+
+        # 2. Record full audit trail in credit_transactions
+        try:
+            supabase.table("credit_transactions").insert({
+                "user_id": user_id,
+                "order_id": order_id,
+                "payment_id": verified_payment_id,
+                "amount_paid": amount_paid,
+                "original_price": base_price,
+                "discount_percent": discount_percent,
+                "coupon_code": coupon_code or ("VIP100" if is_free_order else ""),
+                "payment_gateway": payment_gateway,
+                "transaction_type": transaction_type,
+                "credits_added": credits_to_add,
+                "expires_at": new_expiry,
+                "plan_name": plan["name"],
+                "status": "success"
+            }).execute()
+        except Exception as te:
+            print(f"Transaction log insert warning: {te}")
+
+        # 3. Update coupon usage count in coupons table
+        if coupon_code:
+            try:
+                code_upper = coupon_code.strip().upper()
+                c_row = supabase.table("coupons").select("used_count").eq("code", code_upper).limit(1).execute()
+                if c_row.data and len(c_row.data) > 0:
+                    new_count = (c_row.data[0].get("used_count") or 0) + 1
+                    supabase.table("coupons").update({"used_count": new_count}).eq("code", code_upper).execute()
+            except Exception as ce:
+                print(f"Coupon count update warning: {ce}")
 
     return {
         "status": "success",
