@@ -1,5 +1,5 @@
-// Agri Mitra - Legal Compliance, Terms, Disclaimer & Policies (Gateway Neutral & Legally Fortified)
-const policyDocs = {
+// Agri Mitra - Legal Compliance, Terms, Disclaimer & Policies
+window.policyDocs = {
     terms: `
         <div style="line-height:1.6; color:#1e293b;">
             <h4 style="color:#008069; margin-bottom:8px; font-weight:700; font-size:15px;">नियम एवं सेवा शर्तें (Terms & Conditions)</h4>
@@ -29,7 +29,7 @@ const policyDocs = {
     privacy: `
         <div style="line-height:1.6; color:#1e293b;">
             <h4 style="color:#008069; margin-bottom:8px; font-weight:700; font-size:15px;">गोपनीयता नीति (Privacy Policy)</h4>
-            <p style="margin-bottom:8px;"><b>1. एकत्र की जाने वाली जानकारी:</b> Google प्रमाणीकरण के माध्यम से हम केवल आपका सार्वजनिक प्रोफ़ाइल नाम, ईमेल आईडी एवं अवतार सुरक्षित रखते हैं जो केवल खाता संचालन और बिलing ऑडिट हेतु अनिवार्य है।</p>
+            <p style="margin-bottom:8px;"><b>1. एकत्र की जाने वाली जानकारी:</b> Google प्रमाणीकरण के माध्यम से हम केवल आपका सार्वजनिक प्रोफ़ाइल नाम, ईमेल आईडी एवं अवतार सुरक्षित रखते हैं जो केवल खाता संचालन और बिलिंग ऑडिट हेतु अनिवार्य है।</p>
             <p style="margin-bottom:8px;"><b>2. स्थानीय डेटा सुरक्षा (24-Hour Local Rolling Deletion):</b> उपयोगकर्ताओं द्वारा पूछे गए प्रश्न और चैट हमारे सर्वर पर स्थायी रूप से संग्रहित नहीं होते। वे आपके डिवाइस ब्राउज़र में अधिकतम 24 घंटे के लिए सुरक्षित रहते हैं और उसके उपरांत स्वतः निष्कासित हो जाते हैं।</p>
             <p style="margin-bottom:8px;"><b>3. वित्तीय सुरक्षा (Bank-Grade Gateway Security):</b> कार्ड, नेटबैंकिंग अथवा यूपीआई के माध्यम से होने वाले समस्त वित्तीय लेन-देन आरबीआई (RBI) द्वारा प्रमाणित एवं अधिकृत सुरक्षित पेमेंट गेटवे पार्टनर्स पर 256-बिट एनक्रिप्शन के साथ प्रोसेस होते हैं। आपका बैंकिंग पिन अथवा पासवर्ड कभी भी हमारे प्लेटफॉर्म पर स्टोर नहीं किया जाता।</p>
             <p>हम आपकी निजी जानकारी को कभी भी किसी तीसरे पक्ष को न बेचते हैं और न ही विपणन हेतु साझा करते हैं।</p>
