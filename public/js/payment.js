@@ -11,7 +11,7 @@ function loadExternalScript(src) {
 
 function handleSelectPlan(planId) {
     if (planId === 'basic' && currentUserPlan === 'pro' && isUserPaidActive) {
-        alert('आपका Pro प्लान अभी सक्रिय है! बेसिक प्लान केवल प्रो समाप्त होने पर ही लिया जा सकता है।');
+        alert('आपका Pro प्लान अभी सक्रिय है! बेसिक प्लान केवल प्रो समाप्त होने के बाद ही लिया जा सकता है।');
         return;
     }
     initiatePayment(planId);
@@ -56,25 +56,20 @@ function proceedPendingQuery() {
     }
 }
 
-/* On-demand Lazy Loading for policies.js */
 async function switchTab(t) {
     document.querySelectorAll('#policyView .pill-choice-btn').forEach(b => b.classList.remove('active'));
     const btn = document.getElementById('btn-' + t);
     if (btn) btn.classList.add('active');
     
-    // Live URL update without full reload
     if (window.location.pathname !== '/' + t) {
         history.replaceState({ path: '/' + t }, '', '/' + t);
     }
 
-    // Lazy load policies.js only when policy screen is clicked
     if (typeof policyDocs === 'undefined') {
         showSpinner("नीतियां लोड हो रही हैं...");
         try {
             await loadExternalScript('/policies.js');
-        } catch(e) {
-            console.warn("policies.js load issue:", e);
-        }
+        } catch(e) {}
         hideSpinner();
     }
 
@@ -86,7 +81,8 @@ async function switchTab(t) {
     }
 }
 
-function applyCouponFeedback() {
+// Client-side quick feedback for coupon entry
+async function applyCouponFeedback() {
     const val = (document.getElementById('couponInput').value || '').trim().toUpperCase();
     const msgEl = document.getElementById('couponFeedbackMsg');
     if (!msgEl) return;
@@ -97,14 +93,39 @@ function applyCouponFeedback() {
         msgEl.textContent = 'कृपया कूपन कोड दर्ज करें।';
         return;
     }
+
+    if (!currentUser) {
+        msgEl.style.display = 'block';
+        msgEl.style.color = '#dc2626';
+        msgEl.textContent = 'कृपया पहले साइन इन करें।';
+        return;
+    }
+
+    // Check if user already used this coupon
+    try {
+        const { data: usedTxs } = await supabaseClient
+            .from('credit_transactions')
+            .select('id')
+            .eq('user_id', currentUser.id)
+            .eq('coupon_code', val)
+            .limit(1);
+
+        if (usedTxs && usedTxs.length > 0) {
+            msgEl.style.display = 'block';
+            msgEl.style.color = '#dc2626';
+            msgEl.textContent = '❌ यह कूपन आप पहले ही उपयोग कर चुके हैं (Only 1 time use)।';
+            return;
+        }
+    } catch(e) {}
+
     if (val === 'VIP100') {
         msgEl.style.display = 'block';
         msgEl.style.color = '#15803d';
-        msgEl.textContent = '✓ VIP100 लागू: 100% निःशुल्क सक्रियण!';
+        msgEl.textContent = '✓ VIP100 मान्य: 100% निःशुल्क सक्रियण! नीचे कोई भी प्लान चुनें।';
     } else {
         msgEl.style.display = 'block';
         msgEl.style.color = '#008069';
-        msgEl.textContent = `कोड "${val}" दर्ज हुआ। प्लान चुनने पर स्वतः लागू होगा।`;
+        msgEl.textContent = `कोड "${val}" दर्ज हुआ। प्लान चुनने पर स्वतः छूट लागू होगी।`;
     }
 }
 
@@ -184,7 +205,7 @@ async function initiatePayment(planId) {
 
         const ordData = await ordRes.json();
         
-        // Close payment view smoothly
+        // Close payment sliding view
         const payView = document.getElementById('paymentView');
         if (payView) payView.classList.remove('active');
 
@@ -204,7 +225,7 @@ async function initiatePayment(planId) {
                 })
             });
             hideSpinner();
-            
+
             if (!vRes.ok) {
                 let errDetail = `सत्यापन विफल (${vRes.status})`;
                 try {
@@ -214,14 +235,14 @@ async function initiatePayment(planId) {
                     const txt = await vRes.text();
                     errDetail = txt || errDetail;
                 }
-                alert("कूपन सक्रियण त्रुटि: " + errDetail);
+                alert(errDetail);
                 return;
             }
 
             const vData = await vRes.json();
             if (vData.status === 'success') {
                 triggerPaymentSuccess(vData.credits_added, vData.new_balance, vData.plan_expires_at, planId);
-                await fetchStats();
+                if (typeof fetchStats === 'function') await fetchStats();
             }
             return;
         }
@@ -253,14 +274,14 @@ async function initiatePayment(planId) {
                     hideSpinner();
 
                     if (!vRes.ok) {
-                        alert("भुगतान सफल रहा पर खाते में क्रेडिट जोड़ने में समस्या आई। सपोर्ट से संपर्क करें।");
+                        alert("भुगतान सफल रहा पर खाते में क्रेडिट जोड़ने में समस्या आई। सहायता टीम से संपर्क करें।");
                         return;
                     }
 
                     const vData = await vRes.json();
                     if (vData.status === 'success') {
                         triggerPaymentSuccess(vData.credits_added, vData.new_balance, vData.plan_expires_at, planId);
-                        await fetchStats();
+                        if (typeof fetchStats === 'function') await fetchStats();
                     }
                 },
                 prefill: {
@@ -287,7 +308,6 @@ async function initiatePayment(planId) {
 
 /* Premium Success Celebration with Confetti & 0 -> X Rolling Counter */
 function triggerPaymentSuccess(creditsAdded, newBalance, planExpiry, planId) {
-    // 1. Confetti Animation
     loadExternalScript('https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js').then(() => {
         confetti({ particleCount: 140, spread: 85, origin: { y: 0.6 } });
     }).catch(() => {});
@@ -297,7 +317,6 @@ function triggerPaymentSuccess(creditsAdded, newBalance, planExpiry, planId) {
 
     successModal.style.display = 'flex';
 
-    // 2. Clear Values Update
     const balEl = document.getElementById('successNewBalance');
     if (balEl) balEl.textContent = `${newBalance} क्रेडिट्स`;
 
@@ -318,20 +337,20 @@ function triggerPaymentSuccess(creditsAdded, newBalance, planExpiry, planId) {
         } else {
             featEl.innerHTML = `
                 ✓ 100 कृषि सलाह प्रश्न परामर्श<br>
-                ✓ प्रामाणिक वीडियो संदर्भ लाइब्रेरी एक्सेस<br>
+                ✓ प्रामाणic वीडियो संदर्भ लाइब्रेरी एक्सेस<br>
                 ✓ फसल फोटो / पत्ती रोग प्राथमिक जांच<br>
                 ✓ 24x7 डिजिटल कृषि सहायता
             `;
         }
     }
 
-    // 3. Smooth Rolling Counter (0 -> creditsAdded)
+    // Smooth Rolling Counter (0 -> creditsAdded)
     const rollCountEl = document.getElementById('creditRollCount');
     if (rollCountEl) {
         rollCountEl.textContent = '+0';
         let current = 0;
         const target = Number(creditsAdded) || 100;
-        const duration = 1200; // 1.2 seconds total roll
+        const duration = 1200;
         const stepTime = 25; 
         const totalSteps = duration / stepTime;
         const increment = Math.max(1, Math.ceil(target / totalSteps));
