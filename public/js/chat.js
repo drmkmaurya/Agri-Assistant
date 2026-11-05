@@ -59,13 +59,6 @@ window.renderRoute = function(path) {
 };
 
 window.addEventListener('popstate', (e) => {
-    // Agar video modal open hai to pehle video modal band karein
-    const ytModal = document.getElementById('ytVideoModal');
-    if (ytModal && ytModal.style.display === 'flex') {
-        closeYtModal();
-        return;
-    }
-
     const currentPath = window.location.pathname;
 
     if (currentPath === '/') {
@@ -83,7 +76,6 @@ window.addEventListener('popstate', (e) => {
     }
 });
 
-// Initial Page Load / Refresh handle karein
 window.addEventListener('DOMContentLoaded', () => {
     const initialPath = window.location.pathname;
     if (initialPath !== '/') {
@@ -146,7 +138,6 @@ function restoreDraftMessage() {
     } catch(e) {}
 }
 
-/* Safe Composer Action: Text type hone par hi send karega, mic par nahi */
 function handleComposerAction() {
     const text = document.getElementById('msgField').value.trim();
     if (text.length > 0) {
@@ -156,7 +147,7 @@ function handleComposerAction() {
     }
 }
 
-/* Voice Dictation (Only Types Text, Never Auto-submits) */
+/* Voice Dictation */
 let waveAnimationTimer = null;
 function toggleVoiceDictation() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -230,7 +221,6 @@ function stopVoiceWave() {
     if (waveBar) waveBar.classList.remove('active');
 }
 
-/* Natural Speech Synthesis */
 function speakText(btn, textToRead) {
     if (!('speechSynthesis' in window)) {
         showToast('स्पीच सिंथेसिस समर्थित नहीं है।');
@@ -260,7 +250,6 @@ function speakText(btn, textToRead) {
     window.speechSynthesis.speak(utter);
 }
 
-/* Copy Only Pure Advice */
 function handleCopyClick(btn) {
     const bubble = btn.closest('.bot-bubble');
     if (!bubble) return;
@@ -275,7 +264,6 @@ function handleCopyClick(btn) {
     navigator.clipboard.writeText(raw).then(() => showToast('सलाह कॉपी हो गई!'));
 }
 
-/* WhatsApp Share Filtered Clean Text */
 function handleWhatsAppClick(btn) {
     const bubble = btn.closest('.bot-bubble');
     if (!bubble) return;
@@ -380,7 +368,7 @@ function cleanUrlParameters() {
 function triggerAttachmentPicker() {
     if (!isUserPaidActive) {
         showToast('🔒 फोटो जांच केवल Basic/Pro प्लान में उपलब्ध है।');
-        openViewWithHistory('paymentView');
+        navigateTo('/pricing');
         return;
     }
     document.getElementById('fileInput').click();
@@ -450,7 +438,6 @@ function removeAttachment() {
     document.getElementById('attachmentChip').style.display = 'none';
 }
 
-/* Click on Suggested Question */
 function askQuickChip(questionText) {
     clearFloatingSuggestions();
     document.getElementById('msgField').value = questionText;
@@ -494,7 +481,6 @@ function updateDateDivider() {
     document.getElementById('todayDateDivider').textContent = 'आज';
 }
 
-/* User Bubble with Real Thumbnail Images */
 function renderUserBubbleDirect(textHtml, time, imagePreviews = []) {
     const rowId = 'usr-' + Date.now();
     let imgHtml = '';
@@ -521,7 +507,6 @@ function renderUserBubbleDirect(textHtml, time, imagePreviews = []) {
     return rowId;
 }
 
-/* Bot Bubble with Dynamic Credit Badge (0 on error, 1 on success) */
 function renderBotBubbleDirect(innerHtml, time, isLatest = false, rawForSpeech = '', isError = false) {
     if (currentActiveActionBar && currentActiveActionBar.parentNode) {
         currentActiveActionBar.remove();
@@ -569,7 +554,6 @@ function renderBotBubbleDirect(innerHtml, time, isLatest = false, rawForSpeech =
     toBottom();
 }
 
-/* Render Suggested Questions Outside the Bubble */
 function renderFloatingSuggestions(questions = []) {
     clearFloatingSuggestions();
     if (!questions || !questions.length) return;
@@ -584,7 +568,6 @@ function renderFloatingSuggestions(questions = []) {
     toBottom();
 }
 
-/* Modal Triggers */
 function closeZeroCreditModal() {
     document.getElementById('zeroCreditModal').style.display = 'none';
 }
@@ -602,94 +585,6 @@ function proceedPendingQuery() {
     }
 }
 
-/* =========================================================
-   YOUTUBE IN-APP CLIP PLAYER ENGINE (WhatsApp Style Popup)
-   ========================================================= */
-
-/* Helper: "13:50", "01:15:30", ya seconds string ko integer seconds me convert kare */
-function parseTimestampToSeconds(val) {
-    if (typeof val === 'number') return Math.floor(val);
-    if (!val) return 0;
-    const str = String(val).trim();
-    if (!str.includes(':')) {
-        const parsed = parseInt(str, 10);
-        return isNaN(parsed) ? 0 : parsed;
-    }
-    const parts = str.split(':').map(p => parseInt(p, 10) || 0);
-    if (parts.length === 2) {
-        return (parts[0] * 60) + parts[1];
-    } else if (parts.length === 3) {
-        return (parts[0] * 3600) + (parts[1] * 60) + parts[2];
-    }
-    return 0;
-}
-
-/* Helper: YouTube Video ID extract kare (URL ya direct ID se) */
-function extractYtVideoId(urlOrId) {
-    if (!urlOrId) return 'LxJ4lmW9x7U';
-    const trimmed = String(urlOrId).trim();
-    if (trimmed.length === 11 && !trimmed.includes('/') && !trimmed.includes('.') && !trimmed.includes('?')) {
-        return trimmed;
-    }
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = trimmed.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : trimmed;
-}
-
-/* Open YouTube In-App Clip Modal */
-window.openYtClipModal = function(urlOrId, encodedTitle, startTime, endTime) {
-    const videoId = extractYtVideoId(urlOrId);
-    const startSec = parseTimestampToSeconds(startTime);
-    const endSec = parseTimestampToSeconds(endTime);
-
-    // YouTube Embed Parameters with strict origin & playsinline
-    let embedSrc = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1`;
-    if (startSec > 0) embedSrc += `&start=${startSec}`;
-    if (endSec > startSec) embedSrc += `&end=${endSec}`;
-
-    let titleText = 'संदर्भ वीडियो क्लिप';
-    try {
-        titleText = decodeURIComponent(encodedTitle || titleText);
-    } catch(e) {
-        titleText = encodedTitle || titleText;
-    }
-
-    const titleEl = document.getElementById('ytModalTitle');
-    const timeEl = document.getElementById('ytModalTime');
-    const directLinkEl = document.getElementById('ytOpenDirectLink');
-    const iframe = document.getElementById('ytIframePlayer');
-    const modal = document.getElementById('ytVideoModal');
-
-    if (titleEl) titleEl.textContent = titleText;
-    if (timeEl) {
-        timeEl.textContent = (startTime && endTime) ? `समय: ${startTime} - ${endTime}` : `प्रारंभ: ${startTime || '00:00'}`;
-    }
-
-    // Direct YouTube link fallback
-    let directUrl = `https://www.youtube.com/watch?v=${videoId}`;
-    if (startSec > 0) directUrl += `&t=${startSec}s`;
-    if (directLinkEl) directLinkEl.href = directUrl;
-
-    if (iframe) iframe.src = embedSrc;
-    if (modal) modal.style.display = 'flex';
-};
-
-/* Close YouTube Modal and instantly cease playback */
-window.closeYtModal = function() {
-    const modal = document.getElementById('ytVideoModal');
-    const iframe = document.getElementById('ytIframePlayer');
-    if (modal) modal.style.display = 'none';
-    if (iframe) iframe.src = '';
-};
-
-/* Click outside modal sheet to close */
-window.handleYtBackdropClick = function(event) {
-    if (event.target && event.target.id === 'ytVideoModal') {
-        closeYtModal();
-    }
-};
-
-/* Submit Message Handler */
 async function submitMessage(customTxt) {
     const field = document.getElementById('msgField');
     const text = (customTxt || field.value).trim();
@@ -701,7 +596,6 @@ async function submitMessage(customTxt) {
     const attachCount = selectedAttachments.length;
     const creditsNeeded = 1 + Math.min(2, attachCount);
 
-    // Read image data for local preview thumbnail
     const imagePreviews = [];
     if (selectedAttachments.length > 0) {
         showSpinner("फोटो अपलोड हो रही है...");
@@ -746,6 +640,48 @@ async function submitMessage(customTxt) {
     executeSubmit(text, attachCount, imagePreviews);
 }
 
+/* In-App WhatsApp-style YouTube Clip Popup */
+function openVideoClipPopup(videoUrl, title, duration) {
+    const modal = document.getElementById('whatsappVideoModal');
+    const iframe = document.getElementById('popupIframe');
+    const titleEl = document.getElementById('modalClipTitle');
+    const timeEl = document.getElementById('modalClipTime');
+    const durEl = document.getElementById('modalClipDuration');
+    const ytLink = document.getElementById('modalYtDirectLink');
+
+    if (!modal || !iframe) {
+        window.open(videoUrl, '_blank');
+        return;
+    }
+
+    titleEl.textContent = title || 'संदर्भ वीडियो क्लिप';
+    durEl.textContent = duration ? `${duration} क्लिप` : 'क्लिप';
+    timeEl.textContent = duration || '00:00';
+    ytLink.href = videoUrl;
+
+    let videoId = 'LxJ4lmW9x7U';
+    let startSec = 0;
+
+    try {
+        const urlObj = new URL(videoUrl);
+        videoId = urlObj.searchParams.get('v') || videoId;
+        const tParam = urlObj.searchParams.get('t') || '0s';
+        startSec = parseInt(tParam.replace('s', ''), 10) || 0;
+    } catch(e) {}
+
+    const embedUrl = `https://www.youtube.com/embed/${videoId}?start=${startSec}&autoplay=1&playsinline=1&rel=0&modestbranding=1`;
+    iframe.src = embedUrl;
+
+    modal.style.display = 'flex';
+}
+
+function closePopupPlayer() {
+    const modal = document.getElementById('whatsappVideoModal');
+    const iframe = document.getElementById('popupIframe');
+    if (iframe) iframe.src = '';
+    if (modal) modal.style.display = 'none';
+}
+
 async function executeSubmit(text, attachCount, imagePreviews = []) {
     const time = nowTime();
     const safeUserText = text ? text.replace(/\n/g, '<br>') : '';
@@ -764,7 +700,6 @@ async function executeSubmit(text, attachCount, imagePreviews = []) {
     try {
         const res = await apiRequest('/ask', {
             method: 'POST',
-            headers: { 'Content- honesty-Type': 'application/json' },
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 query: text, 
@@ -787,7 +722,6 @@ async function executeSubmit(text, attachCount, imagePreviews = []) {
         let rawText = data.answer.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
         let finalContent = '<div>' + rawText + '</div>';
 
-        // Horizontal Swipeable Carousel with WhatsApp In-App Modal Triggers
         if (data.sources && data.sources.length > 0) {
             finalContent += `
                 <div class="sources-carousel-title">
@@ -797,23 +731,10 @@ async function executeSubmit(text, attachCount, imagePreviews = []) {
                     <span class="carousel-hint">स्वाइप करें →</span>
                 </div>
                 <div class="sources-carousel">`;
-            
             data.sources.forEach(s => {
-                let start = s.start_time || '00:00';
-                let end = s.end_time || '';
-                if (!end && s.duration && s.duration.includes('-')) {
-                    const parts = s.duration.split('-');
-                    start = parts[0].trim();
-                    end = parts[1].trim();
-                } else if (!s.duration && start) {
-                    s.duration = end ? `${start} - ${end}` : start;
-                }
-
-                const safeVideoId = s.video_id || s.video_url || 'LxJ4lmW9x7U';
-                const safeTitle = encodeURIComponent(s.title || 'कृषि वीडियो क्लिप');
-
+                const escapedTitle = (s.title || '').replace(/'/g, "\\'");
                 finalContent += `
-                    <div class="clip-carousel-card" onclick="openYtClipModal('${safeVideoId}', '${safeTitle}', '${start}', '${end}')">
+                    <div onclick="openVideoClipPopup('${s.video_url}', '${escapedTitle}', '${s.duration || '00:00'}')" class="clip-carousel-card" style="cursor:pointer;">
                         <div>
                             <div class="clip-c-header">
                                 <span><i class="fa-solid fa-play" style="font-size:9px;"></i> ${s.duration || '00:00'}</span>
@@ -822,7 +743,7 @@ async function executeSubmit(text, attachCount, imagePreviews = []) {
                             <div class="clip-c-title">${s.title}</div>
                             <div class="clip-c-summary">${s.summary || s.title}</div>
                         </div>
-                        <div class="clip-c-link">क्लिप देखें <i class="fa-solid fa-arrow-right" style="font-size:8px;"></i></div>
+                        <div class="clip-c-link">क्लिप देखें <i class="fa-solid fa-play" style="font-size:8px;"></i></div>
                     </div>`;
             });
             finalContent += '</div>';
@@ -831,7 +752,6 @@ async function executeSubmit(text, attachCount, imagePreviews = []) {
         renderBotBubbleDirect(finalContent, nowTime(), true, data.answer, false);
         queueSaveLocalMessage('bot', finalContent, nowTime(), data.answer);
 
-        // Render Floating Suggestions OUTSIDE the Bubble
         const followups = [
             "इसका छिड़काव किस समय करना सही रहेगा?",
             "प्रति एकड़ कितनी मात्रा में उपयोग करें?",
@@ -846,7 +766,6 @@ async function executeSubmit(text, attachCount, imagePreviews = []) {
     toBottom();
 }
 
-/* Load Daily Stories (Champions) */
 async function loadDailyStories() {
     const container = document.getElementById('storiesListContainer');
     if (!container) return;
