@@ -1,4 +1,5 @@
 import os
+import re
 from google import genai
 from google.genai import types
 from supabase import create_client, Client
@@ -10,18 +11,45 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if (SUPABASE_URL and SUPABASE_KEY) else None
 client: genai.Client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
+AGRI_KEYWORDS = [
+    "kheti", "fasal", "mitti", "keet", "khad", "jeevamrut", "beej", "rog", "spray", "dhan", "gehun", 
+    "chana", "sarson", "kisan", "krishi", "khet", "urja", "paudh", "organic", "neemastra", "brahmastra", 
+    "fungus", "blight", "pashupalan", "gay", "goban", "gomutra", "sinchai", "crop", "pest", "soil",
+    "fertilizer", "seed", "farming", "agriculture", "plant", "disease", "dairy", "cow", "harvest",
+    "खेती", "फसल", "मिट्टी", "कीट", "खाद", "जीवामृत", "बीज", "रोग", "छिड़काव", "धान", "गेहूं", "चना",
+    "सरसों", "किसान", "कृषि", "खेत", "ऊर्जा जल", "पौध", "जैविक", "नीमास्त्र", "ब्रह्मास्त्र", "फंगस",
+    "झुलसा", "पशुपालन", "गाय", "गोबर", "गोमूत्र", "सिंचाई", "इल्ली", "सुंडी", "दीमक", "फल", "सब्जी"
+]
+
 def is_agricultural_intent(query: str) -> bool:
     q = query.strip().lower()
     greetings = ["hello", "hi", "namaste", "pranam", "hey", "नमस्ते", "प्रणाम", "राम राम", "shukriya", "dhanyawad", "thank you", "thanks"]
-    if q in greetings or len(q) < 4:
+    if q in greetings or len(q) < 3:
         return False
     return True
+
+def is_within_agricultural_domain(query: str) -> bool:
+    q = query.strip().lower()
+    for kw in AGRI_KEYWORDS:
+        if kw in q:
+            return True
+    return False
 
 def generate_rag_answer(user_query: str, language: str = "hi", allow_web_search: bool = False, context_summary: str = "") -> tuple[str, list]:
     sources = []
     context_text = ""
     
-    # Intent-check: Only search video vector library when actual agri question is asked
+    # 1. Strict Out-of-Domain Guardrail Check
+    if is_agricultural_intent(user_query) and not is_within_agricultural_domain(user_query):
+        # Allow short or contextual queries if user previously talked about agriculture
+        if not context_summary or len(user_query) > 20:
+            if language == "en":
+                out_of_domain_reply = "I apologize, farmer friend. I am specifically designed to assist only with organic/natural agriculture, crop protection, soil health, and livestock questions. Please ask a farming-related query."
+            else:
+                out_of_domain_reply = "क्षमा करें किसान भाई, मैं केवल प्राकृतिक व जैविक कृषि, फसल सुरक्षा, मिट्टी की सेहत और पशुपालन संबंधी प्रश्नों में ही सहायता कर सकता हूँ। कृपया खेती-किसानी से जुड़ा कोई प्रश्न पूछें।"
+            return out_of_domain_reply, []
+
+    # 2. Intent-check: Only search video vector library when actual agri question is asked
     if is_agricultural_intent(user_query) and client and supabase:
         try:
             emb_res = client.models.embed_content(
@@ -56,9 +84,18 @@ def generate_rag_answer(user_query: str, language: str = "hi", allow_web_search:
 
     memory_prompt_part = f"\nUser Previous Context / Crop History:\n{context_summary}\n" if context_summary else ""
 
-    system_prompt = f"""You are Agri Mitra (कृषि मित्र), an authentic and expert agricultural advisor.
+    system_prompt = f"""You are Agri Mitra (कृषि मित्र), an authentic and expert agricultural advisor specializing in organic, natural (Subhash Palekar Natural Farming/TCBT), and sustainable agriculture.
 {lang_instruction}
-Deliver practical, grounded, point-by-point advice in 3 to 4 clear bullet points matching the user's intent. Do not pad with unnecessary introductions.
+
+STRICT DOMAIN POLICY:
+If the user's question is completely unrelated to farming, agriculture, plants, soil, crops, livestock, organic solutions, or weather impact on farming, politely refuse by saying:
+"क्षमा करें किसान भाई, मैं केवल प्राकृतिक व जैविक कृषि, फसल सुरक्षा और पशुपालन संबंधी प्रश्नों में ही सहायता कर सकता हूँ।"
+Do not answer questions about politics, cinema, cricket, competitive exams, coding, or general gossip.
+
+CONTENT DELIVERY:
+- Deliver practical, grounded, point-by-point advice in 3 to 4 clear bullet points matching the user's agricultural intent.
+- Do not pad with unnecessary introductions.
+- Mention specific preparation dosages (e.g., in a 15L spray pump or per acre) and the right application time (e.g., evening hours).
 {memory_prompt_part}
 Context from video transcript library:
 {context_text if context_text else 'No direct library context available. Give standard organic/natural agriculture principles.'}
