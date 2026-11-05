@@ -33,22 +33,73 @@ async function apiRequest(endpoint, options = {}) {
     return res;
 }
 
-/* Format Date without "IST" (e.g. 01 Dec 2026, 01:29 AM) */
-function formatCleanDate(isoStr) {
-    if (!isoStr) return 'Active';
-    const d = new Date(isoStr);
-    const day = String(d.getDate()).padStart(2, '0');
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const month = months[d.getMonth()];
-    const year = d.getFullYear();
-    let hours = d.getHours();
-    const minutes = String(d.getMinutes()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12;
-    hours = hours ? hours : 12;
-    const strTime = `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
-    return `${day} ${month} ${year}, ${strTime}`;
+/* Format Date with Date First and Time Below (e.g. 05 Nov 2026<br><small>07:30 PM</small>) */
+function formatCleanDateTime(isoStr) {
+    if (!isoStr) return '30 दिन';
+    try {
+        const d = new Date(isoStr);
+        if (isNaN(d.getTime())) return '30 दिन';
+        
+        const day = String(d.getDate()).padStart(2, '0');
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const month = months[d.getMonth()];
+        const year = d.getFullYear();
+        
+        let hours = d.getHours();
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        const strTime = `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
+        
+        return `${day} ${month} ${year}<br><span style="font-size:10px; color:#64748b; font-weight:500;">${strTime}</span>`;
+    } catch(e) {
+        return '30 दिन';
+    }
 }
+
+function formatCleanDate(isoStr) {
+    if (!isoStr) return '30 दिन';
+    try {
+        const d = new Date(isoStr);
+        if (isNaN(d.getTime())) return '30 दिन';
+        const day = String(d.getDate()).padStart(2, '0');
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const month = months[d.getMonth()];
+        const year = d.getFullYear();
+        let hours = d.getHours();
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        return `${day} ${month} ${year}, ${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
+    } catch(e) {
+        return '30 दिन';
+    }
+}
+
+/* Network Status Indicator Engine */
+function updateNetworkStatus(status) {
+    const dot = document.getElementById('liveStatusDot');
+    const txt = document.getElementById('liveStatusText');
+    if (!dot || !txt) return;
+
+    dot.classList.remove('online', 'connecting', 'offline');
+
+    if (status === 'online') {
+        dot.classList.add('online');
+        txt.textContent = 'कनेक्टेड';
+    } else if (status === 'offline') {
+        dot.classList.add('offline');
+        txt.textContent = 'ऑफलाइन';
+    } else {
+        dot.classList.add('connecting');
+        txt.textContent = 'कनेक्ट हो रहे हैं...';
+    }
+}
+
+window.addEventListener('online', () => updateNetworkStatus('online'));
+window.addEventListener('offline', () => updateNetworkStatus('offline'));
 
 async function loginWithGoogle() {
     showSpinner("Google से कनेक्ट हो रहे हैं...");
@@ -81,7 +132,6 @@ async function signOutUser() {
 }
 
 async function fetchStats() {
-    // 1. Session check
     if (!currentUser) {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session && session.user) {
@@ -96,19 +146,19 @@ async function fetchStats() {
         let plan = 'free';
         let planExpiresAt = null;
         let dataLoaded = false;
+        let superControl = null;
 
         const userEmail = currentUser.email || '';
         const userId = currentUser.id || '';
 
-        // 2. Direct Supabase Query using .from() (NOT .table())
+        // 1. Direct Supabase Query
         try {
             let dbUser = null;
-
-            if (userEmail) {
+            if (userId) {
                 const { data, error } = await supabaseClient
                     .from('user_profiles')
                     .select('total_credits, plan_type, plan_expires_at')
-                    .eq('email', userEmail)
+                    .eq('id', userId)
                     .limit(1);
 
                 if (!error && data && data.length > 0) {
@@ -116,12 +166,11 @@ async function fetchStats() {
                 }
             }
 
-            // Fallback match by UUID if email check didn't return
-            if (!dbUser && userId) {
+            if (!dbUser && userEmail) {
                 const { data, error } = await supabaseClient
                     .from('user_profiles')
                     .select('total_credits, plan_type, plan_expires_at')
-                    .eq('id', userId)
+                    .eq('email', userEmail)
                     .limit(1);
 
                 if (!error && data && data.length > 0) {
@@ -136,11 +185,11 @@ async function fetchStats() {
                 dataLoaded = true;
             }
         } catch (e) {
-            console.warn("Direct DB fetch error:", e);
+            console.warn("Direct DB fetch warning:", e);
         }
 
-        // 3. Fallback to Server API if Direct Query did not return
-        if (!dataLoaded) {
+        // 2. Fallback to /user-stats
+        if (!dataLoaded || !superControl) {
             try {
                 const queryParams = new URLSearchParams({
                     user_id: userId,
@@ -154,10 +203,11 @@ async function fetchStats() {
                     total = Number(data.total_credits) || 0;
                     plan = (data.plan_type || 'free').toLowerCase();
                     planExpiresAt = data.plan_expires_at;
+                    superControl = data.super_control || null;
                     dataLoaded = true;
                 }
             } catch (e) {
-                console.warn("API fallback error:", e);
+                console.warn("API fallback warning:", e);
             }
         }
 
@@ -165,31 +215,38 @@ async function fetchStats() {
         isUserPaidActive = (plan === 'basic' || plan === 'pro');
         window.cachedTotalCredits = total;
 
-        // Homescreen Badge (Live Balance Render)
+        // Header Live Credit Badge
         const ringBadge = document.getElementById('ringBadge');
-        if (ringBadge) {
-            ringBadge.textContent = String(total);
+        if (ringBadge) ringBadge.textContent = String(total);
+
+        // Header Dynamic PRO/BASIC Badge
+        const headerBadge = document.getElementById('headerPlanBadge');
+        if (headerBadge) {
+            headerBadge.className = 'plan-header-badge';
+            if (plan === 'pro') {
+                headerBadge.classList.add('pro');
+                headerBadge.textContent = 'PRO';
+            } else if (plan === 'basic') {
+                headerBadge.classList.add('basic');
+                headerBadge.textContent = 'BASIC';
+            } else {
+                headerBadge.textContent = '';
+            }
         }
 
-        // Menu Texts
-        const planNameEl = document.getElementById('userPlanName');
-        if (planNameEl) {
-            const planDisplay = isUserPaidActive ? plan.toUpperCase() : 'FREE';
-            planNameEl.textContent = 'Plan : ' + planDisplay;
-        }
-        
-        const quotaSummaryEl = document.getElementById('quotaSummary');
-        if (quotaSummaryEl) {
-            quotaSummaryEl.textContent = `Available Credits : ${total}`;
-        }
-        
-        const planExpiryEl = document.getElementById('planExpiryText');
-        if (planExpiryEl) {
-            if (planExpiresAt) {
-                planExpiryEl.textContent = 'Valid till : ' + formatCleanDate(planExpiresAt);
-            } else {
-                planExpiryEl.textContent = 'Valid till : 30 Days';
-            }
+        // Dropdown Menu Email & 2-Column Card Sync
+        const userEmailEl = document.getElementById('userEmailText');
+        if (userEmailEl) userEmailEl.textContent = userEmail || 'kisan@agrimitra.in';
+
+        const menuCreditsEl = document.getElementById('menuAvailableCredits');
+        if (menuCreditsEl) menuCreditsEl.textContent = String(total);
+
+        const menuPlanPill = document.getElementById('menuPlanPill');
+        if (menuPlanPill) menuPlanPill.textContent = plan.toUpperCase();
+
+        const menuValidityEl = document.getElementById('menuDaysRemaining');
+        if (menuValidityEl) {
+            menuValidityEl.innerHTML = formatCleanDateTime(planExpiresAt);
         }
 
         // Pro Web Search Toggle
@@ -202,8 +259,29 @@ async function fetchStats() {
             }
         }
 
+        // Chat Maintenance Safeguard
+        if (superControl && (superControl.maintenance_mode || superControl.chat_maintenance)) {
+            const msgField = document.getElementById('msgField');
+            const btnAction = document.getElementById('btnComposerAction');
+            const btnCam = document.getElementById('btnCameraAttach');
+            if (msgField) {
+                msgField.disabled = true;
+                msgField.placeholder = "कृषि चैट सेवा अभी रखरखाव (Maintenance) में है...";
+            }
+            if (btnAction) btnAction.disabled = true;
+            if (btnCam) btnCam.disabled = true;
+        }
+
+        // Mark network status as fully connected
+        if (window.navigator.onLine) {
+            updateNetworkStatus('online');
+        } else {
+            updateNetworkStatus('offline');
+        }
+
     } catch (err) {
         console.error("fetchStats error:", err);
+        updateNetworkStatus('offline');
     }
 }
 
@@ -229,7 +307,7 @@ async function load7DayUsageHistory() {
 
     try {
         const { data, error } = await supabaseClient
-            .table('user_chat_history')
+            .from('user_chat_history')
             .select('created_at, credits_deducted')
             .eq('user_id', currentUser.id)
             .order('created_at', { ascending: false })
@@ -240,7 +318,6 @@ async function load7DayUsageHistory() {
             return;
         }
 
-        // Group by Date
         const grouped = {};
         data.forEach(row => {
             const d = new Date(row.created_at).toLocaleDateString('hi-IN', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -270,11 +347,30 @@ async function load7DayUsageHistory() {
     }
 }
 
-async function initAuthSession() {
-    try {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session && session.user) {
-            currentUser = session.user;
+// Session Bootstrap with Real-Time Connected Status
+async function bootstrapSession() {
+    updateNetworkStatus('connecting');
+
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session && session.user) {
+        currentUser = session.user;
+        const authScreen = document.getElementById('authScreen');
+        if (authScreen) authScreen.style.display = 'none';
+
+        const avatar = document.getElementById('userAvatar');
+        if (avatar) avatar.src = currentUser.user_metadata?.avatar_url || avatar.src;
+
+        const userName = document.getElementById('userName');
+        if (userName) userName.textContent = currentUser.user_metadata?.full_name || 'किसान साथी';
+
+        await fetchStats();
+        return;
+    }
+
+    setTimeout(async () => {
+        const { data: { session: retrySession } } = await supabaseClient.auth.getSession();
+        if (retrySession && retrySession.user) {
+            currentUser = retrySession.user;
             const authScreen = document.getElementById('authScreen');
             if (authScreen) authScreen.style.display = 'none';
 
@@ -285,8 +381,10 @@ async function initAuthSession() {
             if (userName) userName.textContent = currentUser.user_metadata?.full_name || 'किसान साथी';
 
             await fetchStats();
+        } else {
+            updateNetworkStatus(window.navigator.onLine ? 'online' : 'offline');
         }
-    } catch(e) {}
+    }, 350);
 }
 
 supabaseClient.auth.onAuthStateChange((event, session) => {
@@ -306,51 +404,12 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
         currentUser = null;
         const authScreen = document.getElementById('authScreen');
         if (authScreen) authScreen.style.display = 'flex';
+        updateNetworkStatus(window.navigator.onLine ? 'online' : 'offline');
     }
 });
 
-// Robust Session Bootstrap with Auto-Retry
-async function bootstrapSession() {
-    // 1. Check current session immediately
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session && session.user) {
-        currentUser = session.user;
-        const authScreen = document.getElementById('authScreen');
-        if (authScreen) authScreen.style.display = 'none';
-
-        const avatar = document.getElementById('userAvatar');
-        if (avatar) avatar.src = currentUser.user_metadata?.avatar_url || avatar.src;
-
-        const userName = document.getElementById('userName');
-        if (userName) userName.textContent = currentUser.user_metadata?.full_name || 'किसान साथी';
-
-        await fetchStats();
-        return;
-    }
-
-    // 2. If storage was slow, retry after 300ms
-    setTimeout(async () => {
-        const { data: { session: retrySession } } = await supabaseClient.auth.getSession();
-        if (retrySession && retrySession.user) {
-            currentUser = retrySession.user;
-            const authScreen = document.getElementById('authScreen');
-            if (authScreen) authScreen.style.display = 'none';
-
-            const avatar = document.getElementById('userAvatar');
-            if (avatar) avatar.src = currentUser.user_metadata?.avatar_url || avatar.src;
-
-            const userName = document.getElementById('userName');
-            if (userName) userName.textContent = currentUser.user_metadata?.full_name || 'किसान साथी';
-
-            await fetchStats();
-        }
-    }, 350);
-}
-
-// Global hook: DOM load hote hi forceful fetch
 window.addEventListener('DOMContentLoaded', () => {
     bootstrapSession();
 });
 
-// Also trigger on file load
 bootstrapSession();
