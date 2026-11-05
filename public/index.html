@@ -16,11 +16,66 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        @keyframes pulseGlow {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 128, 105, 0.4); }
+            70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(0, 128, 105, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 128, 105, 0); }
+        }
+        .pulse-btn {
+            animation: pulseGlow 2s infinite ease-in-out;
+        }
+        @keyframes badgeRotate {
+            0% { transform: rotate(-6deg) scale(0.96); }
+            50% { transform: rotate(6deg) scale(1.08); }
+            100% { transform: rotate(-6deg) scale(0.96); }
+        }
+        .anim-badge {
+            display: inline-block;
+            animation: badgeRotate 2.4s infinite ease-in-out;
+        }
+        .plan-header-badge {
+            display: none;
+            font-size: 10px;
+            padding: 1.5px 6px;
+            border-radius: 6px;
+            margin-left: 6px;
+            letter-spacing: 0.5px;
+            vertical-align: middle;
+            line-height: 1.2;
+        }
+        .plan-header-badge.pro {
+            display: inline-block;
+            background: #fef08a;
+            color: #854d0e;
+            font-weight: 800;
+            border: 1px solid #facc15;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+        }
+        .plan-header-badge.basic {
+            display: inline-block;
+            background: rgba(255,255,255,0.22);
+            color: #d1fae5;
+            font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.45);
+        }
+        .status-dot-indicator {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            display: inline-block;
+            transition: background 0.3s ease, box-shadow 0.3s ease;
+        }
+        .status-dot-indicator.online { background: #25d366; box-shadow: 0 0 6px #25d366; }
+        .status-dot-indicator.connecting { background: #facc15; box-shadow: 0 0 6px #facc15; }
+        .status-dot-indicator.offline { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
+    </style>
 </head>
 <body>
 
 <div class="chat-app" id="appFrame">
-    <!-- Header -->
+    <!-- Header with Dynamic Plan Chip & Network Status -->
     <header class="chat-header">
         <div class="header-left">
             <div class="agri-emblem-badge" title="Agri Mitra">
@@ -29,10 +84,13 @@
                 </svg>
             </div>
             <div class="header-titles">
-                <h1>Agri Mitra</h1>
+                <div style="display:flex; align-items:center;">
+                    <h1>Agri Mitra</h1>
+                    <span id="headerPlanBadge" class="plan-header-badge">PRO</span>
+                </div>
                 <div class="header-status-strip">
-                    <span class="live-pulse-dot"></span>
-                    <span>ऑनलाइन</span>
+                    <span id="liveStatusDot" class="status-dot-indicator connecting"></span>
+                    <span id="liveStatusText">कनेक्ट हो रहे हैं...</span>
                 </div>
             </div>
         </div>
@@ -54,13 +112,25 @@
 
     <div class="menu-backdrop" id="menuBackdrop" onclick="closeMenu()"></div>
 
-    <!-- Dropdown Menu -->
+    <!-- AI Studio Inspired 2-Column Card Dropdown Menu -->
     <div class="dropdown-menu" id="userMenu">
         <div class="menu-header">
-            <b id="userName">किसान साथी</b><br>
-            <span style="font-size:11.5px; color:#008069; font-weight:600;" id="userPlanName">Plan : Free</span><br>
-            <span style="font-size:11px; color:#475569;" id="quotaSummary">Available Credits : ...</span><br>
-            <span style="font-size:10.5px; color:#059669; font-weight:500;" id="planExpiryText">Valid till : 30 Days</span>
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+                <b id="userName" style="font-size:13.5px; color:#0f172a;">किसान साथी</b>
+                <span id="menuPlanPill" style="font-size:10px; background:#e6f4f1; color:#008069; font-weight:700; padding:1.5px 6px; border-radius:4px; text-transform:uppercase;">FREE</span>
+            </div>
+            <div style="font-size:11px; color:#64748b; margin-top:2px;" id="userEmailText">kisan@agrimitra.in</div>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:8px 6px; text-align:center;">
+                <div style="border-right:1px solid #f1f5f9; padding-right:4px;">
+                    <span style="font-size:10px; color:#64748b; display:block;">उपलब्ध क्रेडिट्स</span>
+                    <b id="menuAvailableCredits" style="font-size:16px; color:#008069; font-weight:800;">...</b>
+                </div>
+                <div style="padding-left:4px;">
+                    <span style="font-size:10px; color:#64748b; display:block;">वैधता (Validity)</span>
+                    <b id="menuDaysRemaining" style="font-size:11.5px; color:#1e293b; display:block; margin-top:3px; font-weight:700;">30 दिन</b>
+                </div>
+            </div>
         </div>
         <div class="menu-item" onclick="closeMenu(); navigateTo('/pricing');">💳 Buy Credit Plan</div>
         <div class="menu-item" onclick="closeMenu(); navigateTo('/settings');">⚙️ सेटिंग्स (भाषा, सर्च व फॉन्ट)</div>
@@ -151,7 +221,7 @@
         </div>
     </div>
 
-    <!-- View 2: Payment Screen -->
+    <!-- View 2: Redesigned Step-by-Step Payment Screen -->
     <div class="app-view-screen" id="paymentView">
         <div class="view-header">
             <button class="view-back-btn" onclick="navigateBack()">
@@ -160,27 +230,16 @@
             <div class="view-title">💳 Buy Credit Plan</div>
         </div>
         <div class="view-body">
-            <div class="coupon-section">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-size:12px; font-weight:700; color:#334155;">कूपन कोड (वैकल्पिक):</span>
-                    <span style="font-size:11px; color:#64748b;">यदि कोई कोड हो</span>
-                </div>
-                <div class="coupon-box">
-                    <input type="text" id="couponInput" class="coupon-input" placeholder="कोड दर्ज करें (उदा. VIP100)">
-                    <button class="coupon-apply-btn" onclick="applyCouponFeedback()">लागू करें</button>
-                </div>
-                <div id="couponFeedbackMsg" class="coupon-feedback"></div>
-            </div>
-
-            <p style="font-size:12.5px; color:#475569; margin-top:16px; font-weight:600;">उपयुक्त पैक चुनें:</p>
+            <!-- Step 1: Select Plan First -->
+            <p style="font-size:12.5px; color:#475569; font-weight:700;">1. उपयुक्त क्रेडिट पैक चुनें:</p>
             <div class="pricing-grid">
-                <div class="price-box" id="cardBasicPlan" onclick="handleSelectPlan('basic')">
+                <div class="price-box" id="cardBasicPlan" onclick="selectPricingPlan('basic')">
                     <span class="plan-badge badge-basic" id="badgeBasic">Basic Plan</span>
                     <div class="price-val">₹49</div>
                     <div class="credits-val">100 क्रेडिट्स</div>
                     <div class="duration-val">वैधता: ठीक 30 दिन</div>
                 </div>
-                <div class="price-box pro" id="cardProPlan" onclick="handleSelectPlan('pro')">
+                <div class="price-box pro" id="cardProPlan" onclick="selectPricingPlan('pro')">
                     <span class="plan-badge badge-pro">⭐ Pro Plan</span>
                     <div class="price-val">₹99</div>
                     <div class="credits-val">300 क्रेडिट्स</div>
@@ -188,7 +247,41 @@
                 </div>
             </div>
 
-            <p style="font-size:11.5px; color:#64748b; margin-top:16px; line-height:1.6;">
+            <!-- Step 2: Coupon Box (Activates on Plan Selection) -->
+            <div class="coupon-section" id="couponSectionBox" style="opacity:0.55; pointer-events:none; transition:opacity 0.25s;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:12px; font-weight:700; color:#334155;">2. कूपन कोड (वैकल्पिक):</span>
+                    <span style="font-size:11px; color:#64748b;">उदा. VIP100</span>
+                </div>
+                <div class="coupon-box">
+                    <input type="text" id="couponInput" class="coupon-input" placeholder="कोड दर्ज करें" disabled oninput="handleCouponInputChange()">
+                    <button class="coupon-apply-btn" id="btnApplyCoupon" onclick="applyCouponFeedback()" disabled>लागू करें</button>
+                </div>
+                <div id="couponFeedbackMsg" class="coupon-feedback"></div>
+            </div>
+
+            <!-- Amazon-style Dynamic Price Summary Card -->
+            <div id="checkoutSummaryCard" style="display:none; background:#f8fafc; border:1px solid #cbd5e1; border-radius:12px; padding:12px; margin-top:14px; font-size:12.5px; line-height:1.6;">
+                <div style="display:flex; justify-content:space-between;">
+                    <span style="color:#64748b;">मूल मूल्य (Base Price):</span>
+                    <span id="summaryBasePrice" style="font-weight:600;">₹99</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; color:#15803d;" id="summaryDiscountRow">
+                    <span>कूपन छूट (Discount):</span>
+                    <span id="summaryDiscountVal">-₹0</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-weight:800; font-size:14px; border-top:1px dashed #cbd5e1; padding-top:6px; margin-top:4px; color:#0f172a;">
+                    <span>कुल देय राशि (Payable):</span>
+                    <span id="summaryPayableAmount" style="color:#008069;">₹99</span>
+                </div>
+            </div>
+
+            <!-- Action Checkout Button -->
+            <button id="btnProceedCheckout" onclick="proceedSelectedCheckout()" style="background:#008069; color:#fff; border:none; padding:12px; border-radius:12px; font-weight:700; font-size:14px; cursor:pointer; width:100%; margin-top:14px; box-shadow:0 3px 8px rgba(0,128,105,0.25); opacity:0.6; pointer-events:none; transition:all 0.2s;">
+                👉 पहले कोई प्लान चुनें
+            </button>
+
+            <p style="font-size:11.5px; color:#64748b; margin-top:14px; line-height:1.6;">
                 • अधिकतम संचय सीमा 1,000 क्रेडिट्स है।<br>
                 • कार्ड, नेटबैंकिंग एवं UPI भुगतान अधिकृत गेटवे द्वारा 256-बिट सुरक्षित प्रणाली से प्रोसेस होते हैं।
             </p>
@@ -258,7 +351,7 @@
             <button class="pill-choice-btn active" id="btn-terms" onclick="switchTab('terms')" style="margin:6px; flex:none; padding:6px 12px; font-size:11.5px;">Terms</button>
             <button class="pill-choice-btn" id="btn-privacy" onclick="switchTab('privacy')" style="margin:6px; flex:none; padding:6px 12px; font-size:11.5px;">Privacy</button>
             <button class="pill-choice-btn" id="btn-refund" onclick="switchTab('refund')" style="margin:6px; flex:none; padding:6px 12px; font-size:11.5px;">Refund</button>
-            <button class="pill-choice-btn" id="btn-pricing" onclick="switchTab('pricing')" style="margin:6px; flex:none; padding:6px 12px; font-size:11.5px;">Pricing</button>
+            <button class="pill-choice-btn" id="btn-pricing" onclick="switchTab('pricing-policy')" style="margin:6px; flex:none; padding:6px 12px; font-size:11.5px;">Pricing</button>
             <button class="pill-choice-btn" id="btn-contact" onclick="switchTab('contact')" style="margin:6px; flex:none; padding:6px 12px; font-size:11.5px;">Contact</button>
         </div>
         <div class="view-body" id="policyContent"></div>
@@ -283,13 +376,13 @@
                 <iframe id="popupIframe" style="width:100%; height:100%; border:none;" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             </div>
             <div style="background:#1f2c34; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; font-size:11.5px;">
-                <span style="color:#d1fae5; display:flex; align-items:center; gap:5px;"><span class="live-pulse-dot"></span> इन-ऐप प्लेयर</span>
+                <span style="color:#d1fae5; display:flex; align-items:center; gap:5px;"><span class="status-dot-indicator online"></span> इन-ऐप प्लेयर</span>
                 <a id="modalYtDirectLink" href="#" target="_blank" style="color:#38bdf8; text-decoration:none; font-weight:600;">YouTube पर खोलें →</a>
             </div>
         </div>
     </div>
 
-    <!-- Modals -->
+    <!-- Zero Credit Modal -->
     <div class="modal-overlay" id="zeroCreditModal">
         <div class="modal-card" style="text-align:center; padding:24px 20px;">
             <div style="font-size:42px;">🌾</div>
@@ -299,7 +392,7 @@
                 <br>• प्राकृतिक खेती व कीट नियंत्रण सलाह
                 <br>• संदर्भ वीडियो क्लिप्स व त्वरित उत्तर
             </p>
-            <button onclick="closeZeroCreditModal(); navigateTo('/pricing');" style="background:#008069; color:#fff; border:none; padding:12px 22px; border-radius:24px; font-weight:700; font-size:14px; cursor:pointer; width:100%;">
+            <button onclick="closeZeroCreditModal(); navigateTo('/pricing');" style="background:#008069; color:#fff; border:none; padding:12px 22px; border-radius:24px; font-weight:700; font-size:14px; cursor:pointer; width:100%; box-shadow:0 2px 8px rgba(0,128,105,0.3);">
                 ⚡ Buy Credit Plan (मात्र ₹49 से)
             </button>
             <button onclick="closeZeroCreditModal()" style="background:none; border:none; color:#64748b; font-size:12px; margin-top:12px; cursor:pointer;">
@@ -308,6 +401,7 @@
         </div>
     </div>
 
+    <!-- Low Credit Nudge Modal -->
     <div class="modal-overlay" id="lowCreditNudgeModal">
         <div class="modal-card" style="text-align:center; padding:22px 18px;">
             <div style="font-size:36px;">⏳</div>
@@ -324,6 +418,7 @@
         </div>
     </div>
 
+    <!-- Auth Login Overlay -->
     <div class="auth-screen" id="authScreen" style="display:flex;">
         <div style="text-align:center; margin-top:40px;">
             <div style="font-size:52px; margin-bottom:8px;">🌾</div>
@@ -371,26 +466,26 @@
     </div>
 </div>
 
-<!-- Modal: Upgraded Celebration & Rolling Counter Modal -->
+<!-- Upgraded Celebration Modal with Animated Badge & Pulsing Action Button -->
 <div class="modal-overlay" id="successModal">
-    <div class="modal-card" style="text-align:center; padding:24px 20px; border-radius:20px; max-width:380px;">
-        <div style="font-size:42px; margin-bottom:4px;">🎉</div>
-        <h2 style="color:#008069; font-size:20px; font-weight:800; margin-top:2px;">सफल सक्रियण!</h2>
+    <div class="modal-card" style="text-align:center; padding:26px 20px; border-radius:22px; max-width:390px; border:1px solid #bbf7d0;">
+        <div class="anim-badge" style="font-size:46px; margin-bottom:2px;">✨</div>
+        <h2 style="color:#008069; font-size:20px; font-weight:800; margin-top:2px;">बधाई हो! पैक सक्रिय हुआ</h2>
         
-        <div id="creditRollCount" style="font-size:36px; font-weight:900; color:#008069; margin:8px 0; font-family:monospace;">
+        <div id="creditRollCount" style="font-size:38px; font-weight:900; color:#008069; margin:6px 0; font-family:monospace;">
             +0
         </div>
         
-        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:12px; text-align:left; margin:10px 0 16px 0; font-size:12px; color:#1e293b; line-height:1.6;">
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:14px; padding:12px; text-align:left; margin:10px 0 16px 0; font-size:12.5px; color:#1e293b; line-height:1.6;">
             <div style="display:flex; justify-content:space-between; margin-bottom:6px; border-bottom:1px solid #dcfce7; padding-bottom:5px;">
-                <span>कुल नया बैलेंस:</span>
-                <b id="successNewBalance" style="color:#008069; font-size:13px;">...</b>
+                <span>कुल उपलब्ध बैलेंस:</span>
+                <b id="successNewBalance" style="color:#008069; font-size:13.5px;">...</b>
             </div>
             <div style="display:flex; justify-content:space-between; margin-bottom:6px; border-bottom:1px solid #dcfce7; padding-bottom:5px;">
-                <span>नयी वैधता तिथि:</span>
+                <span>वैधता (Validity):</span>
                 <b id="successExpiryDate" style="color:#15803d;">...</b>
             </div>
-            <div style="font-weight:700; color:#008069; margin-top:4px; margin-bottom:3px;">सक्रिय सुविधाएं (Features):</div>
+            <div style="font-weight:700; color:#008069; margin-top:4px; margin-bottom:3px;">सक्रिय सुविधाएं (Active Benefits):</div>
             <div id="successFeaturesList" style="color:#475569; font-size:11.5px;">
                 • तत्काल कृषि समाधान व त्वरित उत्तर<br>
                 • प्रामाणिक संदर्भ वीडियो क्लिप्स एक्सेस<br>
@@ -398,8 +493,8 @@
             </div>
         </div>
 
-        <button onclick="closeSuccessModal()" style="background:#008069; color:#fff; border:none; padding:12px 24px; border-radius:24px; font-weight:700; font-size:14px; cursor:pointer; width:100%; box-shadow:0 3px 10px rgba(0,128,105,0.3);">
-            पूछना शुरू करें (Start Asking)
+        <button onclick="closeSuccessModal()" class="pulse-btn" style="background:#008069; color:#fff; border:none; padding:13px 24px; border-radius:24px; font-weight:700; font-size:14px; cursor:pointer; width:100%; box-shadow:0 3px 12px rgba(0,128,105,0.35);">
+            🌾 सवाल पूछना प्रारंभ करें (Ask Questions)
         </button>
     </div>
 </div>
