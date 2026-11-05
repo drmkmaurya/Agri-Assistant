@@ -150,6 +150,11 @@ async def ask_endpoint(req: QueryReq, request: Request):
         return {
             "answer": greeting_text,
             "sources": [],
+            "suggested_questions": [
+                "जीवामृत बनाने की सही विधि क्या है?",
+                "फसल में कीट नियंत्रण के जैविक उपाय बताएं",
+                "मिट्टी की उर्वरता कैसे बढ़ाएं?"
+            ],
             "total_credits": total_credits,
             "plan_type": plan_type
         }
@@ -163,7 +168,14 @@ async def ask_endpoint(req: QueryReq, request: Request):
 
         allow_web_search = bool(req.web_search_enabled and is_paid_active and plan_type == "pro")
         context_summary = profile.get("chat_context_summary") or ""
-        answer_text, sources = generate_rag_answer(user_query, req.language, allow_web_search, context_summary)
+        
+        rag_res = generate_rag_answer(user_query, req.language, allow_web_search, context_summary)
+        if len(rag_res) == 3:
+            answer_text, sources, suggested_questions = rag_res
+        else:
+            answer_text, sources = rag_res[0], rag_res[1]
+            suggested_questions = []
+            
     except Exception as e:
         print(f"Chat execution error: {e}")
         raise HTTPException(status_code=500, detail="तकनीकी समस्या आई। आपका कोई क्रेडिट नहीं काटा गया है।")
@@ -199,6 +211,7 @@ async def ask_endpoint(req: QueryReq, request: Request):
     return {
         "answer": answer_text,
         "sources": sources,
+        "suggested_questions": suggested_questions,
         "total_credits": new_balance,
         "plan_type": updated_plan_type
     }
