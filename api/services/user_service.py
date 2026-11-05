@@ -27,17 +27,18 @@ def get_super_control_settings() -> dict:
 
 def get_or_create_user_profile(user_id: str, email: str = "", name: str = "", avatar: str = "") -> dict:
     try:
-        # Check by user_id
+        # 1. Check existing by user_id
         res = supabase.table("user_profiles").select("*").eq("id", user_id).limit(1).execute()
         if res.data and len(res.data) > 0:
             return res.data[0]
         
-        # Fallback check by email to prevent duplicate accounts
+        # 2. Fallback check by email
         if email:
             email_res = supabase.table("user_profiles").select("*").eq("email", email).limit(1).execute()
             if email_res.data and len(email_res.data) > 0:
                 return email_res.data[0]
         
+        # 3. New User: Assign 10 Credits & 30 Days Validity
         now = datetime.now(timezone.utc)
         expiry_30_days = (now + timedelta(days=30)).isoformat()
         new_row = {
@@ -51,8 +52,29 @@ def get_or_create_user_profile(user_id: str, email: str = "", name: str = "", av
             "plan_expires_at": expiry_30_days
         }
         ins = supabase.table("user_profiles").insert(new_row).execute()
-        if ins.data and len(ins.data) > 0:
-            return ins.data[0]
+        created_profile = ins.data[0] if (ins.data and len(ins.data) > 0) else new_row
+
+        # 4. Automatic Welcome Bonus Entry in credit_transactions for Financial Audit
+        try:
+            supabase.table("credit_transactions").insert({
+                "user_id": user_id,
+                "order_id": f"welcome_{user_id[:8]}",
+                "payment_id": "WELCOME_BONUS",
+                "amount_paid": 0,
+                "original_price": 0,
+                "discount_percent": 100,
+                "coupon_code": "WELCOME",
+                "payment_gateway": "bonus",
+                "transaction_type": "WELCOME",
+                "credits_added": 10,
+                "expires_at": expiry_30_days,
+                "plan_name": "स्वागत बोनस (Welcome Bonus - 10 Credits)",
+                "status": "success"
+            }).execute()
+        except Exception as tx_err:
+            print(f"Welcome bonus audit log insert warning: {tx_err}")
+
+        return created_profile
     except Exception as e:
         print(f"get_or_create_user_profile error: {e}")
     
