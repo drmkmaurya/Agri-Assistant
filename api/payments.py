@@ -49,7 +49,7 @@ def validate_coupon_for_user(coupon_code: str, plan_id: str, user_id: str, supab
         
     code = coupon_code.strip().upper()
 
-    # Rule: Per user max 1 time usage check via credit_transactions table
+    # Rule: Per user max 1 time usage check via credit_transactions
     if user_id:
         try:
             prev_usage = supabase.table("credit_transactions")\
@@ -98,7 +98,7 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
     plan = PLANS[plan_id]
     credits_to_add = plan["credits"]
 
-    # Safe lookup of existing profile
+    # Safe lookup of profile
     user_data = {}
     try:
         user_res = supabase.table("user_profiles").select("total_credits, plan_type, plan_expires_at").eq("id", user_id).execute()
@@ -122,18 +122,18 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
             except Exception:
                 pass
 
-    # Rule: Pro plan user cannot downgrade to basic while pro is active
+    # Rule: Pro user cannot downgrade to basic while pro is active
     if is_pro_active and plan_id == "basic":
         raise HTTPException(
             status_code=400,
-            detail="आपका Pro प्लान अभी सक्रिय है। बेसिक प्लान केवल प्रो समाप्त होने पर ही लिया जा सकता है।"
+            detail="आपका Pro प्लान अभी सक्रिय है। बेसिक प्लान केवल प्रो समाप्त होने के बाद ही लिया जा सकता है।"
         )
 
-    # Rule: Upper cap check
+    # Rule: 1,000 credit cap check
     if (current_credits + credits_to_add) > MAX_CREDIT_CAP:
         raise HTTPException(
             status_code=400,
-            detail=f"अधिकतम संचय सीमा {MAX_CREDIT_CAP} क्रेडिट है। आपके पास अभी {current_credits} क्रेडिट उपलब्ध हैं।"
+            detail=f"अधिकतम संचय सीमा {MAX_CREDIT_CAP} क्रेडिट है। आपके पास अभी {current_credits} क्रेडिट उपलब्ध हैं। पहले इनका उपयोग करें।"
         )
 
     base_amount = plan["amount"]
@@ -145,7 +145,7 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
 
     final_amount = int(base_amount * (1 - (discount_pct / 100)))
 
-    # 100% discount / VIP coupon bypass
+    # 100% discount / VIP coupon
     if final_amount == 0 or (valid_code == "VIP100"):
         return {
             "order_id": f"free_{user_id[:8]}_{int(time.time()*1000)}",
@@ -207,7 +207,6 @@ def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: s
     is_free_order = str(order_id).startswith("free_") or (coupon_code and coupon_code.upper() == "VIP100")
 
     if is_free_order:
-        # Re-verify per-user one-time restriction
         validate_coupon_for_user(coupon_code or "VIP100", plan_id, user_id, supabase)
         amount_paid = 0.0
         discount_percent = 100
@@ -247,23 +246,14 @@ def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: s
     except Exception as e:
         print(f"Profile fetch warning: {e}")
 
-    # Rule: Existing credits + New credits carry-forward / stack
+    # Rule: Credit stacking / carry-forward
     new_balance = min(MAX_CREDIT_CAP, current_credits + credits_to_add)
 
-    # Rule: Expiry extension logic (adds 30 days from now or current future expiry)
-    base_time = now
-    if current_expires_at and current_plan in ["basic", "pro"]:
-        try:
-            curr_exp = datetime.fromisoformat(str(current_expires_at).replace("Z", "+00:00"))
-            if curr_exp > now:
-                base_time = curr_exp
-        except Exception:
-            pass
-            
-    new_expiry = (base_time + timedelta(days=30)).isoformat()
+    # Rule: Strict 30 days from purchase time (eliminates irrational future compounding)
+    new_expiry = (now + timedelta(days=30)).isoformat()
     resulting_plan = "pro" if (plan_id == "pro" or current_plan == "pro") else "basic"
 
-    # 1. Update user_profiles with new stacked balance and updated plan
+    # 1. Update user_profiles
     try:
         supabase.table("user_profiles").update({
             "plan_type": resulting_plan,
@@ -293,7 +283,7 @@ def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: s
     except Exception as te:
         print(f"Transaction log insert warning: {te}")
 
-    # 3. Increment coupons used_count in coupons table if applicable
+    # 3. Update coupon count if applicable
     if coupon_code and not is_free_order:
         try:
             code_upper = coupon_code.strip().upper()
