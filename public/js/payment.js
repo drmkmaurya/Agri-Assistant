@@ -1,3 +1,7 @@
+let currentSelectedPlan = null;
+let currentAppliedDiscountPct = 0;
+let currentValidatedCouponCode = '';
+
 function loadExternalScript(src) {
     return new Promise((resolve, reject) => {
         if (document.querySelector(`script[src="${src}"]`)) return resolve();
@@ -9,12 +13,195 @@ function loadExternalScript(src) {
     });
 }
 
-function handleSelectPlan(planId) {
-    if (planId === 'basic' && currentUserPlan === 'pro' && isUserPaidActive) {
+/* Step 1: Select Plan & Trigger Realtime Checks */
+function selectPricingPlan(planId) {
+    // 1. Pro downgrade protection
+    if (planId === 'basic' && typeof currentUserPlan !== 'undefined' && currentUserPlan === 'pro' && typeof isUserPaidActive !== 'undefined' && isUserPaidActive) {
         alert('आपका Pro प्लान अभी सक्रिय है! बेसिक प्लान केवल प्रो समाप्त होने के बाद ही लिया जा सकता है।');
         return;
     }
-    initiatePayment(planId);
+
+    // 2. Immediate 1,000 credit cap check
+    const existingCredits = (typeof window.cachedTotalCredits === 'number') ? window.cachedTotalCredits : 0;
+    const creditsToAdd = (planId === 'pro') ? 300 : 100;
+    if ((existingCredits + creditsToAdd) > 1000) {
+        alert(`अधिकतम संचय सीमा 1,000 क्रेडिट है। आपके पास अभी ${existingCredits} क्रेडिट उपलब्ध हैं। कृपया पहले इनका उपयोग करें।`);
+        return;
+    }
+
+    currentSelectedPlan = planId;
+
+    // UI card highlight
+    const basicBox = document.getElementById('cardBasicPlan');
+    const proBox = document.getElementById('cardProPlan');
+    if (basicBox) basicBox.style.borderColor = (planId === 'basic') ? '#008069' : '#bbf7d0';
+    if (proBox) proBox.style.borderColor = (planId === 'pro') ? '#008069' : '#fef08a';
+
+    // Enable coupon input & button
+    const couponBox = document.getElementById('couponSectionBox');
+    const couponInput = document.getElementById('couponInput');
+    const btnCoupon = document.getElementById('btnApplyCoupon');
+    if (couponBox) {
+        couponBox.style.opacity = '1';
+        couponBox.style.pointerEvents = 'auto';
+    }
+    if (couponInput) couponInput.disabled = false;
+    if (btnCoupon) btnCoupon.disabled = false;
+
+    // Recalculate summary card
+    updateCheckoutSummary();
+}
+
+function handleCouponInputChange() {
+    // Reset applied discount if user edits input
+    currentAppliedDiscountPct = 0;
+    currentValidatedCouponCode = '';
+    const msgEl = document.getElementById('couponFeedbackMsg');
+    if (msgEl) msgEl.style.display = 'none';
+    updateCheckoutSummary();
+}
+
+/* Amazon-Style Price Calculation Card Update */
+function updateCheckoutSummary() {
+    if (!currentSelectedPlan) return;
+
+    const basePrice = (currentSelectedPlan === 'pro') ? 99 : 49;
+    const discountAmount = Math.round(basePrice * (currentAppliedDiscountPct / 100));
+    const payableAmount = Math.max(0, basePrice - discountAmount);
+
+    const summaryCard = document.getElementById('checkoutSummaryCard');
+    const basePriceEl = document.getElementById('summaryBasePrice');
+    const discountValEl = document.getElementById('summaryDiscountVal');
+    const discountRow = document.getElementById('summaryDiscountRow');
+    const payableEl = document.getElementById('summaryPayableAmount');
+    const btnCheckout = document.getElementById('btnProceedCheckout');
+
+    if (summaryCard) summaryCard.style.display = 'block';
+    if (basePriceEl) basePriceEl.textContent = `₹${basePrice}`;
+
+    if (discountRow && discountValEl) {
+        if (currentAppliedDiscountPct > 0) {
+            discountRow.style.display = 'flex';
+            discountValEl.textContent = `-₹${discountAmount} (${currentAppliedDiscountPct}% छूट)`;
+        } else {
+            discountRow.style.display = 'none';
+        }
+    }
+
+    if (payableEl) payableEl.textContent = `₹${payableAmount}`;
+
+    if (btnCheckout) {
+        btnCheckout.style.opacity = '1';
+        btnCheckout.style.pointerEvents = 'auto';
+        if (payableAmount === 0) {
+            btnCheckout.textContent = `⚡ सक्रिय करें (मुफ़्त - ₹0)`;
+            btnCheckout.style.background = '#15803d';
+        } else {
+            btnCheckout.textContent = `🔒 सुरक्षित भुगतान करें ₹${payableAmount}`;
+            btnCheckout.style.background = '#008069';
+        }
+    }
+}
+
+/* Per-User 1-Time Coupon Pre-Validation */
+async function applyCouponFeedback() {
+    if (!currentSelectedPlan) {
+        alert('कृपया पहले कोई प्लान चुनें।');
+        return;
+    }
+
+    const val = (document.getElementById('couponInput').value || '').trim().toUpperCase();
+    const msgEl = document.getElementById('couponFeedbackMsg');
+    if (!msgEl) return;
+
+    if (!val) {
+        msgEl.style.display = 'block';
+        msgEl.style.color = '#dc2626';
+        msgEl.textContent = 'कृपया कूपन कोड दर्ज करें।';
+        return;
+    }
+
+    if (!currentUser) {
+        msgEl.style.display = 'block';
+        msgEl.style.color = '#dc2626';
+        msgEl.textContent = 'कृपया पहले साइन इन करें।';
+        return;
+    }
+
+    // Check if user already used this coupon in credit_transactions
+    try {
+        const { data: usedTxs } = await supabaseClient
+            .from('credit_transactions')
+            .select('id')
+            .eq('user_id', currentUser.id)
+            .eq('coupon_code', val)
+            .limit(1);
+
+        if (usedTxs && usedTxs.length > 0) {
+            msgEl.style.display = 'block';
+            msgEl.style.color = '#dc2626';
+            msgEl.textContent = '❌ यह कूपन आप पहले ही उपयोग कर चुके हैं (Only 1 time use)।';
+            currentAppliedDiscountPct = 0;
+            currentValidatedCouponCode = '';
+            updateCheckoutSummary();
+            return;
+        }
+    } catch(e) {}
+
+    if (val === 'VIP100') {
+        currentAppliedDiscountPct = 100;
+        currentValidatedCouponCode = 'VIP100';
+        msgEl.style.display = 'block';
+        msgEl.style.color = '#15803d';
+        msgEl.textContent = '✓ VIP100 लागू: 100% निःशुल्क सक्रियण!';
+        updateCheckoutSummary();
+    } else {
+        try {
+            const { data: cData, error: cErr } = await supabaseClient
+                .from('coupons')
+                .select('*')
+                .eq('code', val)
+                .eq('is_active', true)
+                .limit(1);
+
+            if (cErr || !cData || cData.length === 0) {
+                msgEl.style.display = 'block';
+                msgEl.style.color = '#dc2626';
+                msgEl.textContent = 'अमान्य कूपन कोड।';
+                currentAppliedDiscountPct = 0;
+                currentValidatedCouponCode = '';
+            } else {
+                const c = cData[0];
+                const allowed = c.allowed_plans || ['basic', 'pro'];
+                if (!allowed.includes(currentSelectedPlan)) {
+                    msgEl.style.display = 'block';
+                    msgEl.style.color = '#dc2626';
+                    msgEl.textContent = 'यह कूपन इस चुने हुए प्लान पर मान्य नहीं है।';
+                    currentAppliedDiscountPct = 0;
+                    currentValidatedCouponCode = '';
+                } else {
+                    currentAppliedDiscountPct = c.discount_percent || 0;
+                    currentValidatedCouponCode = val;
+                    msgEl.style.display = 'block';
+                    msgEl.style.color = '#15803d';
+                    msgEl.textContent = `✓ कूपन लागू: ${currentAppliedDiscountPct}% छूट प्राप्त हुई!`;
+                }
+            }
+        } catch(e) {
+            msgEl.style.display = 'block';
+            msgEl.style.color = '#008069';
+            msgEl.textContent = `कोड दर्ज हुआ।`;
+        }
+        updateCheckoutSummary();
+    }
+}
+
+function proceedSelectedCheckout() {
+    if (!currentSelectedPlan) {
+        alert('कृपया पहले कोई प्लान चुनें।');
+        return;
+    }
+    initiatePayment(currentSelectedPlan);
 }
 
 function openPaymentHistoryModal() {
@@ -56,13 +243,18 @@ function proceedPendingQuery() {
     }
 }
 
+/* Route Disambiguation & Lazy Policies Loading */
 async function switchTab(t) {
     document.querySelectorAll('#policyView .pill-choice-btn').forEach(b => b.classList.remove('active'));
-    const btn = document.getElementById('btn-' + t);
+    
+    // Map pricing-policy to avoid URL conflict with /pricing
+    const targetTabKey = (t === 'pricing-policy' || t === 'pricing') ? 'pricing' : t;
+    const btn = document.getElementById('btn-' + (targetTabKey === 'pricing' ? 'pricing' : targetTabKey));
     if (btn) btn.classList.add('active');
     
-    if (window.location.pathname !== '/' + t) {
-        history.replaceState({ path: '/' + t }, '', '/' + t);
+    const urlPath = (targetTabKey === 'pricing') ? '/pricing-policy' : '/' + targetTabKey;
+    if (window.location.pathname !== urlPath) {
+        history.replaceState({ path: urlPath }, '', urlPath);
     }
 
     if (typeof policyDocs === 'undefined') {
@@ -75,57 +267,9 @@ async function switchTab(t) {
 
     const container = document.getElementById('policyContent');
     if (container) {
-        container.innerHTML = (typeof policyDocs !== 'undefined' && policyDocs[t]) 
-            ? policyDocs[t] 
+        container.innerHTML = (typeof policyDocs !== 'undefined' && policyDocs[targetTabKey]) 
+            ? policyDocs[targetTabKey] 
             : '<p style="padding:16px; color:#64748b;">नीतियां लोड हो रही हैं...</p>';
-    }
-}
-
-// Client-side quick feedback for coupon entry
-async function applyCouponFeedback() {
-    const val = (document.getElementById('couponInput').value || '').trim().toUpperCase();
-    const msgEl = document.getElementById('couponFeedbackMsg');
-    if (!msgEl) return;
-
-    if (!val) {
-        msgEl.style.display = 'block';
-        msgEl.style.color = '#dc2626';
-        msgEl.textContent = 'कृपया कूपन कोड दर्ज करें।';
-        return;
-    }
-
-    if (!currentUser) {
-        msgEl.style.display = 'block';
-        msgEl.style.color = '#dc2626';
-        msgEl.textContent = 'कृपया पहले साइन इन करें।';
-        return;
-    }
-
-    // Check if user already used this coupon
-    try {
-        const { data: usedTxs } = await supabaseClient
-            .from('credit_transactions')
-            .select('id')
-            .eq('user_id', currentUser.id)
-            .eq('coupon_code', val)
-            .limit(1);
-
-        if (usedTxs && usedTxs.length > 0) {
-            msgEl.style.display = 'block';
-            msgEl.style.color = '#dc2626';
-            msgEl.textContent = '❌ यह कूपन आप पहले ही उपयोग कर चुके हैं (Only 1 time use)।';
-            return;
-        }
-    } catch(e) {}
-
-    if (val === 'VIP100') {
-        msgEl.style.display = 'block';
-        msgEl.style.color = '#15803d';
-        msgEl.textContent = '✓ VIP100 मान्य: 100% निःशुल्क सक्रियण! नीचे कोई भी प्लान चुनें।';
-    } else {
-        msgEl.style.display = 'block';
-        msgEl.style.color = '#008069';
-        msgEl.textContent = `कोड "${val}" दर्ज हुआ। प्लान चुनने पर स्वतः छूट लागू होगी।`;
     }
 }
 
@@ -153,7 +297,7 @@ async function loadPaymentHistory() {
         txs.forEach(t => {
             const buyDate = typeof formatCleanDate === 'function' ? formatCleanDate(t.created_at) : t.created_at;
             const expDate = typeof formatCleanDate === 'function' ? formatCleanDate(t.expires_at) : (t.expires_at || '30 Days');
-            const amt = t.amount_paid == 0 ? 'मुफ़्त (VIP / Bonus)' : '₹' + t.amount_paid;
+            const amt = t.amount_paid == 0 ? 'मुफ़्त (Bonus / VIP)' : '₹' + t.amount_paid;
             const planTitle = t.plan_name ? t.plan_name.split('(')[0].trim() : `${t.credits_added} Credits`;
             
             html += `
@@ -178,7 +322,7 @@ async function loadPaymentHistory() {
 
 async function initiatePayment(planId) {
     if (!currentUser) return;
-    const couponVal = (document.getElementById('couponInput').value || '').trim();
+    const couponVal = currentValidatedCouponCode || (document.getElementById('couponInput').value || '').trim();
 
     showSpinner("सुरक्षित भुगतान मॉड्यूल तैयार हो रहा है...");
     try {
@@ -330,14 +474,14 @@ function triggerPaymentSuccess(creditsAdded, newBalance, planExpiry, planId) {
         if (planId === 'pro') {
             featEl.innerHTML = `
                 ✓ 300 संपूर्ण कृषि प्रश्न परामर्श<br>
-                ✓ <b>इंटरनेट लाइव सर्च</b> (नवीनतम मंडी व शोध डेटा)<br>
-                ✓ मल्टी-फोटो / पत्ती रोग रिपोर्ट जांच<br>
-                ✓ प्राथमिकता से सुपरफास्ट उत्तर
+                ✓ <b>इंटरनेट लाइव सर्च</b> (नवीनतम शोध व डेटा)<br>
+                ✓ मल्टी-फोटो व पत्ती रोग रिपोर्ट जांच<br>
+                ✓ प्राथमिकता से त्वरित उत्तर
             `;
         } else {
             featEl.innerHTML = `
                 ✓ 100 कृषि सलाह प्रश्न परामर्श<br>
-                ✓ प्रामाणic वीडियो संदर्भ लाइब्रेरी एक्सेस<br>
+                ✓ प्रामाणिक वीडियो संदर्भ लाइब्रेरी एक्सेस<br>
                 ✓ फसल फोटो / पत्ती रोग प्राथमिक जांच<br>
                 ✓ 24x7 डिजिटल कृषि सहायता
             `;
