@@ -10,6 +10,18 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if (SUPABASE_URL an
 IST = ZoneInfo("Asia/Kolkata")
 
 def get_super_control_settings() -> dict:
+    if not supabase:
+        return {
+            "maintenance_mode": False,
+            "banner_enabled": False,
+            "banner_text": "",
+            "welcome_credits": 10,
+            "welcome_days": 30,
+            "welcome_enabled": True,
+            "chat_maintenance": False,
+            "payment_maintenance": False,
+            "active_payment_gateway": "razorpay"
+        }
     try:
         res = supabase.table("app_settings").select("*").limit(1).execute()
         if res.data and len(res.data) > 0:
@@ -29,6 +41,16 @@ def get_super_control_settings() -> dict:
     }
 
 def get_or_create_user_profile(user_id: str, email: str = "", name: str = "", avatar: str = "") -> dict:
+    if not supabase:
+        return {
+            "id": user_id,
+            "email": email,
+            "full_name": name or "किसान साथी",
+            "plan_type": "free",
+            "total_credits": 10,
+            "status": "approved"
+        }
+
     try:
         # 1. Check existing user by user_id
         res = supabase.table("user_profiles").select("*").eq("id", user_id).limit(1).execute()
@@ -58,7 +80,9 @@ def get_or_create_user_profile(user_id: str, email: str = "", name: str = "", av
             "plan_type": "free",
             "total_credits": welcome_credits,
             "status": "approved",
-            "plan_expires_at": expiry_date
+            "plan_expires_at": expiry_date,
+            "created_at": now.isoformat(),
+            "updated_at": now.isoformat()
         }
         ins = supabase.table("user_profiles").insert(new_row).execute()
         created_profile = ins.data[0] if (ins.data and len(ins.data) > 0) else new_row
@@ -98,10 +122,13 @@ def get_or_create_user_profile(user_id: str, email: str = "", name: str = "", av
     }
 
 def update_user_credits(user_id: str, new_balance: int, updated_plan_type: str):
+    if not supabase:
+        return
     try:
         supabase.table("user_profiles").update({
             "total_credits": new_balance,
-            "plan_type": updated_plan_type
+            "plan_type": updated_plan_type,
+            "updated_at": datetime.now(timezone.utc).isoformat()
         }).eq("id", user_id).execute()
     except Exception as e:
         print(f"Error updating user credits: {e}")
