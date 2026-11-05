@@ -25,7 +25,7 @@ except ImportError:
     )
     from services.rag_service import generate_rag_answer
 
-app = FastAPI()
+app = FastAPI(title="Agri Mitra API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -122,7 +122,8 @@ async def ask_endpoint(req: QueryReq, request: Request):
                     is_paid_active = True
                 else:
                     plan_type = "free"
-                    supabase.table("user_profiles").update({"plan_type": "free"}).eq("id", req.user_id).execute()
+                    if supabase:
+                        supabase.table("user_profiles").update({"plan_type": "free"}).eq("id", req.user_id).execute()
                     profile["plan_type"] = "free"
             except Exception:
                 plan_type = "free"
@@ -140,20 +141,10 @@ async def ask_endpoint(req: QueryReq, request: Request):
         else:
             raise HTTPException(status_code=402, detail="आपके निःशुल्क क्रेडिट समाप्त हो चुके हैं। सवाल पूछने के लिए नया प्लान चुनें।")
 
-    async with concurrency_lock:
-        concurrency_counter += 1
-    
-    try:
-        if plan_type == "free" and concurrency_counter > 5:
-            await asyncio.sleep(0.5)
-    finally:
-        async with concurrency_lock:
-            concurrency_counter = max(0, concurrency_counter - 1)
-
     user_query = req.query.strip()
     clean_q = user_query.lower()
 
-    greetings = ["hello", "hi", "namaste", "pranam", "hey", "नमस्ते", "प्रणाम", "राम राम"]
+    greetings = ["hello", "hi", "namaste", "pranam", "hey", "नमस्ते", "प्रणाम", "राम राम", "जय जवान जय किसान"]
     if clean_q in greetings:
         greeting_text = "नमस्ते किसान भाई! 🙏 बताइए, आज फसल, मिट्टी या प्राकृतिक कृषि से संबंधित क्या सहायता चाहिए?" if req.language == "hi" else "Hello Farmer Friend! 🙏 How can I assist you with your farming, soil, or organic agriculture today?"
         return {
@@ -163,13 +154,22 @@ async def ask_endpoint(req: QueryReq, request: Request):
             "plan_type": plan_type
         }
 
+    async with concurrency_lock:
+        concurrency_counter += 1
+
     try:
+        if plan_type == "free" and concurrency_counter > 5:
+            await asyncio.sleep(0.4)
+
         allow_web_search = bool(req.web_search_enabled and is_paid_active and plan_type == "pro")
         context_summary = profile.get("chat_context_summary") or ""
         answer_text, sources = generate_rag_answer(user_query, req.language, allow_web_search, context_summary)
     except Exception as e:
         print(f"Chat execution error: {e}")
         raise HTTPException(status_code=500, detail="तकनीकी समस्या आई। आपका कोई क्रेडिट नहीं काटा गया है।")
+    finally:
+        async with concurrency_lock:
+            concurrency_counter = max(0, concurrency_counter - 1)
 
     new_balance = max(0, total_credits - credits_needed)
     updated_plan_type = plan_type
@@ -178,22 +178,23 @@ async def ask_endpoint(req: QueryReq, request: Request):
 
     update_user_credits(req.user_id, new_balance, updated_plan_type)
 
-    try:
-        supabase.table("user_chat_history").insert({
-            "user_id": req.user_id,
-            "query_text": user_query,
-            "response_text": answer_text,
-            "credits_deducted": credits_needed,
-            "attachments_count": req.attachment_count
-        }).execute()
-    except Exception as he:
-        print(f"History log error: {he}")
+    if supabase:
+        try:
+            supabase.table("user_chat_history").insert({
+                "user_id": req.user_id,
+                "query_text": user_query,
+                "response_text": answer_text,
+                "credits_deducted": credits_needed,
+                "attachments_count": req.attachment_count
+            }).execute()
+        except Exception as he:
+            print(f"History log error: {he}")
 
-    try:
-        new_summary = f"{context_summary}\n- Q: {user_query[:60]}"[-350:]
-        supabase.table("user_profiles").update({"chat_context_summary": new_summary}).eq("id", req.user_id).execute()
-    except Exception:
-        pass
+        try:
+            new_summary = f"{context_summary}\n- Q: {user_query[:60]}"[-350:]
+            supabase.table("user_profiles").update({"chat_context_summary": new_summary}).eq("id", req.user_id).execute()
+        except Exception:
+            pass
 
     return {
         "answer": answer_text,
@@ -202,7 +203,6 @@ async def ask_endpoint(req: QueryReq, request: Request):
         "plan_type": updated_plan_type
     }
 
-# Universal Coupon Validation Route
 @app.post("/api/validate-coupon")
 @app.post("/validate-coupon")
 async def validate_coupon_endpoint(req: ValidateCouponReq):
@@ -213,7 +213,6 @@ async def validate_coupon_endpoint(req: ValidateCouponReq):
         "discount_percent": discount_pct
     }
 
-# Universal Order Creation Routes
 @app.post("/api/create-order")
 @app.post("/create-order")
 @app.post("/api/create-order/")
@@ -224,7 +223,6 @@ async def create_order_endpoint(req: OrderReq):
         raise HTTPException(status_code=503, detail="भुगतान सेवा अभी रखरखाव (Maintenance) में है। कृपया कुछ समय बाद पुनः प्रयास करें।")
     return process_order(req.user_id, req.plan_id, req.coupon_code, supabase)
 
-# Universal Payment Verification Routes
 @app.post("/api/verify-payment")
 @app.post("/verify-payment")
 @app.post("/api/verify-payment/")
@@ -254,7 +252,8 @@ async def user_stats(user_id: str, email: str = "", name: str = "", avatar: str 
                     is_paid_active = True
                 else:
                     plan_type = "free"
-                    supabase.table("user_profiles").update({"plan_type": "free"}).eq("id", user_id).execute()
+                    if supabase:
+                        supabase.table("user_profiles").update({"plan_type": "free"}).eq("id", user_id).execute()
             except Exception:
                 plan_type = "free"
         else:
@@ -279,6 +278,8 @@ async def user_stats(user_id: str, email: str = "", name: str = "", avatar: str 
 @app.get("/api/payment-history")
 @app.get("/payment-history")
 async def payment_history_endpoint(user_id: str):
+    if not supabase:
+        return {"transactions": []}
     three_months_ago = (datetime.now(timezone.utc) - timedelta(days=90)).isoformat()
     res = supabase.table("credit_transactions")\
         .select("*")\
