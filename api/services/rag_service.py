@@ -52,23 +52,23 @@ def is_within_agricultural_domain(query: str) -> bool:
             return True
     return False
 
-def generate_rag_answer(user_query: str, language: str = "hi", allow_web_search: bool = False, context_summary: str = "") -> tuple[str, list]:
+def generate_rag_answer(user_query: str, language: str = "hi", allow_web_search: bool = False, context_summary: str = ""):
     sources = []
     context_text = ""
+    suggested_questions = []
     client = get_gemini_client()
     
     if not client:
-        return "तकनीकी समस्या: AI सेवा अभी उपलब्ध नहीं है। कृपया कुछ समय बाद प्रयास करें।", []
+        return "तकनीकी समस्या: AI सेवा अभी उपलब्ध नहीं है। कृपया कुछ समय बाद प्रयास करें।", [], []
 
     # 1. Strict Out-of-Domain Guardrail Check
     if is_agricultural_intent(user_query) and not is_within_agricultural_domain(user_query):
-        # Allow short follow-ups only if context mentions agricultural topic
         if not context_summary or len(user_query) > 20:
             if language == "en":
                 out_of_domain_reply = "I apologize, farmer friend. I am specifically designed to assist only with organic/natural agriculture, crop protection, soil health, and livestock questions. Please ask a farming-related query."
             else:
                 out_of_domain_reply = "क्षमा करें किसान भाई, मैं केवल प्राकृतिक व जैविक कृषि, फसल सुरक्षा, मिट्टी की सेहत और पशुपालन संबंधी प्रश्नों में ही सहायता कर सकता हूँ। कृपया खेती-किसानी से जुड़ा कोई प्रश्न पूछें।"
-            return out_of_domain_reply, []
+            return out_of_domain_reply, [], []
 
     # 2. Vector RAG Embedding Search on Authentic TCBT Video Library
     if is_agricultural_intent(user_query) and supabase:
@@ -101,8 +101,10 @@ def generate_rag_answer(user_query: str, language: str = "hi", allow_web_search:
 
     if language == "en":
         lang_instruction = "CRITICAL: The user has selected English. You MUST respond 100% in pure English only. Do NOT use any Hindi or Hinglish words."
+        suggestions_instruction = "At the very end of your response, strictly output exactly 3 practical, relevant follow-up questions tailored to this specific crop/topic in this format on a single line:\nSUGGESTIONS: question 1 | question 2 | question 3"
     else:
         lang_instruction = "CRITICAL: The user has selected Hindi. You MUST respond 100% in pure, authentic Devnagari Hindi only. Do NOT use Roman English (Hinglish)."
+        suggestions_instruction = "उत्तर के बिल्कुल अंत में, इस विशिष्ट फसल व विषय के संदर्भ के अनुसार 3 अत्यधिक उपयोगी और व्यावहारिक अगले प्रश्न (Follow-up questions) केवल इसी प्रारूप में एक लाइन में लिखें:\nSUGGESTIONS: पहला प्रश्न | दूसरा प्रश्न | तीसरा प्रश्न"
 
     memory_prompt_part = f"\nUser Previous Context / Crop History:\n{context_summary}\n" if context_summary else ""
 
@@ -124,6 +126,8 @@ Context from video transcript library:
 
 User Query:
 {user_query}
+
+{suggestions_instruction}
 """
 
     gen_config = types.GenerateContentConfig(temperature=0.2)
@@ -136,8 +140,21 @@ User Query:
             contents=system_prompt,
             config=gen_config
         )
-        answer_text = response.text or "क्षमा करें, उत्तर प्राप्त नहीं हो सका। कृपया पुनः प्रयास करें।"
-        return answer_text, sources
+        raw_text = response.text or "क्षमा करें, उत्तर प्राप्त नहीं हो सका। कृपया पुनः प्रयास करें।"
+
+        # Extract dynamic suggestions from response text
+        match = re.search(r"SUGGESTIONS:\s*(.+)$", raw_text, re.IGNORECASE | re.MULTILINE)
+        if match:
+            suggestions_line = match.group(1).strip()
+            # Clean answer text by removing the SUGGESTIONS line
+            clean_answer = raw_text[:match.start()].strip()
+            parts = [q.strip() for q in suggestions_line.split("|") if q.strip()]
+            suggested_questions = parts[:3]
+        else:
+            clean_answer = raw_text.strip()
+            suggested_questions = []
+
+        return clean_answer, sources, suggested_questions
     except Exception as ge:
         print(f"Gemini generation error: {ge}")
         raise ge
