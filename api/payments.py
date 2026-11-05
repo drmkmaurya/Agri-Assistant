@@ -43,18 +43,38 @@ def get_active_gateway(supabase) -> str:
         pass
     return "razorpay"
 
-def validate_coupon(coupon_code: str, plan_id: str, supabase):
+def validate_coupon_for_user(coupon_code: str, plan_id: str, user_id: str, supabase):
     if not coupon_code:
         return 0, None
         
     code = coupon_code.strip().upper()
+
+    # Rule: Per user max 1 time usage check via credit_transactions table
+    if user_id:
+        try:
+            prev_usage = supabase.table("credit_transactions")\
+                .select("id")\
+                .eq("user_id", user_id)\
+                .eq("coupon_code", code)\
+                .limit(1)\
+                .execute()
+            if prev_usage.data and len(prev_usage.data) > 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail="यह कूपन कोड आप पहले ही उपयोग कर चुके हैं। प्रत्येक कूपन केवल 1 बार मान्य है।"
+                )
+        except HTTPException:
+            raise
+        except Exception as e:
+            print(f"Per-user coupon check warning: {e}")
+
     if code == "VIP100":
         return 100, "VIP100"
 
     try:
         res = supabase.table("coupons").select("*").eq("code", code).eq("is_active", True).execute()
         if not res.data:
-            raise HTTPException(status_code=400, detail="अमान्य (Invalid) कूपन कोड। कृपया सही कोड दर्ज करें।")
+            raise HTTPException(status_code=400, detail="अमान्य कूपन कोड। कृपया सही कोड दर्ज करें।")
             
         c = res.data[0]
         if c.get("used_count", 0) >= c.get("max_uses", 9999):
@@ -62,13 +82,13 @@ def validate_coupon(coupon_code: str, plan_id: str, supabase):
             
         allowed = c.get("allowed_plans") or ['basic', 'pro']
         if plan_id not in allowed:
-            raise HTTPException(status_code=400, detail="यह कूपन इस प्लान पर मान्य नहीं है।")
+            raise HTTPException(status_code=400, detail="यह कूपन इस चुने गए प्लान पर मान्य नहीं है।")
             
         return c.get("discount_percent", 0), code
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Coupon DB check fallback: {e}")
+        print(f"Coupon DB lookup fallback: {e}")
         return 0, None
 
 def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
@@ -78,17 +98,17 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
     plan = PLANS[plan_id]
     credits_to_add = plan["credits"]
 
-    # Safe lookup
+    # Safe lookup of existing profile
     user_data = {}
     try:
-        user_res = supabase.table("user_profiles").select("total_credits, plan_type, plan_expires_at, email, full_name").eq("id", user_id).execute()
+        user_res = supabase.table("user_profiles").select("total_credits, plan_type, plan_expires_at").eq("id", user_id).execute()
         if user_res.data and len(user_res.data) > 0:
             user_data = user_res.data[0]
     except Exception as e:
-        print(f"Lookup error: {e}")
-
+        print(f"Profile lookup warning: {e}")
+    
     current_credits = user_data.get("total_credits", 0) or 0
-    current_plan = user_data.get("plan_type", "free")
+    current_plan = (user_data.get("plan_type") or "free").lower()
     plan_expires_at = user_data.get("plan_expires_at")
 
     now_utc = datetime.now(timezone.utc)
@@ -102,16 +122,18 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
             except Exception:
                 pass
 
+    # Rule: Pro plan user cannot downgrade to basic while pro is active
     if is_pro_active and plan_id == "basic":
         raise HTTPException(
             status_code=400,
-            detail="आपका Pro प्लान अभी सक्रिय है। बेसिक प्लान केवल प्रो प्लान समाप्त (क्रेडिट 0) होने के बाद ही लिया जा सकता है।"
+            detail="आपका Pro प्लान अभी सक्रिय है। बेसिक प्लान केवल प्रो समाप्त होने पर ही लिया जा सकता है।"
         )
 
+    # Rule: Upper cap check
     if (current_credits + credits_to_add) > MAX_CREDIT_CAP:
         raise HTTPException(
             status_code=400,
-            detail=f"कृपया पहले अपने मौजूदा क्रेडिट का उपयोग करें। आपके पास अभी {current_credits} क्रेडिट उपलब्ध हैं।"
+            detail=f"अधिकतम संचय सीमा {MAX_CREDIT_CAP} क्रेडिट है। आपके पास अभी {current_credits} क्रेडिट उपलब्ध हैं।"
         )
 
     base_amount = plan["amount"]
@@ -119,11 +141,11 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
     valid_code = None
 
     if coupon_code and coupon_code.strip():
-        discount_pct, valid_code = validate_coupon(coupon_code, plan_id, supabase)
+        discount_pct, valid_code = validate_coupon_for_user(coupon_code, plan_id, user_id, supabase)
 
     final_amount = int(base_amount * (1 - (discount_pct / 100)))
 
-    # Free VIP Coupon bypass
+    # 100% discount / VIP coupon bypass
     if final_amount == 0 or (valid_code == "VIP100"):
         return {
             "order_id": f"free_{user_id[:8]}_{int(time.time()*1000)}",
@@ -175,7 +197,6 @@ def process_order(user_id: str, plan_id: str, coupon_code: str, supabase):
             "applied_coupon": valid_code
         }
 
-
 def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: str, plan_id: str, coupon_code: str, supabase):
     if plan_id not in PLANS:
         raise HTTPException(status_code=400, detail="अमान्य प्लान।")
@@ -186,6 +207,8 @@ def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: s
     is_free_order = str(order_id).startswith("free_") or (coupon_code and coupon_code.upper() == "VIP100")
 
     if is_free_order:
+        # Re-verify per-user one-time restriction
+        validate_coupon_for_user(coupon_code or "VIP100", plan_id, user_id, supabase)
         amount_paid = 0.0
         discount_percent = 100
         payment_gateway = "coupon"
@@ -193,17 +216,16 @@ def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: s
         verified_payment_id = payment_id or "VIP_COUPON"
     else:
         gateway = get_active_gateway(supabase)
-        if gateway == "razorpay":
-            if RAZORPAY_KEY_SECRET and signature:
-                msg = f"{order_id}|{payment_id}"
-                expected_sig = hmac.new(
-                    RAZORPAY_KEY_SECRET.encode(),
-                    msg.encode(),
-                    hashlib.sha256
-                ).hexdigest()
-                if expected_sig != signature:
-                    raise HTTPException(status_code=400, detail="भुगतान सत्यापन (Signature) विफल रहा।")
-        
+        if gateway == "razorpay" and RAZORPAY_KEY_SECRET and signature:
+            msg = f"{order_id}|{payment_id}"
+            expected_sig = hmac.new(
+                RAZORPAY_KEY_SECRET.encode(),
+                msg.encode(),
+                hashlib.sha256
+            ).hexdigest()
+            if expected_sig != signature:
+                raise HTTPException(status_code=400, detail="भुगतान सत्यापन विफल रहा।")
+
         amount_paid = float(base_price)
         discount_percent = 0
         payment_gateway = "razorpay"
@@ -216,17 +238,19 @@ def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: s
     current_expires_at = None
 
     try:
-        user_res = supabase.table("user_profiles").select("total_credits, max_pack_credits, plan_type, plan_expires_at").eq("id", user_id).execute()
+        user_res = supabase.table("user_profiles").select("total_credits, plan_type, plan_expires_at").eq("id", user_id).execute()
         if user_res.data and len(user_res.data) > 0:
             user_data = user_res.data[0]
             current_credits = user_data.get("total_credits", 0) or 0
-            current_plan = user_data.get("plan_type", "free")
+            current_plan = (user_data.get("plan_type") or "free").lower()
             current_expires_at = user_data.get("plan_expires_at")
     except Exception as e:
-        print(f"User verify fetch error: {e}")
+        print(f"Profile fetch warning: {e}")
 
+    # Rule: Existing credits + New credits carry-forward / stack
     new_balance = min(MAX_CREDIT_CAP, current_credits + credits_to_add)
 
+    # Rule: Expiry extension logic (adds 30 days from now or current future expiry)
     base_time = now
     if current_expires_at and current_plan in ["basic", "pro"]:
         try:
@@ -239,7 +263,7 @@ def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: s
     new_expiry = (base_time + timedelta(days=30)).isoformat()
     resulting_plan = "pro" if (plan_id == "pro" or current_plan == "pro") else "basic"
 
-    # 1. Update user_profiles
+    # 1. Update user_profiles with new stacked balance and updated plan
     try:
         supabase.table("user_profiles").update({
             "plan_type": resulting_plan,
@@ -247,9 +271,9 @@ def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: s
             "plan_expires_at": new_expiry
         }).eq("id", user_id).execute()
     except Exception as ue:
-        print(f"Profile update error: {ue}")
+        print(f"Profile update warning: {ue}")
 
-    # 2. Insert into credit_transactions safely
+    # 2. Record full audit trail in credit_transactions
     try:
         supabase.table("credit_transactions").insert({
             "user_id": user_id,
@@ -267,7 +291,18 @@ def verify_and_credit(user_id: str, order_id: str, payment_id: str, signature: s
             "status": "success"
         }).execute()
     except Exception as te:
-        print(f"Transaction log insert error: {te}")
+        print(f"Transaction log insert warning: {te}")
+
+    # 3. Increment coupons used_count in coupons table if applicable
+    if coupon_code and not is_free_order:
+        try:
+            code_upper = coupon_code.strip().upper()
+            c_row = supabase.table("coupons").select("used_count").eq("code", code_upper).limit(1).execute()
+            if c_row.data and len(c_row.data) > 0:
+                new_count = (c_row.data[0].get("used_count") or 0) + 1
+                supabase.table("coupons").update({"used_count": new_count}).eq("code", code_upper).execute()
+        except Exception:
+            pass
 
     return {
         "status": "success",
