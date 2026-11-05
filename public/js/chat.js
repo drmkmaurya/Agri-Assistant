@@ -580,7 +580,8 @@ function renderFloatingSuggestions(questions = []) {
 
     let html = '<div class="suggested-questions-box" id="floatingSuggestionsBar" style="padding:4px 8px; margin-bottom:6px;">';
     questions.forEach(q => {
-        html += `<div class="suggested-q-chip" onclick="askQuickChip('${q}')">👉 ${q}</div>`;
+        const cleanQ = q.replace(/^👉\s*/, '').trim();
+        html += `<div class="suggested-q-chip" onclick="askQuickChip('${cleanQ.replace(/'/g, "\\'")}')">👉 ${cleanQ}</div>`;
     });
     html += '</div>';
 
@@ -772,11 +773,17 @@ async function executeSubmit(text, attachCount, imagePreviews = []) {
         renderBotBubbleDirect(finalContent, nowTime(), true, data.answer, false);
         queueSaveLocalMessage('bot', finalContent, nowTime(), data.answer);
 
-        const followups = [
-            "इसका छिड़काव किस समय करना सही रहेगा?",
-            "प्रति एकड़ कितनी मात्रा में उपयोग करें?",
-            "क्या इसे अन्य जैविक घोल के साथ मिला सकते हैं?"
-        ];
+        // Dynamic context-aware suggested questions from backend
+        let followups = [];
+        if (data.suggested_questions && Array.isArray(data.suggested_questions) && data.suggested_questions.length > 0) {
+            followups = data.suggested_questions;
+        } else {
+            followups = [
+                "इसका छिड़काव किस समय करना सही रहेगा?",
+                "प्रति एकड़ कितनी मात्रा में उपयोग करें?",
+                "क्या इसे अन्य जैविक घोल के साथ मिला सकते हैं?"
+            ];
+        }
         renderFloatingSuggestions(followups);
 
     } catch(e) {
@@ -858,7 +865,6 @@ function openStoryDetailById(storyId, incrementView = true) {
 
     const story = cachedDailyStories.find(s => String(s.id) === String(storyId));
     if (!story) {
-        // If loaded directly from URL, load from DB
         loadSingleStoryFromDB(storyId);
         return;
     }
