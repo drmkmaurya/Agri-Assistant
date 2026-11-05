@@ -12,6 +12,7 @@ let speechRecognizer = null;
 let isRecognizingVoice = false;
 let pendingUserQuery = null;
 let lastBackPressTime = 0;
+let cachedDailyStories = [];
 
 /* Clean URL Routing & Hardware Back Navigation Engine */
 const ROUTE_VIEW_MAP = {
@@ -32,7 +33,16 @@ window.navigateTo = function(path) {
 };
 
 window.navigateBack = function() {
-    if (window.location.pathname === '/') {
+    const currentPath = window.location.pathname;
+    
+    // If inside a single story view (/champions/:id), go back to stories list (/champions)
+    if (currentPath.startsWith('/champions/') && currentPath !== '/champions') {
+        history.pushState({ path: '/champions' }, '', '/champions');
+        window.renderRoute('/champions');
+        return;
+    }
+
+    if (currentPath === '/') {
         return;
     }
     history.pushState({ path: '/' }, '', '/');
@@ -42,6 +52,16 @@ window.navigateBack = function() {
 window.renderRoute = function(path) {
     document.querySelectorAll('.app-view-screen').forEach(el => el.classList.remove('active'));
 
+    // 1. Check for single champion story path: /champions/:id
+    if (path.startsWith('/champions/') && path !== '/champions') {
+        const storyId = path.replace('/champions/', '').trim();
+        const targetView = document.getElementById('storiesView');
+        if (targetView) targetView.classList.add('active');
+        openStoryDetailById(storyId, false);
+        return;
+    }
+
+    // 2. Standard Views
     const viewId = ROUTE_VIEW_MAP[path];
     if (viewId) {
         const targetView = document.getElementById(viewId);
@@ -49,7 +69,7 @@ window.renderRoute = function(path) {
             targetView.classList.add('active');
         }
 
-        if (path === '/champions' && typeof loadDailyStories === 'function') {
+        if (path === '/champions') {
             loadDailyStories();
         } else if (['/terms', '/privacy', '/refund', '/contact'].includes(path) && typeof switchTab === 'function') {
             const tabName = path.replace('/', '');
@@ -766,6 +786,7 @@ async function executeSubmit(text, attachCount, imagePreviews = []) {
     toBottom();
 }
 
+/* Two-Tier Champions Experience: Compact Card List + Dedicated Blog Story View */
 async function loadDailyStories() {
     const container = document.getElementById('storiesListContainer');
     if (!container) return;
@@ -776,26 +797,40 @@ async function loadDailyStories() {
             .from('daily_stories')
             .select('*')
             .order('published_date', { ascending: false })
-            .limit(10);
+            .limit(20);
 
         if (error || !data || data.length === 0) {
             container.innerHTML = '<p style="color:#64748b; font-size:12.5px; text-align:center; padding:20px;">आज की सफलता की कहानी जल्द प्रकाशित होगी।</p>';
             return;
         }
 
+        cachedDailyStories = data;
+
+        // Render Tier 1: Compact Clean Cards
         let html = '';
         data.forEach(st => {
+            const shortSnippet = st.content ? (st.content.substring(0, 115) + '...') : '';
             html += `
-                <div class="story-card-item">
-                    <div>
-                        <span class="story-badge">सफलता की मिसाल</span>
-                        <span class="story-views-badge">👁️ ${st.views_count || 120}</span>
-                        <span class="story-date" style="margin-right:8px;">${st.published_date || 'आज'}</span>
+                <div class="story-card-item" onclick="openStoryDetail('${st.id}')" style="cursor:pointer; transition:transform 0.15s ease, box-shadow 0.15s ease; padding:12px 14px; margin-bottom:10px; background:#ffffff; border:1px solid #e2e8f0; border-radius:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span class="story-badge" style="background:#dcfce7; color:#15803d; font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:6px;">सफलता की मिसाल</span>
+                        <div style="font-size:11px; color:#64748b; display:flex; align-items:center; gap:6px;">
+                            <span>👁️ ${st.views_count || 120}</span>
+                            <span>•</span>
+                            <span>${st.published_date || 'हाल ही में'}</span>
+                        </div>
                     </div>
-                    <div class="story-title">${st.title}</div>
-                    <div class="story-meta">👨‍🌾 <b>${st.farmer_name}</b> • 📍 ${st.village_district}</div>
-                    <div class="story-impact">💰 प्रभाव: ${st.earnings_impact}</div>
-                    <div class="story-content">${st.content}</div>
+                    <div class="story-title" style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:4px; line-height:1.35;">${st.title}</div>
+                    <div class="story-meta" style="font-size:11.5px; color:#64748b; margin-bottom:6px;">
+                        👨‍🌾 <b>${st.farmer_name}</b> • 📍 ${st.village_district}
+                    </div>
+                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; font-size:11px; font-weight:700; padding:3px 8px; border-radius:6px; margin-bottom:6px; display:inline-block;">
+                        💰 ${st.earnings_impact}
+                    </div>
+                    <p style="font-size:12px; color:#475569; line-height:1.5; margin:0;">${shortSnippet}</p>
+                    <div style="margin-top:8px; text-align:right;">
+                        <span style="font-size:11.5px; color:#008069; font-weight:700;">पूरा लेख पढ़ें (Read Full) →</span>
+                    </div>
                 </div>`;
         });
         container.innerHTML = html;
@@ -806,4 +841,92 @@ async function loadDailyStories() {
         console.error("Champions load error:", e);
         container.innerHTML = '<p style="color:#ef4444; font-size:12.5px;">कथाएं लोड करने में समस्या आई।</p>';
     }
+}
+
+/* Tier 2: Open Dedicated Blog Article Reader View */
+function openStoryDetail(storyId) {
+    const url = `/champions/${storyId}`;
+    if (window.location.pathname !== url) {
+        history.pushState({ path: url }, '', url);
+    }
+    openStoryDetailById(storyId, true);
+}
+
+function openStoryDetailById(storyId, incrementView = true) {
+    const container = document.getElementById('storiesListContainer');
+    if (!container) return;
+
+    const story = cachedDailyStories.find(s => String(s.id) === String(storyId));
+    if (!story) {
+        // If loaded directly from URL, load from DB
+        loadSingleStoryFromDB(storyId);
+        return;
+    }
+
+    if (incrementView) {
+        try {
+            supabaseClient.rpc('increment_story_views', { story_id: storyId }).then(() => {}).catch(() => {});
+        } catch(e) {}
+    }
+
+    container.innerHTML = `
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:16px; line-height:1.7;">
+            <button onclick="navigateTo('/champions')" style="background:#f1f5f9; border:none; color:#008069; font-size:12px; font-weight:700; padding:6px 12px; border-radius:8px; cursor:pointer; margin-bottom:12px; display:inline-flex; align-items:center; gap:5px;">
+                ← सभी कहानियां (Back to List)
+            </button>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="background:#dcfce7; color:#15803d; font-size:11px; font-weight:700; padding:3px 8px; border-radius:6px;">सफलता की मिसाल</span>
+                <span style="font-size:11.5px; color:#64748b;">📅 ${story.published_date || 'आज'}</span>
+            </div>
+            <h2 style="font-size:17px; font-weight:800; color:#0f172a; margin:10px 0 6px 0; line-height:1.4;">${story.title}</h2>
+            <div style="font-size:12.5px; color:#64748b; margin-bottom:12px;">
+                👨‍🌾 <b>${story.farmer_name}</b> • 📍 ${story.village_district}
+            </div>
+            <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#047857; font-size:12px; font-weight:700; padding:8px 12px; border-radius:8px; margin-bottom:14px;">
+                💰 आर्थिक प्रभाव: ${story.earnings_impact}
+            </div>
+            <div style="font-size:13.5px; color:#334155; line-height:1.7; white-space:pre-line;">
+                ${story.content}
+            </div>
+            <div style="margin-top:20px; padding-top:14px; border-top:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center;">
+                <button onclick="shareStoryWhatsApp('${story.title.replace(/'/g, "\\'")}', '${storyId}')" style="background:#25d366; color:#fff; border:none; padding:8px 14px; border-radius:20px; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                    <i class="fa-brands fa-whatsapp"></i> किसान भाइयों से साझा करें
+                </button>
+                <button onclick="navigateTo('/champions')" style="background:none; border:none; color:#64748b; font-size:12px; cursor:pointer;">
+                    सूची पर लौटें
+                </button>
+            </div>
+        </div>`;
+}
+
+async function loadSingleStoryFromDB(storyId) {
+    const container = document.getElementById('storiesListContainer');
+    if (!container) return;
+    container.innerHTML = '<p style="color:#64748b; font-size:12.5px;">लेख लोड हो रहा है...</p>';
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('daily_stories')
+            .select('*')
+            .eq('id', storyId)
+            .limit(1);
+
+        if (error || !data || data.length === 0) {
+            container.innerHTML = `
+                <p style="color:#ef4444; font-size:12.5px;">कहानी नहीं मिली।</p>
+                <button onclick="navigateTo('/champions')" style="background:#008069; color:#fff; border:none; padding:6px 12px; border-radius:8px; font-size:12px; margin-top:8px; cursor:pointer;">वापस जाएं</button>`;
+            return;
+        }
+
+        cachedDailyStories.push(data[0]);
+        openStoryDetailById(storyId, false);
+    } catch(e) {
+        container.innerHTML = '<p style="color:#ef4444; font-size:12.5px;">लोड करने में त्रुटि आई।</p>';
+    }
+}
+
+function shareStoryWhatsApp(title, storyId) {
+    const url = `${window.location.origin}/champions/${storyId}`;
+    const text = `🌾 *कृषि चैंपियंस सफलता की कहानी:*\n\n"${title}"\n\nपूरा लेख पढ़ें:\n${url}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
 }
