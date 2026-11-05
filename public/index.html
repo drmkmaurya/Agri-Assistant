@@ -86,7 +86,7 @@
             <div class="header-titles">
                 <div style="display:flex; align-items:center;">
                     <h1>Agri Mitra</h1>
-                    <span id="headerPlanBadge" class="plan-header-badge">PRO</span>
+                    <span id="headerPlanBadge" class="plan-header-badge"></span>
                 </div>
                 <div class="header-status-strip">
                     <span id="liveStatusDot" class="status-dot-indicator connecting"></span>
@@ -119,7 +119,7 @@
                 <b id="userName" style="font-size:13.5px; color:#0f172a;">किसान साथी</b>
                 <span id="menuPlanPill" style="font-size:10px; background:#e6f4f1; color:#008069; font-weight:700; padding:1.5px 6px; border-radius:4px; text-transform:uppercase;">FREE</span>
             </div>
-            <div style="font-size:11px; color:#64748b; margin-top:2px;" id="userEmailText">kisan@agrimitra.in</div>
+            <div style="font-size:11px; color:#64748b; margin-top:2px;" id="userEmailText">...</div>
             
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:8px 6px; text-align:center;">
                 <div style="border-right:1px solid #f1f5f9; padding-right:4px;">
@@ -128,7 +128,7 @@
                 </div>
                 <div style="padding-left:4px;">
                     <span style="font-size:10px; color:#64748b; display:block;">वैधता (Validity)</span>
-                    <b id="menuDaysRemaining" style="font-size:11.5px; color:#1e293b; display:block; margin-top:3px; font-weight:700;">30 दिन</b>
+                    <b id="menuDaysRemaining" style="font-size:11px; color:#1e293b; display:block; margin-top:2px; font-weight:700; line-height:1.3;">30 दिन</b>
                 </div>
             </div>
         </div>
@@ -181,14 +181,14 @@
 
         <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,application/pdf" multiple style="display:none;" onchange="handleFileSelected(event)">
 
-        <button class="camera-attach-btn" onclick="triggerAttachmentPicker()" title="फोटो लें या चुनें">
+        <button class="camera-attach-btn" id="btnCameraAttach" onclick="triggerAttachmentPicker()" title="फोटो लें या चुनें">
             <svg class="camera-svg" viewBox="0 0 24 24">
                 <path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4z"/>
                 <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
             </svg>
         </button>
 
-        <div class="input-box">
+        <div class="input-box" id="composerInputBox">
             <div class="voice-waveform-container" id="voiceWaveBar">
                 <div class="wave-bar"></div>
                 <div class="wave-bar"></div>
@@ -247,14 +247,14 @@
                 </div>
             </div>
 
-            <!-- Step 2: Coupon Box (Activates on Plan Selection) -->
+            <!-- Step 2: Clean Coupon Box (Without VIP100 example text) -->
             <div class="coupon-section" id="couponSectionBox" style="opacity:0.55; pointer-events:none; transition:opacity 0.25s;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <span style="font-size:12px; font-weight:700; color:#334155;">2. कूपन कोड (वैकल्पिक):</span>
-                    <span style="font-size:11px; color:#64748b;">उदा. VIP100</span>
+                    <span style="font-size:11px; color:#64748b;">यदि कोई कोड हो</span>
                 </div>
                 <div class="coupon-box">
-                    <input type="text" id="couponInput" class="coupon-input" placeholder="कोड दर्ज करें" disabled oninput="handleCouponInputChange()">
+                    <input type="text" id="couponInput" class="coupon-input" placeholder="कूपन कोड दर्ज करें" disabled oninput="handleCouponInputChange()">
                     <button class="coupon-apply-btn" id="btnApplyCoupon" onclick="applyCouponFeedback()" disabled>लागू करें</button>
                 </div>
                 <div id="couponFeedbackMsg" class="coupon-feedback"></div>
@@ -382,7 +382,7 @@
         </div>
     </div>
 
-    <!-- Zero Credit Modal -->
+    <!-- Modals -->
     <div class="modal-overlay" id="zeroCreditModal">
         <div class="modal-card" style="text-align:center; padding:24px 20px;">
             <div style="font-size:42px;">🌾</div>
@@ -401,7 +401,6 @@
         </div>
     </div>
 
-    <!-- Low Credit Nudge Modal -->
     <div class="modal-overlay" id="lowCreditNudgeModal">
         <div class="modal-card" style="text-align:center; padding:22px 18px;">
             <div style="font-size:36px;">⏳</div>
@@ -418,7 +417,6 @@
         </div>
     </div>
 
-    <!-- Auth Login Overlay -->
     <div class="auth-screen" id="authScreen" style="display:flex;">
         <div style="text-align:center; margin-top:40px;">
             <div style="font-size:52px; margin-bottom:8px;">🌾</div>
@@ -483,7 +481,7 @@
             </div>
             <div style="display:flex; justify-content:space-between; margin-bottom:6px; border-bottom:1px solid #dcfce7; padding-bottom:5px;">
                 <span>वैधता (Validity):</span>
-                <b id="successExpiryDate" style="color:#15803d;">...</b>
+                <b id="successExpiryDate" style="color:#15803d; line-height:1.3; text-align:right;">...</b>
             </div>
             <div style="font-weight:700; color:#008069; margin-top:4px; margin-bottom:3px;">सक्रिय सुविधाएं (Active Benefits):</div>
             <div id="successFeaturesList" style="color:#475569; font-size:11.5px;">
