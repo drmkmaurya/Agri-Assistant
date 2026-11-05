@@ -66,7 +66,7 @@ window.policyDocs = {
             <h4 style="color:#008069; margin-bottom:8px; font-weight:700; font-size:15px;">सहायता एवं संपर्क (Help & Support)</h4>
             <p style="margin-bottom:8px;">किसी भी बिलिंग, तकनीकी सहायता अथवा सुझाव के लिए सीधे संपर्क करें:</p>
             <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:8px; line-height:1.7;">
-                📧 <b>ईमेल:</b> <a href="mailto:support@agrimitra.in" style="color:#008069; font-weight:600; text-decoration:none;">support@agrimitra.in</a><br>
+                📧 <b>ईमेल:</b> <a href="mailto:support@agrimitra.in" style="color:#008069; font-weight:600; text-decoration:none;">mauryarohit2152017@gmail.com</a><br>
                 📍 <b>स्थान:</b> उत्तर प्रदेश, भारत<br>
                 ⏰ <b>कार्य समय:</b> सोमवार से शनिवार (सुबह 10:00 से शाम 06:00 बजे IST)
             </div>
