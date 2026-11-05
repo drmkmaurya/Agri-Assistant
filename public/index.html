@@ -332,6 +332,45 @@
     </div>
 </div>
 
+<!-- WhatsApp Style YouTube Clip Player Modal (PiP Overlay) -->
+<div class="modal-overlay" id="ytVideoModal" style="display:none; z-index:3000; background:rgba(0,0,0,0.85); backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px); padding:14px;" onclick="handleYtBackdropClick(event)">
+    <div class="yt-modal-sheet" onclick="event.stopPropagation()">
+        <!-- Modal Top Bar -->
+        <div class="yt-modal-header">
+            <div class="yt-modal-info">
+                <span class="yt-badge-icon"><i class="fa-brands fa-youtube"></i></span>
+                <div class="yt-titles-wrap">
+                    <div id="ytModalTitle" class="yt-modal-title">संदर्भ वीडियो क्लिप</div>
+                    <div id="ytModalTime" class="yt-modal-timestamp">क्लिप प्ले हो रही है</div>
+                </div>
+            </div>
+            <button onclick="closeYtModal()" class="yt-close-btn" title="बंद करें">✕</button>
+        </div>
+
+        <!-- Video Frame Container (Responsive 16:9) -->
+        <div class="yt-player-box">
+            <iframe id="ytIframePlayer" 
+                    src="" 
+                    title="YouTube video player" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    allowfullscreen 
+                    referrerpolicy="strict-origin-when-cross-origin">
+            </iframe>
+        </div>
+
+        <!-- Modal Bottom Bar -->
+        <div class="yt-modal-footer">
+            <div class="yt-status-label">
+                <span class="live-pulse-dot" style="width:6px; height:6px;"></span>
+                <span>WhatsApp इन-ऐप क्लिप मोड</span>
+            </div>
+            <a id="ytOpenDirectLink" href="#" target="_blank" rel="noopener noreferrer" class="yt-direct-link">
+                YouTube पर देखें ↗
+            </a>
+        </div>
+    </div>
+</div>
+
 <!-- Modal: Payment History -->
 <div class="modal-overlay" id="historyModal">
     <div class="modal-card">
