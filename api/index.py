@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from supabase import create_client, Client
 
 try:
-    from api.payments import process_order, verify_and_credit
+    from api.payments import process_order, verify_and_credit, validate_coupon_for_user
     from api.services.user_service import (
         get_super_control_settings,
         get_or_create_user_profile,
@@ -17,7 +17,7 @@ try:
     )
     from api.services.rag_service import generate_rag_answer
 except ImportError:
-    from payments import process_order, verify_and_credit
+    from payments import process_order, verify_and_credit, validate_coupon_for_user
     from services.user_service import (
         get_super_control_settings,
         get_or_create_user_profile,
@@ -85,8 +85,10 @@ class VerifyPaymentReq(BaseModel):
     plan_id: str
     coupon_code: str = ""
 
-class ClaimWelcomeReq(BaseModel):
-    user_id: str
+class ValidateCouponReq(BaseModel):
+    coupon_code: str
+    plan_id: str
+    user_id: str = ""
 
 @app.post("/api/ask")
 @app.post("/ask")
@@ -115,7 +117,7 @@ async def ask_endpoint(req: QueryReq, request: Request):
     if plan_type in ["basic", "pro"]:
         if plan_expires_at:
             try:
-                exp_time = datetime.fromisoformat(plan_expires_at.replace("Z", "+00:00"))
+                exp_time = datetime.fromisoformat(str(plan_expires_at).replace("Z", "+00:00"))
                 if now_utc <= exp_time and total_credits > 0:
                     is_paid_active = True
                 else:
@@ -176,7 +178,6 @@ async def ask_endpoint(req: QueryReq, request: Request):
 
     update_user_credits(req.user_id, new_balance, updated_plan_type)
 
-    # Save to user_chat_history
     try:
         supabase.table("user_chat_history").insert({
             "user_id": req.user_id,
@@ -188,7 +189,6 @@ async def ask_endpoint(req: QueryReq, request: Request):
     except Exception as he:
         print(f"History log error: {he}")
 
-    # Lightweight sliding context memory update
     try:
         new_summary = f"{context_summary}\n- Q: {user_query[:60]}"[-350:]
         supabase.table("user_profiles").update({"chat_context_summary": new_summary}).eq("id", req.user_id).execute()
@@ -202,7 +202,18 @@ async def ask_endpoint(req: QueryReq, request: Request):
         "plan_type": updated_plan_type
     }
 
-# Universal Order Creation Routes (FastAPI catch-all support)
+# Universal Coupon Validation Route
+@app.post("/api/validate-coupon")
+@app.post("/validate-coupon")
+async def validate_coupon_endpoint(req: ValidateCouponReq):
+    discount_pct, code = validate_coupon_for_user(req.coupon_code, req.plan_id, req.user_id, supabase)
+    return {
+        "valid": True,
+        "code": code,
+        "discount_percent": discount_pct
+    }
+
+# Universal Order Creation Routes
 @app.post("/api/create-order")
 @app.post("/create-order")
 @app.post("/api/create-order/")
@@ -238,7 +249,7 @@ async def user_stats(user_id: str, email: str = "", name: str = "", avatar: str 
     if plan_type in ["basic", "pro"]:
         if plan_expires_at:
             try:
-                exp_time = datetime.fromisoformat(plan_expires_at.replace("Z", "+00:00"))
+                exp_time = datetime.fromisoformat(str(plan_expires_at).replace("Z", "+00:00"))
                 if now_utc <= exp_time and total_credits > 0:
                     is_paid_active = True
                 else:
@@ -259,7 +270,9 @@ async def user_stats(user_id: str, email: str = "", name: str = "", avatar: str 
             "maintenance_mode": settings.get("maintenance_mode", False),
             "chat_maintenance": settings.get("chat_maintenance", False),
             "payment_maintenance": settings.get("payment_maintenance", False),
-            "active_payment_gateway": settings.get("active_payment_gateway", "razorpay")
+            "active_payment_gateway": settings.get("active_payment_gateway", "razorpay"),
+            "welcome_credits": settings.get("welcome_credits", 10),
+            "welcome_days": settings.get("welcome_days", 30)
         }
     }
 
