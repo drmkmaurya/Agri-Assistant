@@ -261,7 +261,7 @@
                 <div id="couponFeedbackMsg" class="coupon-feedback"></div>
             </div>
 
-            <!-- Amazon-style Dynamic Price Summary Card -->
+            <!-- Dynamic Price Summary Card -->
             <div id="checkoutSummaryCard" style="display:none; background:#f8fafc; border:1px solid #cbd5e1; border-radius:12px; padding:12px; margin-top:14px; font-size:12.5px; line-height:1.6;">
                 <div style="display:flex; justify-content:space-between;">
                     <span style="color:#64748b;">मूल मूल्य (Base Price):</span>
@@ -432,9 +432,9 @@
 
         <div class="prelogin-legal-box">
             साइन इन करके आप हमारे 
-            <span class="prelogin-link" onclick="openViewWithHistory('policyView'); switchTab('terms');">नियम एवं शर्तें</span>, 
-            <span class="prelogin-link" onclick="openViewWithHistory('policyView'); switchTab('privacy');">गोपनीयता नीति</span> एवं 
-            <span class="prelogin-link" onclick="openViewWithHistory('policyView'); switchTab('refund');">वापसी नीति</span> 
+            <span class="prelogin-link" onclick="navigateTo('/terms')">नियम एवं शर्तें</span>, 
+            <span class="prelogin-link" onclick="navigateTo('/privacy')">गोपनीयता नीति</span> एवं 
+            <span class="prelogin-link" onclick="navigateTo('/refund')">वापसी नीति</span> 
             स्वीकार करते हैं।<br>
             <span style="font-size:10.5px; color:#94a3b8;">सर्वाधिकार सुरक्षित © 2026 Agri Mitra</span>
         </div>
@@ -512,14 +512,18 @@
 <script>
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', () => {
-            document.getElementById('appFrame').style.height = `${window.visualViewport.height}px`;
-            setTimeout(toBottom, 50);
+            const frame = document.getElementById('appFrame');
+            if (frame) frame.style.height = `${window.visualViewport.height}px`;
+            setTimeout(() => { if (typeof toBottom === 'function') toBottom(); }, 50);
         });
         window.visualViewport.addEventListener('scroll', () => { window.scrollTo(0, 0); });
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-        if (typeof nowTime === 'function') document.getElementById('initClock').textContent = nowTime();
+        if (typeof nowTime === 'function') {
+            const clk = document.getElementById('initClock');
+            if (clk) clk.textContent = nowTime();
+        }
         if (typeof updateDateDivider === 'function') updateDateDivider();
         if (typeof cleanAndLoadLocalHistory === 'function') cleanAndLoadLocalHistory();
         if (typeof loadSavedFontPreference === 'function') loadSavedFontPreference();
