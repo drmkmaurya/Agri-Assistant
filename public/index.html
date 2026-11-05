@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/policies.js" defer></script>
     
     <style>
         @keyframes pulseGlow {
@@ -247,7 +248,7 @@
                 </div>
             </div>
 
-            <!-- Step 2: Clean Coupon Box (Without VIP100 example text) -->
+            <!-- Step 2: Clean Coupon Box -->
             <div class="coupon-section" id="couponSectionBox" style="opacity:0.55; pointer-events:none; transition:opacity 0.25s;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <span style="font-size:12px; font-weight:700; color:#334155;">2. कूपन कोड (वैकल्पिक):</span>
@@ -351,7 +352,7 @@
             <button class="pill-choice-btn active" id="btn-terms" onclick="switchTab('terms')" style="margin:6px; flex:none; padding:6px 12px; font-size:11.5px;">Terms</button>
             <button class="pill-choice-btn" id="btn-privacy" onclick="switchTab('privacy')" style="margin:6px; flex:none; padding:6px 12px; font-size:11.5px;">Privacy</button>
             <button class="pill-choice-btn" id="btn-refund" onclick="switchTab('refund')" style="margin:6px; flex:none; padding:6px 12px; font-size:11.5px;">Refund</button>
-            <button class="pill-choice-btn" id="btn-pricing" onclick="switchTab('pricing-policy')" style="margin:6px; flex:none; padding:6px 12px; font-size:11.5px;">Pricing</button>
+            <button class="pill-choice-btn" id="btn-pricing" onclick="switchTab('pricing')" style="margin:6px; flex:none; padding:6px 12px; font-size:11.5px;">Pricing</button>
             <button class="pill-choice-btn" id="btn-contact" onclick="switchTab('contact')" style="margin:6px; flex:none; padding:6px 12px; font-size:11.5px;">Contact</button>
         </div>
         <div class="view-body" id="policyContent"></div>
