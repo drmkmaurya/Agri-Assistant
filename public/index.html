@@ -9,27 +9,21 @@
     <meta name="theme-color" content="#005c4b">
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/606/606553.png">
 
-    <!-- Preconnect to Font Origins for Faster Render -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <!-- Critical CSS -->
     <link rel="stylesheet" href="/styles.css">
-
-    <!-- Non-blocking Font Awesome Stylesheet -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
 
-    <!-- Core Scripts (policies.js is now lazy-loaded on-demand) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
 <div class="chat-app" id="appFrame">
-    <!-- Header with Golden-Wheat Emblem & Online Status -->
+    <!-- Header -->
     <header class="chat-header">
         <div class="header-left">
             <div class="agri-emblem-badge" title="Agri Mitra">
-                <!-- Golden Wheat / Sprout Emblem -->
                 <svg class="agri-emblem-svg" viewBox="0 0 24 24">
                     <path d="M12 2C8 6 6 10 6 14a6 6 0 0 0 12 0c0-4-2-8-6-12zm-1 16.9A4.01 4.01 0 0 1 8 15c0-2.6 1.3-5.3 3-7.5 1.7 2.2 3 4.9 3 7.5a4.01 4.01 0 0 1-3 3.9z"/>
                 </svg>
@@ -44,7 +38,6 @@
         </div>
         
         <div class="header-right">
-            <!-- Champions Header Button -->
             <button class="header-icon-btn" onclick="navigateTo('/champions')" title="कृषि चैंपियंस">
                 <svg class="header-btn-svg" viewBox="0 0 24 24">
                     <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0 0 11 15.9V19H7v2h10v-2h-4v-3.1c1.86-.44 3.27-1.95 3.61-3.96A5.01 5.01 0 0 0 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
@@ -52,7 +45,6 @@
                 <span class="unread-badge-dot" id="storyUnreadDot"></span>
             </button>
 
-            <!-- User DP & Clean Credit Count Badge -->
             <div class="profile-ring-container" id="btnProfileRing" onclick="toggleMenu()" title="खाता व मेनू">
                 <img src="https://lh3.googleusercontent.com/a/default-user=s96-c" id="userAvatar" class="user-dp" alt="Avatar">
                 <div class="ring-credit-badge" id="ringBadge">...</div>
@@ -110,7 +102,7 @@
         </div>
     </main>
 
-    <!-- Composer Bar with Camera Icon & Live Voice Waveform -->
+    <!-- Composer Bar -->
     <footer class="input-bar" id="inputFooterBar">
         <div class="attachment-preview-chip" id="attachmentChip">
             <span id="attachedFileName">📎 1 फोटो</span>
@@ -272,7 +264,32 @@
         <div class="view-body" id="policyContent"></div>
     </div>
 
-    <!-- Zero Credit Modal -->
+    <!-- WhatsApp-Style Video Popup Modal -->
+    <div class="modal-overlay" id="whatsappVideoModal" style="display:none; z-index:2500; background:rgba(0,0,0,0.85); backdrop-filter:blur(4px);">
+        <div class="modal-card" style="background:#111b21; border:1px solid #2a3942; border-radius:18px; max-width:460px; overflow:hidden; color:#fff;">
+            <div style="background:#1f2c34; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #2a3942;">
+                <div style="display:flex; align-items:center; gap:8px; overflow:hidden;">
+                    <div style="width:28px; height:28px; background:#dc2626; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px;">
+                        <i class="fa-brands fa-youtube"></i>
+                    </div>
+                    <div style="overflow:hidden;">
+                        <div id="modalClipTitle" style="font-size:12.5px; font-weight:700; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; color:#f1f5f9;">वीडियो क्लिप</div>
+                        <div style="font-size:10.5px; color:#94a3b8;"><span id="modalClipTime" style="color:#34d399; font-weight:600;">00:00</span> • <span id="modalClipDuration">क्लिप</span></div>
+                    </div>
+                </div>
+                <button onclick="closePopupPlayer()" style="background:none; border:none; color:#94a3b8; font-size:18px; cursor:pointer; padding:4px;">✕</button>
+            </div>
+            <div style="position:relative; width:100%; aspect-ratio:16/9; background:#000;">
+                <iframe id="popupIframe" style="width:100%; height:100%; border:none;" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+            <div style="background:#1f2c34; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; font-size:11.5px;">
+                <span style="color:#d1fae5; display:flex; align-items:center; gap:5px;"><span class="live-pulse-dot"></span> इन-ऐप प्लेयर</span>
+                <a id="modalYtDirectLink" href="#" target="_blank" style="color:#38bdf8; text-decoration:none; font-weight:600;">YouTube पर खोलें →</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
     <div class="modal-overlay" id="zeroCreditModal">
         <div class="modal-card" style="text-align:center; padding:24px 20px;">
             <div style="font-size:42px;">🌾</div>
@@ -282,7 +299,7 @@
                 <br>• प्राकृतिक खेती व कीट नियंत्रण सलाह
                 <br>• संदर्भ वीडियो क्लिप्स व त्वरित उत्तर
             </p>
-            <button onclick="closeZeroCreditModal(); navigateTo('/pricing');" style="background:#008069; color:#fff; border:none; padding:12px 22px; border-radius:24px; font-weight:700; font-size:14px; cursor:pointer; width:100%; box-shadow:0 2px 8px rgba(0,128,105,0.3);">
+            <button onclick="closeZeroCreditModal(); navigateTo('/pricing');" style="background:#008069; color:#fff; border:none; padding:12px 22px; border-radius:24px; font-weight:700; font-size:14px; cursor:pointer; width:100%;">
                 ⚡ Buy Credit Plan (मात्र ₹49 से)
             </button>
             <button onclick="closeZeroCreditModal()" style="background:none; border:none; color:#64748b; font-size:12px; margin-top:12px; cursor:pointer;">
@@ -291,7 +308,6 @@
         </div>
     </div>
 
-    <!-- Low Credit Nudge Modal -->
     <div class="modal-overlay" id="lowCreditNudgeModal">
         <div class="modal-card" style="text-align:center; padding:22px 18px;">
             <div style="font-size:36px;">⏳</div>
@@ -308,7 +324,6 @@
         </div>
     </div>
 
-    <!-- Auth Login Overlay -->
     <div class="auth-screen" id="authScreen" style="display:flex;">
         <div style="text-align:center; margin-top:40px;">
             <div style="font-size:52px; margin-bottom:8px;">🌾</div>
@@ -332,46 +347,6 @@
     </div>
 </div>
 
-<!-- WhatsApp Style YouTube Clip Player Modal (PiP Overlay) -->
-<div class="modal-overlay" id="ytVideoModal" style="display:none; z-index:3000; background:rgba(0,0,0,0.85); backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px); padding:14px;" onclick="handleYtBackdropClick(event)">
-    <div class="yt-modal-sheet" onclick="event.stopPropagation()">
-        <!-- Modal Top Bar -->
-        <div class="yt-modal-header">
-            <div class="yt-modal-info">
-                <span class="yt-badge-icon"><i class="fa-brands fa-youtube"></i></span>
-                <div class="yt-titles-wrap">
-                    <div id="ytModalTitle" class="yt-modal-title">संदर्भ वीडियो क्लिप</div>
-                    <div id="ytModalTime" class="yt-modal-timestamp">क्लिप प्ले हो रही है</div>
-                </div>
-            </div>
-            <button onclick="closeYtModal()" class="yt-close-btn" title="बंद करें">✕</button>
-        </div>
-
-        <!-- Video Frame Container (Responsive 16:9) -->
-        <div class="yt-player-box">
-            <iframe id="ytIframePlayer" 
-                    src="" 
-                    title="YouTube video player" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                    allowfullscreen 
-                    referrerpolicy="strict-origin-when-cross-origin">
-            </iframe>
-        </div>
-
-        <!-- Modal Bottom Bar -->
-        <div class="yt-modal-footer">
-            <div class="yt-status-label">
-                <span class="live-pulse-dot" style="width:6px; height:6px;"></span>
-                <span>WhatsApp इन-ऐप क्लिप मोड</span>
-            </div>
-            <a id="ytOpenDirectLink" href="#" target="_blank" rel="noopener noreferrer" class="yt-direct-link">
-                YouTube पर देखें ↗
-            </a>
-        </div>
-    </div>
-</div>
-
-<!-- Modal: Payment History -->
 <div class="modal-overlay" id="historyModal">
     <div class="modal-card">
         <div class="modal-header" style="background:#008069; color:white; padding:12px 16px; display:flex; justify-content:space-between;">
@@ -384,7 +359,6 @@
     </div>
 </div>
 
-<!-- Modal: 7-Day Usage History -->
 <div class="modal-overlay" id="usageModal">
     <div class="modal-card">
         <div class="modal-header" style="background:#008069; color:white; padding:12px 16px; display:flex; justify-content:space-between;">
@@ -403,12 +377,10 @@
         <div style="font-size:42px; margin-bottom:4px;">🎉</div>
         <h2 style="color:#008069; font-size:20px; font-weight:800; margin-top:2px;">सफल सक्रियण!</h2>
         
-        <!-- Live Animated Rolling Counter (0 -> X) -->
         <div id="creditRollCount" style="font-size:36px; font-weight:900; color:#008069; margin:8px 0; font-family:monospace;">
             +0
         </div>
         
-        <!-- Detailed Benefits Box -->
         <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:12px; text-align:left; margin:10px 0 16px 0; font-size:12px; color:#1e293b; line-height:1.6;">
             <div style="display:flex; justify-content:space-between; margin-bottom:6px; border-bottom:1px solid #dcfce7; padding-bottom:5px;">
                 <span>कुल नया बैलेंस:</span>
@@ -439,7 +411,6 @@
 
 <div class="toast-popup" id="toastNotice">सूचना</div>
 
-<!-- Core Scripts Loaded with Priority -->
 <script src="/js/chat.js" defer></script>
 <script src="/js/auth.js" defer></script>
 <script src="/js/payment.js" defer></script>
@@ -454,9 +425,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-        if (typeof nowTime === 'function') {
-            document.getElementById('initClock').textContent = nowTime();
-        }
+        if (typeof nowTime === 'function') document.getElementById('initClock').textContent = nowTime();
         if (typeof updateDateDivider === 'function') updateDateDivider();
         if (typeof cleanAndLoadLocalHistory === 'function') cleanAndLoadLocalHistory();
         if (typeof loadSavedFontPreference === 'function') loadSavedFontPreference();
