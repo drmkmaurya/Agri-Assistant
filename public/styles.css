@@ -140,11 +140,9 @@ html, body {
     font-size: var(--chat-font-size); line-height: var(--chat-line-height); word-wrap: break-word;
     box-shadow: 0 1px 1.5px rgba(0,0,0,0.12); position: relative;
 }
-/* User bubble leaves clean left space */
 .user-bubble { 
     max-width: 80%; background: #d9fdd3; border-top-right-radius: 2px; color: #111b21; 
 }
-/* Bot bubble fills maximum width like Meta AI */
 .bot-bubble { 
     width: 96%; max-width: 96%; background: #ffffff; border-top-left-radius: 2px; color: #111b21; 
 }
@@ -184,8 +182,10 @@ html, body {
     scroll-snap-align: start; background: #f8fafc;
     border: 1px solid #e2e8f0; border-radius: 9px; padding: 8px 10px;
     text-decoration: none; display: flex; flex-direction: column; justify-content: space-between;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.03); transition: transform 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03); transition: transform 0.15s ease, border-color 0.15s ease;
+    cursor: pointer;
 }
+.clip-carousel-card:hover { border-color: #cbd5e1; }
 .clip-carousel-card:active { transform: scale(0.97); background: #f1f5f9; }
 .clip-c-header { 
     font-size: 11px; font-weight: 700; color: #dc2626; 
@@ -205,7 +205,120 @@ html, body {
     display: flex; align-items: center; gap: 3px; 
 }
 
-/* Suggested Follow-up Question Chips (Floating outside bubble) */
+/* WhatsApp-Style YouTube Clip Player Modal */
+.yt-modal-sheet {
+    background: #111b21;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 440px;
+    overflow: hidden;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    animation: ytPopIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes ytPopIn {
+    0% { transform: scale(0.94); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.yt-modal-header {
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #182229;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.yt-modal-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow: hidden;
+}
+.yt-badge-icon {
+    color: #ef4444;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+.yt-titles-wrap {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.yt-modal-title {
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 280px;
+}
+.yt-modal-timestamp {
+    color: #94a3b8;
+    font-size: 11px;
+    margin-top: 1px;
+}
+.yt-close-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: none;
+    color: #cbd5e1;
+    font-size: 15px;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+    flex-shrink: 0;
+}
+.yt-close-btn:hover { background: rgba(255, 255, 255, 0.16); color: #ffffff; }
+
+.yt-player-box {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%; /* 16:9 Aspect Ratio */
+    background: #000000;
+}
+.yt-player-box iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.yt-modal-footer {
+    padding: 9px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #182229;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.yt-status-label {
+    font-size: 11px;
+    color: #25d366;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+}
+.yt-direct-link {
+    color: #38bdf8;
+    font-size: 11.5px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.15s ease;
+}
+.yt-direct-link:hover { color: #7dd3fc; text-decoration: underline; }
+
+/* Suggested Follow-up Question Chips */
 .suggested-questions-box {
     margin-top: 6px; padding: 4px 6px;
     display: flex; flex-direction: column; gap: 4px;
@@ -222,7 +335,6 @@ html, body {
     display: flex; align-items: center; justify-content: flex-start; gap: 14px;
     margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(0,0,0,0.04);
 }
-/* Borderless, flat monochrome action icons just like Meta AI */
 .action-btn-pill {
     background: transparent; border: none; padding: 2px 4px;
     color: #64748b; display: flex; align-items: center; gap: 5px;
