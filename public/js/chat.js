@@ -625,7 +625,7 @@ async function submitMessage(customTxt) {
                 try {
                     const ext = file.name.split('.').pop() || 'jpg';
                     const fileName = `${currentUser.id}/${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${ext}`;
-                    const { data: upData, error: upErr } = await supabaseClient.storage
+                    const { data: upData, error: upErr } = await supabaseClient
                         .from('chat-attachments')
                         .upload(fileName, file);
 
@@ -773,7 +773,6 @@ async function executeSubmit(text, attachCount, imagePreviews = []) {
         renderBotBubbleDirect(finalContent, nowTime(), true, data.answer, false);
         queueSaveLocalMessage('bot', finalContent, nowTime(), data.answer);
 
-        // Dynamic context-aware suggested questions from backend
         let followups = [];
         if (data.suggested_questions && Array.isArray(data.suggested_questions) && data.suggested_questions.length > 0) {
             followups = data.suggested_questions;
@@ -793,7 +792,7 @@ async function executeSubmit(text, attachCount, imagePreviews = []) {
     toBottom();
 }
 
-/* Two-Tier Champions Experience: Compact Card List + Dedicated Blog Story View */
+/* Two-Tier Champions Experience: Compact 1-Line Title & Max 2-Line Clean Snippet */
 async function loadDailyStories() {
     const container = document.getElementById('storiesListContainer');
     if (!container) return;
@@ -813,31 +812,38 @@ async function loadDailyStories() {
 
         cachedDailyStories = data;
 
-        // Render Tier 1: Compact Clean Cards
+        // Render Tier 1: Ultra-Compact Card (1 Line Title, 2 Lines Snippet)
         let html = '';
         data.forEach(st => {
-            const shortSnippet = st.content ? (st.content.substring(0, 115) + '...') : '';
             html += `
-                <div class="story-card-item" onclick="openStoryDetail('${st.id}')" style="cursor:pointer; transition:transform 0.15s ease, box-shadow 0.15s ease; padding:12px 14px; margin-bottom:10px; background:#ffffff; border:1px solid #e2e8f0; border-radius:12px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                        <span class="story-badge" style="background:#dcfce7; color:#15803d; font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:6px;">सफलता की मिसाल</span>
-                        <div style="font-size:11px; color:#64748b; display:flex; align-items:center; gap:6px;">
-                            <span>👁️ ${st.views_count || 120}</span>
-                            <span>•</span>
-                            <span>${st.published_date || 'हाल ही में'}</span>
-                        </div>
+                <div class="story-card-item" onclick="openStoryDetail('${st.id}')" style="cursor:pointer; padding:10px 12px; margin-bottom:8px; background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; transition:transform 0.12s ease;">
+                    
+                    <!-- Top Strip: Farmer Name & Published Date -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; font-size:11px; color:#64748b;">
+                        <span style="font-weight:700; color:#0f172a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:65%;">
+                            👨‍🌾 ${st.farmer_name} • ${st.village_district || ''}
+                        </span>
+                        <span style="font-size:10.5px; color:#94a3b8; flex-shrink:0;">${st.published_date || ''}</span>
                     </div>
-                    <div class="story-title" style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:4px; line-height:1.35;">${st.title}</div>
-                    <div class="story-meta" style="font-size:11.5px; color:#64748b; margin-bottom:6px;">
-                        👨‍🌾 <b>${st.farmer_name}</b> • 📍 ${st.village_district}
+
+                    <!-- 1 Line Title (Strict Single-Line Truncation) -->
+                    <div style="font-size:13.5px; font-weight:700; color:#008069; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.35; margin-bottom:4px;">
+                        ${st.title}
                     </div>
-                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; font-size:11px; font-weight:700; padding:3px 8px; border-radius:6px; margin-bottom:6px; display:inline-block;">
-                        💰 ${st.earnings_impact}
+
+                    <!-- Max 2 Lines Description (Strict Webkit Clamping) -->
+                    <div style="font-size:11.5px; color:#475569; line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; margin-bottom:6px;">
+                        ${st.content || ''}
                     </div>
-                    <p style="font-size:12px; color:#475569; line-height:1.5; margin:0;">${shortSnippet}</p>
-                    <div style="margin-top:8px; text-align:right;">
-                        <span style="font-size:11.5px; color:#008069; font-weight:700;">पूरा लेख पढ़ें (Read Full) →</span>
+
+                    <!-- Bottom Minimal Impact Pill & Quick Arrow -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:10.5px;">
+                        <span style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; font-weight:700; padding:1.5px 6px; border-radius:4px; max-width:80%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                            💰 ${st.earnings_impact || 'सफल जैविक परिणाम'}
+                        </span>
+                        <span style="color:#008069; font-weight:700;">विस्तार से पढ़ें →</span>
                     </div>
+
                 </div>`;
         });
         container.innerHTML = html;
@@ -850,7 +856,7 @@ async function loadDailyStories() {
     }
 }
 
-/* Tier 2: Open Dedicated Blog Article Reader View */
+/* Tier 2: Dedicated Full Blog Article Reader View */
 function openStoryDetail(storyId) {
     const url = `/champions/${storyId}`;
     if (window.location.pathname !== url) {
@@ -886,10 +892,10 @@ function openStoryDetailById(storyId, incrementView = true) {
             </div>
             <h2 style="font-size:17px; font-weight:800; color:#0f172a; margin:10px 0 6px 0; line-height:1.4;">${story.title}</h2>
             <div style="font-size:12.5px; color:#64748b; margin-bottom:12px;">
-                👨‍🌾 <b>${story.farmer_name}</b> • 📍 ${story.village_district}
+                👨‍🌾 <b>${story.farmer_name}</b> • 📍 ${story.village_district || ''}
             </div>
             <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#047857; font-size:12px; font-weight:700; padding:8px 12px; border-radius:8px; margin-bottom:14px;">
-                💰 आर्थिक प्रभाव: ${story.earnings_impact}
+                💰 आर्थिक प्रभाव: ${story.earnings_impact || 'उत्कृष्ट जैविक परिणाम'}
             </div>
             <div style="font-size:13.5px; color:#334155; line-height:1.7; white-space:pre-line;">
                 ${story.content}
