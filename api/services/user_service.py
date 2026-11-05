@@ -12,7 +12,7 @@ IST = ZoneInfo("Asia/Kolkata")
 def get_super_control_settings() -> dict:
     try:
         res = supabase.table("app_settings").select("*").limit(1).execute()
-        if res.data:
+        if res.data and len(res.data) > 0:
             return res.data[0]
     except Exception:
         pass
@@ -22,57 +22,67 @@ def get_super_control_settings() -> dict:
         "banner_text": "",
         "welcome_credits": 10,
         "welcome_days": 30,
-        "welcome_enabled": True
+        "welcome_enabled": True,
+        "chat_maintenance": False,
+        "payment_maintenance": False,
+        "active_payment_gateway": "razorpay"
     }
 
 def get_or_create_user_profile(user_id: str, email: str = "", name: str = "", avatar: str = "") -> dict:
     try:
-        # 1. Check existing by user_id
+        # 1. Check existing user by user_id
         res = supabase.table("user_profiles").select("*").eq("id", user_id).limit(1).execute()
         if res.data and len(res.data) > 0:
             return res.data[0]
         
-        # 2. Fallback check by email
+        # 2. Fallback check by email to prevent duplicate accounts
         if email:
             email_res = supabase.table("user_profiles").select("*").eq("email", email).limit(1).execute()
             if email_res.data and len(email_res.data) > 0:
                 return email_res.data[0]
         
-        # 3. New User: Assign 10 Credits & 30 Days Validity
+        # 3. Dynamic Welcome Settings from app_settings
+        settings = get_super_control_settings()
+        is_welcome_enabled = settings.get("welcome_enabled", True)
+        welcome_credits = int(settings.get("welcome_credits", 10)) if is_welcome_enabled else 0
+        welcome_days = int(settings.get("welcome_days", 30))
+
         now = datetime.now(timezone.utc)
-        expiry_30_days = (now + timedelta(days=30)).isoformat()
+        expiry_date = (now + timedelta(days=welcome_days)).isoformat()
+
         new_row = {
             "id": user_id,
             "email": email or "",
             "full_name": name or "किसान साथी",
             "avatar_url": avatar or "https://lh3.googleusercontent.com/a/default-user=s96-c",
             "plan_type": "free",
-            "total_credits": 10,
+            "total_credits": welcome_credits,
             "status": "approved",
-            "plan_expires_at": expiry_30_days
+            "plan_expires_at": expiry_date
         }
         ins = supabase.table("user_profiles").insert(new_row).execute()
         created_profile = ins.data[0] if (ins.data and len(ins.data) > 0) else new_row
 
-        # 4. Automatic Welcome Bonus Entry in credit_transactions for Financial Audit
-        try:
-            supabase.table("credit_transactions").insert({
-                "user_id": user_id,
-                "order_id": f"welcome_{user_id[:8]}",
-                "payment_id": "WELCOME_BONUS",
-                "amount_paid": 0,
-                "original_price": 0,
-                "discount_percent": 100,
-                "coupon_code": "WELCOME",
-                "payment_gateway": "bonus",
-                "transaction_type": "WELCOME",
-                "credits_added": 10,
-                "expires_at": expiry_30_days,
-                "plan_name": "स्वागत बोनस (Welcome Bonus - 10 Credits)",
-                "status": "success"
-            }).execute()
-        except Exception as tx_err:
-            print(f"Welcome bonus audit log insert warning: {tx_err}")
+        # 4. Insert Welcome Bonus Audit Record in credit_transactions
+        if is_welcome_enabled and welcome_credits > 0:
+            try:
+                supabase.table("credit_transactions").insert({
+                    "user_id": user_id,
+                    "order_id": f"welcome_{user_id[:8]}",
+                    "payment_id": "WELCOME_BONUS",
+                    "amount_paid": 0,
+                    "original_price": 0,
+                    "discount_percent": 100,
+                    "coupon_code": "WELCOME",
+                    "payment_gateway": "bonus",
+                    "transaction_type": "WELCOME",
+                    "credits_added": welcome_credits,
+                    "expires_at": expiry_date,
+                    "plan_name": f"स्वागत बोनस (Welcome Bonus - {welcome_credits} Credits)",
+                    "status": "success"
+                }).execute()
+            except Exception as tx_err:
+                print(f"Welcome bonus transaction log warning: {tx_err}")
 
         return created_profile
     except Exception as e:
